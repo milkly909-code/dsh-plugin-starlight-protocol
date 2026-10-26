@@ -173,9 +173,9 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('底部状态栏与Token用量：纯白文字高对比显示', fullCss.includes('GRgSLq_dock') && fullCss.includes('color: #FFFFFF !important'));
   check('步数/token/上下文弹窗：深空高对比不透明背景', fullCss.includes('stat-dialog') && fullCss.includes('rgba(13, 17, 28, 0.96)'));
   check('动态玻璃不透明度：支持按参数动态渲染透明/半透度', X.generateDynamicCss({ enabled: true, surfaceOpacity: 0.35 }).includes('rgba(10, 15, 26, 0.35)'));
-  check('深色模式全息强化：侧栏与通用设置项强制纯白文字与图标', fullCss.includes('body[data-ds-dark-theme]') && fullCss.includes('fill: #FFFFFF !important'));
-  check('浅色模式自适应：界面表面自动切换为晨曦雾质感 (rgba(246, 248, 252, 0.88))', fullCss.includes('body:not([data-ds-dark-theme])') && fullCss.includes('rgba(246, 248, 252, 0.88)'));
-  check('浅色模式字体自适应：标题与正文切换为深色高对比排版 (#0f172a / #1e293b)', fullCss.includes('body:not([data-ds-dark-theme])') && fullCss.includes('color: #0f172a !important'));
+  check('全天候侧栏与通用设置项强制纯白高对比文字与图标', fullCss.includes('[class*="_sidebarCol"] *') && fullCss.includes('fill: #FFFFFF !important'));
+  check('外观选项卡与配置按钮全域纯白与高亮胶囊', fullCss.includes('[class*="cube"]') && fullCss.includes('rgba(56, 189, 248, 0.22)'));
+  check('下拉触发器统一为深空微透晶石与纯白文字', fullCss.includes('[role="combobox"]') && fullCss.includes('rgba(14, 20, 32, 0.85)'));
   check('右下角控制面板组件导出：SpaceFloatControl', typeof X.Views.SpaceFloatControl === 'function');
 
   check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
