@@ -1025,35 +1025,68 @@ window.__ModuleLoader__.load({
 
     /** 动态根据配置生成全局 CSS 规则（无模糊 + 全域穿透全透 + 聊天框全透一致性 + 太空 HUD 保护）。 */
     function generateDynamicCss(options) {
-      const { enabled = true } = options || {};
+      const { enabled = true, surfaceOpacity = 0.0 } = options || {};
       if (!enabled) return '';
+      const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.95);
+      const surfaceBg = op > 0 ? `rgba(10, 15, 26, ${op.toFixed(2)})` : 'transparent';
 
       return [
-        // 1. 彻底禁用一切背景模糊（无模糊纯净视界）
+        // 1. 彻底禁用全局常规背景模糊（纯净无模糊模式）
         'html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
 
         // 2. 全窗口容器彻底全透（body, #root, #app, frame, content, panel, page, settings, detail）
         'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_panel"], html[data-sbg-on] [class*="q_panel"], html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="q_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_page"], html[data-sbg-on] [class*="q_page"], html[data-sbg-on] [class*="_settings"], html[data-sbg-on] [class*="q_settings"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="view"], html[data-sbg-on] [class*="View"], html[data-sbg-on] [class*="section"], html[data-sbg-on] [class*="Section"] { background: transparent !important; background-color: transparent !important; }',
 
-        // 3. 聊天主工作区、中栏、侧栏全部彻底透明
-        'html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"] { background: transparent !important; background-color: transparent !important; }',
+        // 3. 聊天主工作区、中栏、侧栏（支持根据用户设置的玻璃不透明度调节微透度）
+        `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; }`,
         'html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: transparent !important; background-color: transparent !important; }',
 
-        // 4. 彻底解决聊天框与底栏：与其它页面完全一致，保持全透明且无模糊
-        'html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="_footer"], html[data-sbg-on] [class*="q_footer"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="Composer"] { background: transparent !important; background-color: transparent !important; box-shadow: none !important; }',
-        'html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="q_bottomRow"] { background: transparent !important; background-color: transparent !important; }',
+        // 4. 解决文字上滑遮挡聊天框问题：聊天输入座席设置顶部渐隐遮罩，文字上滑进入即隐没，绝不遮挡输入框
+        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="Composer"] { z-index: 7 !important; background: linear-gradient(180deg, rgba(6, 9, 18, 0) 0px, rgba(6, 9, 18, 0.78) 22px, rgba(6, 9, 18, 0.94) 46px, rgba(6, 9, 18, 0.98) 100%) !important; box-shadow: none !important; }',
 
-        // 聊天框输入区域卡片：透明底色 + 干净微线框界定输入区域，无模糊、透出星空
-        'html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { background: rgba(10, 15, 26, 0.45) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: none !important; }',
+        // 聊天框输入区域卡片：深邃高对比防穿透底色 + 干净微线框，确保内部文字与按钮 100% 清晰
+        'html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { background: rgba(10, 15, 26, 0.92) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important; }',
         'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"], html[data-sbg-on] [class*="input"], html[data-sbg-on] [class*="q_input"] { background: transparent !important; background-color: transparent !important; color: #FFFFFF !important; }',
 
-        // 5. 消息气泡与其它页面卡片项：轻量纯净线框，无模糊
+        // 5. 消息气泡与其它页面卡片项：轻量纯净线框
         'html[data-sbg-on] [class*="_card"], html[data-sbg-on] [class*="q_card"], html[data-sbg-on] [class*="_item"], html[data-sbg-on] [class*="q_item"], html[data-sbg-on] [class*="bubble"] { background: rgba(15, 20, 32, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; }',
+
+        // 5.1 底部步数、token用量、上下文弹窗与菜单：绝不透明，提供高对比深空暗色卡片背景，保证数据一目了然
+        `html[data-sbg-on] [role="dialog"],
+        html[data-sbg-on] [role="menu"],
+        html[data-sbg-on] [role="listbox"],
+        html[data-sbg-on] [class*="dialog"],
+        html[data-sbg-on] [class*="Dialog"],
+        html[data-sbg-on] [class*="popover"],
+        html[data-sbg-on] [class*="Popover"],
+        html[data-sbg-on] [class*="dropdown"],
+        html[data-sbg-on] [class*="Dropdown"],
+        html[data-sbg-on] [class*="menu"],
+        html[data-sbg-on] [class*="Menu"],
+        html[data-sbg-on] [class*="stat-dialog"],
+        html[data-sbg-on] [class*="TurnUsagePanel"],
+        html[data-sbg-on] [class*="xXe6ja_panel"],
+        html[data-sbg-on] [class*="panel"][role="dialog"],
+        html[data-sbg-on] [class*="_panel"][role="dialog"],
+        html[data-sbg-on] [class*="q_panel"][role="dialog"] {
+          background: rgba(13, 17, 28, 0.96) !important;
+          background-color: rgba(13, 17, 28, 0.96) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+          backdrop-filter: blur(16px) !important;
+          -webkit-backdrop-filter: blur(16px) !important;
+        }
+        html[data-sbg-on] [role="dialog"] *,
+        html[data-sbg-on] [role="menu"] *,
+        html[data-sbg-on] [class*="stat-dialog"] *,
+        html[data-sbg-on] [class*="TurnUsagePanel"] * {
+          text-shadow: none !important;
+        }`, 
 
         // 6. 全景视窗微暗角（Cockpit Vignette）：中央阅读区柔和压暗，四周边缘纯透星光璀璨，0 模糊且极大提升阅读对比度
         '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6, 9, 18, 0.28) 0%, rgba(6, 9, 18, 0.10) 60%, transparent 100%); z-index: 1; }',
@@ -1110,9 +1143,10 @@ window.__ModuleLoader__.load({
 
     /** 动态根据配置生成官方主题令牌覆盖。 */
     function generateTokenOverrides(options) {
-      const { enabled = true } = options || {};
+      const { enabled = true, surfaceOpacity = 0.0 } = options || {};
       if (!enabled) return {};
-      const zeroColor = 'rgba(0, 0, 0, 0)';
+      const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.95);
+      const zeroColor = op > 0 ? `rgba(10, 15, 26, ${op.toFixed(2)})` : 'rgba(0, 0, 0, 0)';
 
       return {
         '--dsw-alias-bg-base': { light: zeroColor, dark: zeroColor },
@@ -1122,7 +1156,7 @@ window.__ModuleLoader__.load({
         '--dsw-alias-bg-layer-4': { light: zeroColor, dark: zeroColor },
         '--dsw-alias-settings-card-fill': { light: zeroColor, dark: zeroColor },
         '--dsw-specific-sidebar-fill': { light: zeroColor, dark: zeroColor },
-        '--dsw-specific-input-major': { light: zeroColor, dark: zeroColor },
+        '--dsw-specific-input-major': { light: 'rgba(0, 0, 0, 0)', dark: 'rgba(0, 0, 0, 0)' },
       };
     }
 
@@ -1173,6 +1207,20 @@ window.__ModuleLoader__.load({
         '.sbg-doc-card-title{font-size:13.5px;font-weight:600;color:#7dd3fc;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
         '.sbg-doc-card-body{font-size:12px;color:rgba(235,242,255,0.88);line-height:1.6;white-space:pre-line;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
         '@media (max-width:768px){.sbg-doc-grid{grid-template-columns:1fr;}}',
+        // 右下角悬浮控制面板样式
+        '.sbg-fab-btn{position:fixed;bottom:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(13,18,30,0.88);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.6);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;padding:0;outline:none;}',
+        '.sbg-fab-btn:hover{transform:scale(1.1);border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);}',
+        '.sbg-fab-panel{position:fixed;bottom:64px;right:20px;width:280px;background:rgba(13,18,30,0.96);border:1px solid rgba(56,189,248,0.35);border-radius:12px;padding:16px;box-shadow:0 16px 36px rgba(0,0,0,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:10000;display:flex;flex-direction:column;gap:13px;color:#f1f5f9;font-size:13px;}',
+        '.sbg-fab-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;}',
+        '.sbg-fab-title{font-weight:600;color:#38bdf8;display:flex;align-items:center;gap:6px;}',
+        '.sbg-fab-close{background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;}',
+        '.sbg-fab-close:hover{color:#fff;background:rgba(255,255,255,0.1);}',
+        '.sbg-ctrl-row{display:flex;flex-direction:column;gap:5px;}',
+        '.sbg-ctrl-label{display:flex;justify-content:space-between;color:rgba(235,242,255,0.9);font-size:12px;}',
+        '.sbg-ctrl-slider{width:100%;accent-color:#38bdf8;cursor:pointer;}',
+        '.sbg-fab-footer{display:flex;justify-content:flex-end;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);}',
+        '.sbg-btn-reset{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:rgba(235,242,255,0.85);padding:4px 10px;font-size:11.5px;cursor:pointer;}',
+        '.sbg-btn-reset:hover{background:rgba(255,255,255,0.15);color:#fff;}',
       ].join('\n');
       document.head.appendChild(el);
     }
@@ -1233,6 +1281,109 @@ window.__ModuleLoader__.load({
       );
     }
 
+    /** 右下角快捷悬浮调控球与调控面板（支持航速、粒子数、玻璃不透明度实时调节）。 */
+    function SpaceFloatControl({ useStore, actions }) {
+      const [open, setOpen] = React.useState(false);
+      const doc = typeof useStore === 'function' ? useStore((s) => s) : {};
+      const enabled = doc.enabled !== false;
+      const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
+      const density = typeof doc.density === 'number' ? doc.density : 1000;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
+
+      return h('div', { className: 'sbg-fab-root' },
+        h('button', {
+          type: 'button',
+          className: 'sbg-fab-btn',
+          title: '深空背景调节（速度 / 粒子 / 不透明度）',
+          onClick: () => setOpen(!open),
+        },
+          h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+            h('line', { x1: 4, y1: 21, x2: 4, y2: 14 }),
+            h('line', { x1: 4, y1: 10, x2: 4, y2: 3 }),
+            h('line', { x1: 12, y1: 21, x2: 12, y2: 12 }),
+            h('line', { x1: 12, y1: 8, x2: 12, y2: 3 }),
+            h('line', { x1: 20, y1: 21, x2: 20, y2: 16 }),
+            h('line', { x1: 20, y1: 12, x2: 20, y2: 3 }),
+            h('line', { x1: 1, y1: 14, x2: 7, y2: 14 }),
+            h('line', { x1: 9, y1: 8, x2: 15, y2: 8 }),
+            h('line', { x1: 17, y1: 16, x2: 23, y2: 16 })
+          )
+        ),
+        open && h('div', { className: 'sbg-fab-panel' },
+          h('div', { className: 'sbg-fab-header' },
+            h('span', { className: 'sbg-fab-title' }, '🌌 深空视界调节'),
+            h('button', {
+              type: 'button',
+              className: 'sbg-fab-close',
+              onClick: () => setOpen(false)
+            }, '✕')
+          ),
+          h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+            h('span', { style: { fontSize: '12.5px' } }, '深空星空背景'),
+            h('button', {
+              type: 'button',
+              className: 'sbg-switch',
+              role: 'switch',
+              'aria-checked': String(enabled),
+              onClick: () => actions && actions.setEnabled && actions.setEnabled(!enabled),
+            }, h('span', { className: 'sbg-switch-thumb' }))
+          ),
+          h('div', { className: 'sbg-ctrl-row' },
+            h('div', { className: 'sbg-ctrl-label' },
+              h('span', null, '航行速度'),
+              h('span', { style: { color: '#38bdf8' } }, `${speed.toFixed(2)}x`)
+            ),
+            h('input', {
+              type: 'range',
+              className: 'sbg-ctrl-slider',
+              min: '0.1',
+              max: '1.5',
+              step: '0.05',
+              value: String(speed),
+              onChange: (e) => actions && actions.setSpeed && actions.setSpeed(Number(e.target.value)),
+            })
+          ),
+          h('div', { className: 'sbg-ctrl-row' },
+            h('div', { className: 'sbg-ctrl-label' },
+              h('span', null, '星空粒子数量'),
+              h('span', { style: { color: '#38bdf8' } }, `${density} 颗`)
+            ),
+            h('input', {
+              type: 'range',
+              className: 'sbg-ctrl-slider',
+              min: '300',
+              max: '2000',
+              step: '100',
+              value: String(density),
+              onChange: (e) => actions && actions.setDensity && actions.setDensity(Number(e.target.value)),
+            })
+          ),
+          h('div', { className: 'sbg-ctrl-row' },
+            h('div', { className: 'sbg-ctrl-label' },
+              h('span', null, '玻璃不透明度'),
+              h('span', { style: { color: '#38bdf8' } }, `${Math.round(surfaceOpacity * 100)}%`)
+            ),
+            h('input', {
+              type: 'range',
+              className: 'sbg-ctrl-slider',
+              min: '0',
+              max: '0.7',
+              step: '0.05',
+              value: String(surfaceOpacity),
+              onChange: (e) => actions && actions.setSurfaceOpacity && actions.setSurfaceOpacity(Number(e.target.value)),
+            })
+          ),
+          h('div', { className: 'sbg-fab-footer' },
+            h('button', {
+              type: 'button',
+              className: 'sbg-btn-reset',
+              onClick: () => actions && actions.resetDefaults && actions.resetDefaults(),
+            }, '恢复默认')
+          )
+        )
+      );
+    }
+
     /** 插件详情页面槽位组件（plugins.detail.section）。 */
     function PluginDetailSection(props) {
       const subject = props && props.subject;
@@ -1282,6 +1433,7 @@ window.__ModuleLoader__.load({
       const enabled = doc.enabled !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
       const density = typeof doc.density === 'number' ? doc.density : 1000;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
 
       React.useEffect(() => {
         boundDoc = doc;
@@ -1293,17 +1445,17 @@ window.__ModuleLoader__.load({
 
       React.useEffect(() => {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-        diag.steps.push(`SpaceLayer:effect:start: enabled=${enabled}`);
+        diag.steps.push(`SpaceLayer:effect:start: enabled=${enabled} op=${surfaceOpacity}`);
 
-        // 1. 动态生成并注入全局全域穿透 CSS（无模糊纯净模式）
-        updateDynamicStyles({ enabled });
+        // 1. 动态生成并注入全局全域穿透 CSS（支持实时调节表面透明度）
+        updateDynamicStyles({ enabled, surfaceOpacity });
 
-        // 2. 官方主题服务令牌动态覆盖（清空实体背景色）
+        // 2. 官方主题服务令牌动态覆盖
         let disposeThemeOverride = null;
         if (themeApi && typeof themeApi.overrideTokens === 'function') {
           try {
             if (enabled) {
-              const tokens = generateTokenOverrides({ enabled });
+              const tokens = generateTokenOverrides({ enabled, surfaceOpacity });
               disposeThemeOverride = themeApi.overrideTokens(PANEL_ID, tokens);
             }
           } catch (e) {
@@ -1334,6 +1486,7 @@ window.__ModuleLoader__.load({
             speed,
             interactive: false,
             showHud: false,
+            parallax: true,
             getSpeed: () => (boundDoc ? (typeof boundDoc.speed === 'number' ? boundDoc.speed : 0.4) : speed),
           });
           diag.steps.push('SpaceLayer:engine:running');
@@ -1348,9 +1501,10 @@ window.__ModuleLoader__.load({
           if (root && root.parentNode) root.parentNode.removeChild(root);
           diag.steps.push('SpaceLayer:effect:cleanup');
         };
-      }, [enabled, density]);
+      }, [enabled, density, surfaceOpacity]);
 
-      return null;
+      // 渲染右下角悬浮调控球与面板
+      return h(SpaceFloatControl, { useStore, actions });
     }
 
     function makeStore() {
@@ -1393,7 +1547,8 @@ window.__ModuleLoader__.load({
             draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
           setEnabled(draft, on) { draft.enabled = on === true; },
-          setSurfaceOpacity(draft) { draft.surfaceOpacity = 0.0; },
+          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0, 0.0, 0.95); },
+          setDensity(draft, val) { draft.density = clamp(Math.round(Number(val) || 1000), 300, 2500); },
           setBlur(draft) { draft.blur = 0; },
           setAutoContrast(draft, on) { draft.autoContrast = on === true; },
           setTextShadow(draft, on) { draft.textShadow = on === true; },
@@ -1483,7 +1638,7 @@ window.__ModuleLoader__.load({
         clamp, pickTint, bandYFor, buildBasis, makeConstellations,
         makeStore, ensureStyles, createSpaceEngine,
         generateDynamicCss, generateTokenOverrides,
-        Views: { SpaceBackgroundPage, SpaceLayer, PluginDetailSection, SettingsRow },
+        Views: { SpaceBackgroundPage, SpaceLayer, PluginDetailSection, SettingsRow, SpaceFloatControl },
       },
     };
   },

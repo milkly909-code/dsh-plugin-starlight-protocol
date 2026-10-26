@@ -169,6 +169,10 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('深空专属极简滚动条：5px 超窄且全透明轨道', fullCss.includes('html[data-sbg-on] *::-webkit-scrollbar'));
   check('聊天输入框 Focus 全息冰蓝呼吸微光', fullCss.includes('focus-within'));
   check('代码块微光盾：pre 与 code 容器暗色全息护盾', fullCss.includes('background: rgba(8, 12, 22, 0.65)'));
+  check('防文字上滑遮挡：聊天座席渐隐暗色遮罩', fullCss.includes('data-composer-seat') && fullCss.includes('rgba(6, 9, 18, 0.98)'));
+  check('步数/token/上下文弹窗：深空高对比不透明背景', fullCss.includes('stat-dialog') && fullCss.includes('rgba(13, 17, 28, 0.96)'));
+  check('动态玻璃不透明度：支持按参数动态渲染透明/半透度', X.generateDynamicCss({ enabled: true, surfaceOpacity: 0.35 }).includes('rgba(10, 15, 26, 0.35)'));
+  check('右下角控制面板组件导出：SpaceFloatControl', typeof X.Views.SpaceFloatControl === 'function');
 
   check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
 
@@ -193,6 +197,10 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   const d4 = {};
   storeSpec.actions.setBlur(d4, 0);
   check('setBlur 设置无模糊 (0)', d4.blur === 0);
+
+  const dDensity = {};
+  storeSpec.actions.setDensity(dDensity, 1500);
+  check('setDensity 支持调节星空粒子数量', dDensity.density === 1500);
 
   const d5 = { surfaceOpacity: 0.8, blur: 16, autoContrast: false };
   storeSpec.actions.resetDefaults(d5);

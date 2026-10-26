@@ -1,7 +1,7 @@
 {
   "name": "@local/space-background",
-  "version": "1.1.1",
-  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：界面彻底无模糊(0px blur)全透展现，舷窗径向微暗角高对比护眼，深空极简细轨，输入聚焦全息微光与代码块微光盾，天体引擎支持鼠标阻尼微视差。",
+  "version": "1.2.0",
+  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：界面彻底无模糊(0px blur)全透展现，防文字上滑遮挡聊天框，步数/token统计弹窗高对比防穿透，右下角快捷悬浮调控球支持速度、粒子数与玻璃不透明度随时调节。",
   "type": "module",
   "keywords": [
     "dsh-plugin",
