@@ -30,17 +30,15 @@ window.__ModuleLoader__.load({
     /**
      * 持久化文档的 schema 版本。
      *
-     * 2：丢弃 speed / boost / hue 等已移除字段，并把旧文档的 enabled 复位成
-     *    true（旧版本没有可靠的开关写入通道，留下的 false 不可信）。
+     * 3：升级为独立控制台页面，支持界面通透度 (surfaceOpacity)、毛玻璃磨砂度 (blur)、
+     *    智能文字对比度保护 (autoContrast) 与轮廓微阴影 (textShadow)。
      */
-    const STORE_SCHEMA_VERSION = 2;
+    const STORE_SCHEMA_VERSION = 3;
 
     // ── 早期版本脏数据迁移 ────────────────────────────────────────────────
     // defineStore 的 rehydration 只是直接 JSON.parse(localStorage.getItem(...))
-    // 并不会自动调用 actions.normalize。如果 localStorage 里还留着早期版本的
-    // enabled:false，rehydrate 后 store 会直接带上 false。
-    // 在模块加载时提前就地迁移 localStorage，确保 defineStore 初始化读取时
-    // 拿到已复位为 enabled:true 的文档。
+    // 并不会自动调用 actions.normalize。在模块加载时提前就地迁移 localStorage，
+    // 确保 defineStore 初始化读取时拿到已升级的 schemaVersion: 3 与推荐通透度。
     try {
       if (typeof localStorage !== 'undefined') {
         const raw = localStorage.getItem(PERSIST_KEY);
@@ -49,7 +47,12 @@ window.__ModuleLoader__.load({
           if (parsed && (typeof parsed.schemaVersion !== 'number' || parsed.schemaVersion < STORE_SCHEMA_VERSION)) {
             parsed.schemaVersion = STORE_SCHEMA_VERSION;
             parsed.enabled = true;
-            delete parsed.speed;
+            if (typeof parsed.surfaceOpacity !== 'number') parsed.surfaceOpacity = 0.45;
+            if (typeof parsed.blur !== 'number') parsed.blur = 16;
+            if (typeof parsed.autoContrast !== 'boolean') parsed.autoContrast = true;
+            if (typeof parsed.textShadow !== 'boolean') parsed.textShadow = true;
+            if (typeof parsed.speed !== 'number') parsed.speed = 0.4;
+            delete parsed.speed_legacy;
             delete parsed.boost;
             delete parsed.hue;
             localStorage.setItem(PERSIST_KEY, JSON.stringify(parsed));
@@ -937,187 +940,508 @@ window.__ModuleLoader__.load({
     }
 
     /* ======================================================================
-     * 外观集成：设置行 + 全局星空层 + 主题令牌覆盖
+     * 外观集成：独立控制台面板 (main) + 侧边栏图标 + 全局星空层 (overlay)
      * ==================================================================== */
 
     /** 主题服务句柄（apply 内 ctx.inject(['theme']) 就绪后写入）。 */
     let themeApi = null;
+    let boundDoc = null;
+    let boundActions = null;
 
     const dict = {
       zh: {
-        rowTitle: '深空背景',
-        rowDesc: '银河、星座与行星在窗口底层缓缓流动，界面表面保持可读',
+        title: '深空背景',
+        studioTitle: '深空背景控制中心',
+        studioSubtitle: '调整界面通透度、毛玻璃质感与智能文字对比度，让深空宇宙与内容保持完美平衡',
+        statusRunning: '星空运行中',
+        statusDisabled: '背景已关闭',
+        masterSwitch: '启用深空背景',
+        masterSwitchDesc: '在整个应用底层渲染无缝漂移的银河、随机星座、行星与流星',
+        transparencySection: '界面通透度调节 (Surface Transparency)',
+        transparencyDesc: '降低界面各区域的不透明度以透出底层星空。数值越低越通透，底层星空越清晰。',
+        presetBalanced: '毛玻璃适中 (45%)',
+        presetSubtle: '轻透微澜 (75%)',
+        presetDeep: '深空通透 (25%)',
+        presetClear: '纯净全景 (10%)',
+        sliderLabel: '界面表面不透明度',
+        blurSection: '毛玻璃磨砂度 (Backdrop Blur)',
+        blurDesc: '在前景界面与底层星空之间形成磨砂柔化过渡，保证信息层级与层次感。',
+        blurNone: '无模糊 (0px)',
+        blurSoft: '轻柔 (8px)',
+        blurMedium: '经典 (16px)',
+        blurDeep: '深度 (24px)',
+        readabilitySection: '智能文字可读性与高对比度保护',
+        readabilityDesc: '高通透度下深色星空会成为主色调，智能对比度会自动提亮文字并增加微阴影，防止暗色文字在黑夜星空下难以辨别。',
+        autoContrast: '文字智能增亮与反转',
+        autoContrastDesc: '在通透度较高时自动将正文与标题增强为高对比度银白色',
+        textShadow: '抗晕散文字轮廓阴影',
+        textShadowDesc: '为文字边缘增加细微环境阴影，防止明亮星芒干扰阅读',
+        dynamicsSection: '天体运行节奏',
+        speedLabel: '漂移速度',
+        speedSlow: '沉静慢速 (0.2x)',
+        speedNormal: '自然流转 (0.4x)',
+        speedFast: '快速巡航 (0.8x)',
+        previewSection: '透光与文字辨识度实测预览',
+        previewTitle: '标题：DeepSeek Harness 专业级会话',
+        previewBody: '星汉灿烂，若出其里；日月之行，若出其中。在当前通透度与高对比度保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。',
+        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.45, blur: 16 });',
+        resetDefaults: '恢复推荐配置',
       },
       en: {
-        rowTitle: 'Deep space background',
-        rowDesc: 'Milky Way, constellations and planets drift behind a translucent shell',
+        title: 'Deep Space',
+        studioTitle: 'Deep Space Studio',
+        studioSubtitle: 'Tune shell transparency, frosted glass blur, and smart text legibility for the perfect balance',
+        statusRunning: 'Engine Running',
+        statusDisabled: 'Background Off',
+        masterSwitch: 'Enable Deep Space',
+        masterSwitchDesc: 'Renders the drifting Milky Way, constellations, planets, and meteors in background',
+        transparencySection: 'Surface Transparency',
+        transparencyDesc: 'Lower surface opacity to reveal the cosmic backdrop. Lower values are more translucent.',
+        presetBalanced: 'Balanced (45%)',
+        presetSubtle: 'Subtle (75%)',
+        presetDeep: 'Deep Space (25%)',
+        presetClear: 'Ultra Clear (10%)',
+        sliderLabel: 'Surface Opacity',
+        blurSection: 'Backdrop Blur',
+        blurDesc: 'Softens the starry backdrop to create elegant frosted glass depth.',
+        blurNone: 'None (0px)',
+        blurSoft: 'Soft (8px)',
+        blurMedium: 'Classic (16px)',
+        blurDeep: 'Deep (24px)',
+        readabilitySection: 'Smart Readability & Contrast Protection',
+        readabilityDesc: 'Under high transparency, text automatically shifts to crisp contrast with subtle shadows.',
+        autoContrast: 'Smart Text Brightening',
+        autoContrastDesc: 'Enhances text to high-contrast crisp white when surface opacity is low',
+        textShadow: 'Text Contour Shadow',
+        textShadowDesc: 'Adds subtle shadows behind text to prevent stars from interfering with reading',
+        dynamicsSection: 'Stellar Dynamics',
+        speedLabel: 'Drift Speed',
+        speedSlow: 'Calm (0.2x)',
+        speedNormal: 'Natural (0.4x)',
+        speedFast: 'Cruise (0.8x)',
+        previewSection: 'Live Readability & Transparency Preview',
+        previewTitle: 'Title: DeepSeek Harness Studio Session',
+        previewBody: 'The stars shine brilliant in the night sky. With smart readability active, text remains exceptionally crisp and readable over any cosmic backdrop.',
+        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.45, blur: 16 });',
+        resetDefaults: 'Reset to Recommended',
       },
     };
 
-    /** 开启时折入活动主题的令牌覆盖层（官方 ctx.theme.overrideTokens 机制）。 */
-    const GLOBAL_TOKEN_OVERRIDES = {
-      '--dsw-alias-bg-base': { light: 'rgba(243,245,249,0.88)', dark: 'rgba(7,10,19,0.82)' },
-      '--dsw-alias-bg-layer-1': { light: 'rgba(249,250,252,0.92)', dark: 'rgba(13,17,29,0.9)' },
-      '--dsw-specific-sidebar-fill': { light: 'rgba(235,236,241,0.8)', dark: 'rgba(9,13,24,0.76)' },
-    };
+    /** 动态根据配置生成全局 CSS 规则（界面各列半透明 + 毛玻璃 + 浅色模式高透文字增亮保护）。 */
+    function generateDynamicCss(options) {
+      const {
+        enabled = true,
+        surfaceOpacity = 0.45,
+        blur = 16,
+        autoContrast = true,
+        textShadow = true,
+      } = options || {};
 
-    /** 兜底样式：令牌覆盖之外的第二层保险（浅/深双色，数据属性门控，关闭即撤）。 */
-    /**
-     * 兜底样式：令牌覆盖之外的第二层保险（浅/深双色，数据属性门控，关闭即撤）。
-     *
-     * 选择器为什么写成 `[class*="_frame"]` 与 `[class*="q_frame"]` 两种：
-     * 宿主用 CSS Modules，类名形如 `mP3x-q_frame` / `mP3x-q_centerCol`。
-     * 旧写法只匹配 `_frame`（以下划线开头），而真实类名是 `q_frame`——
-     * 下划线在哈希段之后，`[class*="_frame"]` 根本命中不了，于是兜底样式
-     * 一直没生效。这里同时保留两种拼写，哈希算法换了前缀也不会再断。
-     */
-    const GLOBAL_BG_CSS = [
-      'html[data-sbg-on] body,html[data-sbg-on] #root,html[data-sbg-on] #app{background:transparent !important;}',
-      // 框架根：宿主的 .frame 带不透明 background，必须让它透出底层星空
-      'html[data-sbg-on] [class*="_frame"],html[data-sbg-on] [class*="q_frame"]{background:transparent !important;}',
-      'html[data-sbg-on] [class*="_centerCol"],html[data-sbg-on] [class*="_rightbarCol"],html[data-sbg-on] [class*="q_centerCol"],html[data-sbg-on] [class*="q_rightbarCol"]{background:rgba(243,245,249,0.88) !important;}',
-      'html[data-sbg-on] [class*="_sidebarCol"],html[data-sbg-on] [class*="q_sidebarCol"]{background:rgba(235,236,241,0.8) !important;}',
-      'html[data-sbg-on] [class*="_bottomRow"],html[data-sbg-on] [class*="q_bottomRow"]{background:rgba(243,245,249,0.9) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="_rightbarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_rightbarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="q_centerCol"]{background:rgba(7,10,19,0.82) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_sidebarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_sidebarCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_sidebarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="q_sidebarCol"]{background:rgba(9,13,24,0.76) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"],html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_bottomRow"],html[data-sbg-on][data-ds-dark-theme] [class*="q_bottomRow"]{background:rgba(7,10,19,0.86) !important;}',
-    ].join('\n');
+      if (!enabled) return '';
 
-    /** 组件样式（一次性注入；设置行使用 DSH token 融入原生外观）。 */
+      const op = clamp(surfaceOpacity, 0.05, 0.95);
+      const blurPx = clamp(blur, 0, 32);
+
+      // 浅色模式各列背景色（带透明度）
+      const lightCenter = `rgba(243, 245, 249, ${op})`;
+      const lightSidebar = `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`;
+      const lightBottom = `rgba(243, 245, 249, ${Math.min(op + 0.1, 0.98)})`;
+
+      // 深色模式各列背景色
+      const darkCenter = `rgba(7, 10, 19, ${op * 0.9})`;
+      const darkSidebar = `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`;
+      const darkBottom = `rgba(7, 10, 19, ${Math.min(op * 0.9 + 0.1, 0.95)})`;
+
+      const blurRule = blurPx > 0
+        ? `backdrop-filter: blur(${blurPx}px) saturate(180%) !important; -webkit-backdrop-filter: blur(${blurPx}px) saturate(180%) !important;`
+        : '';
+
+      // 当表面不透明度小于 0.65 且开启自动对比度时，在浅色模式下深色字叠在黑底星空上看不清，必须提亮为高对比度银白字
+      const needBrightTextLight = autoContrast && op < 0.65;
+      const textShadowRule = textShadow
+        ? 'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 0, 0, 0.9) !important;'
+        : '';
+
+      return [
+        'html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; }',
+        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"] { background: transparent !important; }',
+        `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"] { background: ${lightCenter} !important; ${blurRule} }`,
+        `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${lightSidebar} !important; ${blurRule} }`,
+        `html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"] { background: ${lightBottom} !important; ${blurRule} }`,
+        
+        // 深色模式适配
+        `html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"], html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_centerCol"], html[data-sbg-on][data-ds-dark-theme] [class*="q_centerCol"] { background: ${darkCenter} !important; ${blurRule} }`,
+        `html[data-sbg-on] body[data-ds-dark-theme] [class*="_sidebarCol"], html[data-sbg-on][data-ds-dark-theme] [class*="_sidebarCol"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_sidebarCol"], html[data-sbg-on][data-ds-dark-theme] [class*="q_sidebarCol"] { background: ${darkSidebar} !important; ${blurRule} }`,
+        `html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="q_bottomRow"] { background: ${darkBottom} !important; ${blurRule} }`,
+
+        // 内部卡片与气泡磨砂通透化
+        `html[data-sbg-on] [class*="bubble"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="card"] { ${blurRule} }`,
+
+        // 浅色模式高透时的文字反转与增亮保护（解决“黑字在黑夜星空下看不清”的根因）
+        needBrightTextLight ? `
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) {
+          --dsw-alias-label-primary: #FFFFFF !important;
+          --dsw-alias-label-secondary: rgba(255, 255, 255, 0.85) !important;
+          --dsw-alias-label-tertiary: rgba(255, 255, 255, 0.65) !important;
+          --dsw-alias-label-quaternary: rgba(255, 255, 255, 0.45) !important;
+          --dsw-alias-border-l1: rgba(255, 255, 255, 0.16) !important;
+          --dsw-alias-border-l2: rgba(255, 255, 255, 0.26) !important;
+          --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.12) !important;
+          color: #FFFFFF !important;
+        }
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] p,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] span,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h1,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h2,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h3,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h4,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] li,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] pre,
+        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] code {
+          ${textShadowRule}
+        }
+        ` : '',
+
+        // 深色模式下的文字抗晕散微阴影
+        textShadow ? `
+        html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"] p,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"] p,
+        html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"] span,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"] span {
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+        }
+        ` : ''
+      ].join('\n');
+    }
+
+    /** 动态根据配置生成官方主题令牌覆盖。 */
+    function generateTokenOverrides(options) {
+      const opts = typeof options === 'number' ? { surfaceOpacity: options } : (options || {});
+      const { enabled = true, surfaceOpacity = 0.45 } = opts;
+      if (!enabled) return {};
+      const op = clamp(surfaceOpacity, 0.05, 0.95);
+      return {
+        '--dsw-alias-bg-base': {
+          light: `rgba(243, 245, 249, ${op})`,
+          dark: `rgba(7, 10, 19, ${op * 0.9})`,
+        },
+        '--dsw-alias-bg-layer-1': {
+          light: `rgba(249, 250, 252, ${Math.min(op + 0.08, 0.98)})`,
+          dark: `rgba(13, 17, 29, ${Math.min(op * 0.9 + 0.08, 0.95)})`,
+        },
+        '--dsw-specific-sidebar-fill': {
+          light: `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`,
+          dark: `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`,
+        },
+      };
+    }
+
+    /** 静态兜底兼容导出（供旧单测与外部引用）。 */
+    const GLOBAL_TOKEN_OVERRIDES = generateTokenOverrides({ enabled: true, surfaceOpacity: 0.45 });
+    const GLOBAL_BG_CSS = generateDynamicCss({ enabled: true, surfaceOpacity: 0.45, blur: 16, autoContrast: true, textShadow: true });
+
+    function updateDynamicStyles(options) {
+      if (!options || options.enabled === false) {
+        document.documentElement.removeAttribute('data-sbg-on');
+        const el = document.getElementById('sbg-dynamic-style');
+        if (el) el.textContent = '';
+        return;
+      }
+      document.documentElement.setAttribute('data-sbg-on', 'on');
+      let el = document.getElementById('sbg-dynamic-style');
+      if (!el) {
+        el = document.createElement('style');
+        el.id = 'sbg-dynamic-style';
+        document.head.appendChild(el);
+      }
+      el.textContent = generateDynamicCss(options);
+    }
+
+    /** 组件与独立控制面板样式。 */
     function ensureStyles() {
       if (document.getElementById('sbg-style')) return;
       const el = document.createElement('style');
       el.id = 'sbg-style';
       el.textContent = [
         '.sbg-cv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}',
-        '.sbg-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0;border-bottom:1px solid var(--dsw-alias-border-l1, rgba(0,0,0,.06));}',
-        '.sbg-row-text{min-width:0;}',
-        '.sbg-row-title{color:var(--dsw-alias-label-primary, inherit);font-size:14px;line-height:22px;}',
-        '.sbg-row-desc{color:var(--dsw-alias-label-secondary, rgba(0,0,0,.55));font-size:12px;line-height:18px;margin-top:2px;}',
-        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:40px;height:22px;border-radius:999px;border-style:solid;border-width:1px;border-color:transparent;background:var(--dsw-alias-interactive-bg-hover, rgba(0,0,0,.12));position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
-        '.sbg-switch[aria-checked="true"]{background:var(--dsw-alias-brand-primary, #4176E6);}',
-        '.sbg-switch-thumb{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--dsw-alias-switch-thumb, #fff);transition:left .15s ease;box-shadow:0 1px 2px rgba(0,0,0,.2);}',
+        '.sbg-page{display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;box-sizing:border-box;background:transparent;}',
+        '.sbg-page-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 32px;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);backdrop-filter:blur(16px);}',
+        '.sbg-brand{display:flex;align-items:center;gap:12px;min-width:0;}',
+        '.sbg-brand-mark{width:36px;height:36px;border-radius:10px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-brand-primary);display:grid;place-items:center;flex-shrink:0;}',
+        '.sbg-brand-title{font-size:18px;font-weight:700;color:var(--dsw-alias-label-primary);letter-spacing:-0.3px;}',
+        '.sbg-brand-subtitle{font-size:12px;color:var(--dsw-alias-label-secondary);margin-top:2px;}',
+        '.sbg-brand-tag{font-size:11px;font-weight:600;color:var(--dsw-alias-label-secondary);padding:2px 6px;border-radius:4px;background:var(--dsw-alias-bg-layer-2);margin-left:8px;}',
+        '.sbg-topbar-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}',
+        '.sbg-page-content{padding:28px 32px 64px;max-width:920px;width:100%;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}',
+        '.sbg-card{background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(16px);}',
+        '.sbg-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;}',
+        '.sbg-card-title{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary);}',
+        '.sbg-card-desc{font-size:13px;color:var(--dsw-alias-label-secondary);line-height:1.5;margin-top:4px;}',
+        '.sbg-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}',
+        '.sbg-preset-btn{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:8px;padding:12px 10px;font-size:12px;text-align:center;color:var(--dsw-alias-label-primary);cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;align-items:center;gap:4px;}',
+        '.sbg-preset-btn:hover{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-interactive-bg-hover);}',
+        '.sbg-preset-btn.active{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-brand-primary);color:#fff;font-weight:600;}',
+        '.sbg-preset-tag{font-size:10px;font-weight:500;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.25);}',
+        '.sbg-slider-row{display:flex;align-items:center;gap:16px;margin-top:8px;}',
+        '.sbg-slider{flex:1;accent-color:var(--dsw-alias-brand-primary,#4176E6);height:6px;border-radius:3px;cursor:pointer;}',
+        '.sbg-slider-val{font-size:13px;font-weight:600;color:var(--dsw-alias-brand-primary);min-width:140px;text-align:right;font-variant-numeric:tabular-nums;}',
+        '.sbg-chips{display:flex;flex-wrap:wrap;gap:8px;}',
+        '.sbg-chip{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:6px;padding:7px 14px;font-size:12px;color:var(--dsw-alias-label-secondary);cursor:pointer;transition:all .15s ease;}',
+        '.sbg-chip:hover{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-label-primary);}',
+        '.sbg-chip.active{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-interactive-bg-hover);font-weight:600;}',
+        '.sbg-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}',
+        '.sbg-preview-card{border:1px solid var(--dsw-alias-border-l2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;margin-top:6px;}',
+        '.sbg-btn{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:7px;color:var(--dsw-alias-label-primary);padding:7px 14px;font-size:12px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;}',
+        '.sbg-btn:hover{background:var(--dsw-alias-interactive-bg-hover);}',
+        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid transparent;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.15));position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
+        '.sbg-switch[aria-checked="true"]{background:var(--dsw-alias-brand-primary,#4176E6);}',
+        '.sbg-switch-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.25);}',
         '.sbg-switch[aria-checked="true"] .sbg-switch-thumb{left:20px;}',
+        '.sbg-status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);}',
+        '.sbg-status-dot{width:8px;height:8px;border-radius:50%;}',
+        '.sbg-status-dot.on{background:#10B981;box-shadow:0 0 8px #10B981;}',
+        '.sbg-status-dot.off{background:#9CA3AF;}',
+        '@media (max-width:768px){.sbg-presets{grid-template-columns:repeat(2,1fr);}.sbg-page-topbar{padding:16px 20px;}.sbg-page-content{padding:20px 16px;}}',
       ].join('\n');
       document.head.appendChild(el);
     }
 
-    let boundActions = null;
+    /** 左侧边栏定制星座图标 (sidebar.panellist)。 */
+    function PanelIcon({ size = 20, active }) {
+      return h('svg', {
+        viewBox: '0 0 24 24', width: size, height: size, 'aria-hidden': true,
+        style: { display: 'block', color: active ? 'var(--dsw-alias-brand-primary)' : 'currentColor' },
+      },
+        h('rect', { x: 2, y: 2, width: 20, height: 20, rx: 5, fill: active ? 'var(--dsw-alias-brand-primary)' : 'currentColor', opacity: active ? 0.2 : 0.08 }),
+        h('path', { d: 'M4.5 14.5 8.5 12l2.6 3 3-4.2 2.2 2.5L19.5 9.5', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }),
+        h('circle', { cx: 16.5, cy: 6.5, r: 1.4, fill: 'currentColor' }),
+        h('circle', { cx: 7, cy: 7.5, r: 0.9, fill: 'currentColor' }),
+        h('circle', { cx: 12, cy: 18.5, r: 0.8, fill: 'currentColor' })
+      );
+    }
 
-    /** 设置「通用」分区外观行：深空背景开关 + 实时自检面板。 */
-    function SettingsRow(props) {
-      const useStore = props && props.useStore;
-      const t = (props && props.t) || ((k) => k);
-      const actions = props && props.actions;
+    /** 深空背景独立控制中心面板（main 槽位）。 */
+    function SpaceBackgroundPage({ useStore, actions, t }) {
+      const doc = typeof useStore === 'function' ? useStore((s) => s) : {};
       React.useEffect(() => {
         if (actions && typeof actions.normalize === 'function') {
           actions.normalize();
         }
         if (actions) boundActions = actions;
       }, [actions]);
-      // 优先使用宿主注入的真实 store actions.setEnabled
+      React.useEffect(ensureStyles, []);
+
+      const enabled = doc.enabled !== false;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.45;
+      const blur = typeof doc.blur === 'number' ? doc.blur : 16;
+      const autoContrast = doc.autoContrast !== false;
+      const textShadow = doc.textShadow !== false;
+      const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
+
+      const pct = Math.round(surfaceOpacity * 100);
+      const transparencyPct = 100 - pct;
+
+      const presets = [
+        { label: (t && t('presetBalanced')) || '毛玻璃适中 (45%)', op: 0.45, tag: '官方推荐' },
+        { label: (t && t('presetSubtle')) || '轻透微澜 (75%)', op: 0.75 },
+        { label: (t && t('presetDeep')) || '深空通透 (25%)', op: 0.25 },
+        { label: (t && t('presetClear')) || '纯净全景 (10%)', op: 0.10 },
+      ];
+
+      const blurs = [
+        { label: (t && t('blurNone')) || '无模糊 (0px)', val: 0 },
+        { label: (t && t('blurSoft')) || '轻柔 (8px)', val: 8 },
+        { label: (t && t('blurMedium')) || '经典 (16px)', val: 16 },
+        { label: (t && t('blurDeep')) || '深度 (24px)', val: 24 },
+      ];
+
+      const speeds = [
+        { label: (t && t('speedSlow')) || '沉静慢速 (0.2x)', val: 0.2 },
+        { label: (t && t('speedNormal')) || '自然流转 (0.4x)', val: 0.4 },
+        { label: (t && t('speedFast')) || '快速巡航 (0.8x)', val: 0.8 },
+      ];
+
+      return h('div', { className: 'sbg-page' },
+        h('header', { className: 'sbg-page-topbar' },
+          h('div', { className: 'sbg-brand' },
+            h('div', { className: 'sbg-brand-mark' },
+              h(PanelIcon, { size: 22, active: enabled })),
+            h('div', null,
+              h('div', { className: 'sbg-brand-title' }, (t && t('studioTitle')) || '深空背景控制中心'),
+              h('div', { className: 'sbg-brand-subtitle' }, (t && t('studioSubtitle')) || '全界面通透度、星空动态与文字可读性调整')),
+            h('span', { className: 'sbg-brand-tag' }, 'v1.1.0')),
+          h('div', { className: 'sbg-topbar-actions' },
+            h('span', { className: 'sbg-status-badge' },
+              h('span', { className: 'sbg-status-dot ' + (enabled ? 'on' : 'off') }),
+              enabled ? ((t && t('statusRunning')) || '星空运行中') : ((t && t('statusDisabled')) || '背景已关闭')),
+            h('button', {
+              type: 'button',
+              className: 'sbg-btn',
+              onClick: () => actions && actions.resetDefaults && actions.resetDefaults(),
+            }, (t && t('resetDefaults')) || '恢复推荐配置'))),
+        h('main', { className: 'sbg-page-content' },
+          // 卡片 1: 总开关
+          h('section', { className: 'sbg-card' },
+            h('div', { className: 'sbg-card-header' },
+              h('div', null,
+                h('div', { className: 'sbg-card-title' }, (t && t('masterSwitch')) || '启用深空背景'),
+                h('div', { className: 'sbg-card-desc' }, (t && t('masterSwitchDesc')) || '在整个应用底层渲染无缝漂移的银河、星座、行星与流星')),
+              h('button', {
+                type: 'button',
+                className: 'sbg-switch',
+                role: 'switch',
+                'aria-checked': String(enabled),
+                onClick: () => actions && actions.setEnabled && actions.setEnabled(!enabled),
+              }, h('span', { className: 'sbg-switch-thumb' })))),
+
+          // 卡片 2: 界面通透度与毛玻璃
+          h('section', { className: 'sbg-card' },
+            h('div', null,
+              h('div', { className: 'sbg-card-title' }, (t && t('transparencySection')) || '界面透光度调节 (Surface Transparency)'),
+              h('div', { className: 'sbg-card-desc' }, (t && t('transparencyDesc')) || '降低界面表面不透明度以透出底层星空。数值越低越通透，底层星空越清晰。')),
+            h('div', { className: 'sbg-presets' },
+              presets.map((p) => h('button', {
+                key: String(p.op),
+                type: 'button',
+                className: 'sbg-preset-btn ' + (Math.abs(surfaceOpacity - p.op) < 0.03 ? 'active' : ''),
+                onClick: () => actions && actions.setSurfaceOpacity && actions.setSurfaceOpacity(p.op),
+              },
+                h('div', { style: { fontWeight: 600 } }, p.label),
+                p.tag ? h('span', { className: 'sbg-preset-tag' }, p.tag) : null))),
+            h('div', { className: 'sbg-slider-row' },
+              h('span', { style: { fontSize: '13px', color: 'var(--dsw-alias-label-secondary)' } }, (t && t('sliderLabel')) || '界面表面不透明度'),
+              h('input', {
+                type: 'range',
+                className: 'sbg-slider',
+                min: 5,
+                max: 95,
+                step: 1,
+                value: pct,
+                onChange: (e) => actions && actions.setSurfaceOpacity && actions.setSurfaceOpacity(Number(e.target.value) / 100),
+              }),
+              h('span', { className: 'sbg-slider-val' }, `${pct}% (透光 ${transparencyPct}%)`)),
+            h('div', { style: { marginTop: '12px' } },
+              h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)', marginBottom: '8px' } }, (t && t('blurSection')) || '毛玻璃磨砂度 (Backdrop Blur)'),
+              h('div', { className: 'sbg-chips' },
+                blurs.map((b) => h('button', {
+                  key: String(b.val),
+                  type: 'button',
+                  className: 'sbg-chip ' + (blur === b.val ? 'active' : ''),
+                  onClick: () => actions && actions.setBlur && actions.setBlur(b.val),
+                }, b.label))))),
+
+          // 卡片 3: 专业文字可读性与高对比度保护
+          h('section', { className: 'sbg-card' },
+            h('div', null,
+              h('div', { className: 'sbg-card-title' }, (t && t('readabilitySection')) || '智能文字可读性与高对比度保护'),
+              h('div', { className: 'sbg-card-desc' }, (t && t('readabilityDesc')) || '高通透度下深色星空会成为主色调，智能对比度会自动提亮文字并增加微阴影，防止暗色文字在黑夜星空下难以辨别。')),
+            h('div', { className: 'sbg-toggle-row' },
+              h('div', null,
+                h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)' } }, (t && t('autoContrast')) || '文字智能增亮与反转'),
+                h('div', { style: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary)', marginTop: '2px' } }, (t && t('autoContrastDesc')) || '在通透度较高时自动将主文字提升为高对比度银白色')),
+              h('button', {
+                type: 'button',
+                className: 'sbg-switch',
+                role: 'switch',
+                'aria-checked': String(autoContrast),
+                onClick: () => actions && actions.setAutoContrast && actions.setAutoContrast(!autoContrast),
+              }, h('span', { className: 'sbg-switch-thumb' }))),
+            h('div', { className: 'sbg-toggle-row', style: { borderTop: '1px solid var(--dsw-alias-border-l1)', paddingTop: '12px' } },
+              h('div', null,
+                h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)' } }, (t && t('textShadow')) || '抗晕散文字轮廓阴影'),
+                h('div', { style: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary)', marginTop: '2px' } }, (t && t('textShadowDesc')) || '为文字边缘增加细微环境阴影，防止明亮星芒干扰阅读')),
+              h('button', {
+                type: 'button',
+                className: 'sbg-switch',
+                role: 'switch',
+                'aria-checked': String(textShadow),
+                onClick: () => actions && actions.setTextShadow && actions.setTextShadow(!textShadow),
+              }, h('span', { className: 'sbg-switch-thumb' })))),
+
+          // 卡片 4: 实时效果透视预览
+          h('section', { className: 'sbg-card' },
+            h('div', null,
+              h('div', { className: 'sbg-card-title' }, (t && t('previewSection')) || '透光与文字辨识度实测预览'),
+              h('div', { className: 'sbg-card-desc' }, '本卡片模拟在当前通透度与对比度设置下，正文、标题与代码的视觉呈现：')),
+            h('div', {
+              className: 'sbg-preview-card',
+              style: {
+                background: `rgba(243, 245, 249, ${surfaceOpacity})`,
+                backdropFilter: blur > 0 ? `blur(${blur}px) saturate(180%)` : 'none',
+                WebkitBackdropFilter: blur > 0 ? `blur(${blur}px) saturate(180%)` : 'none',
+              },
+            },
+              h('div', {
+                style: {
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  color: (autoContrast && surfaceOpacity < 0.65) ? '#FFFFFF' : 'var(--dsw-alias-label-primary)',
+                  textShadow: textShadow ? '0 1px 2px rgba(0,0,0,0.8)' : 'none',
+                },
+              }, (t && t('previewTitle')) || '标题：DeepSeek Harness 专业级会话'),
+              h('div', {
+                style: {
+                  fontSize: '13px',
+                  lineHeight: 1.6,
+                  color: (autoContrast && surfaceOpacity < 0.65) ? 'rgba(255,255,255,0.88)' : 'var(--dsw-alias-label-secondary)',
+                  textShadow: textShadow ? '0 1px 2px rgba(0,0,0,0.7)' : 'none',
+                },
+              }, (t && t('previewBody')) || '星汉灿烂，若出其里；日月之行，若出其中。在当前通透度与高对比度保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。'),
+              h('code', {
+                style: {
+                  fontSize: '12px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  background: 'rgba(0,0,0,0.25)',
+                  color: '#93C5FD',
+                  display: 'inline-block',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                },
+              }, (t && t('previewCode')) || `const space = new CosmicBackdrop({ opacity: ${surfaceOpacity}, blur: ${blur} });`))),
+
+          // 卡片 5: 天体动力学运行节奏
+          h('section', { className: 'sbg-card' },
+            h('div', null,
+              h('div', { className: 'sbg-card-title' }, (t && t('dynamicsSection')) || '天体运行节奏'),
+              h('div', { className: 'sbg-card-desc' }, '调整银河旋转与全天天幕的漂移速度：')),
+            h('div', { className: 'sbg-chips' },
+              speeds.map((s) => h('button', {
+                key: String(s.val),
+                type: 'button',
+                className: 'sbg-chip ' + (speed === s.val ? 'active' : ''),
+                onClick: () => actions && actions.setSpeed && actions.setSpeed(s.val),
+              }, s.label))))
+        )
+      );
+    }
+
+    /** 兼容保留：设置行视图（供单测与可选挂载）。 */
+    function SettingsRow(props) {
+      const useStore = props && props.useStore;
+      const t = (props && props.t) || ((k) => k);
+      const actions = props && props.actions;
+      React.useEffect(() => {
+        if (actions && typeof actions.normalize === 'function') actions.normalize();
+        if (actions) boundActions = actions;
+      }, [actions]);
       const setEnabled = (actions && actions.setEnabled) || (props && props.setEnabled);
       const enabled = typeof useStore === 'function' ? useStore((s) => s.enabled !== false) : true;
       React.useEffect(ensureStyles, []);
 
-      // ── 自检面板 ─────────────────────────────────────────────────────
-      // 为什么把诊断画在界面上：这个插件的效果全部在一个渲染 null 的
-      // overlay 组件里，一旦副作用静默失败，用户在界面上得不到任何反馈，
-      // 只能靠开发者工具。把状态直接铺在这一行，能一眼看出卡在哪一步。
-      const probe = () => {
-        const out = {
-          overlay: false,
-          canvas: 0,
-          bgStyle: false,
-          bgOn: null,
-          steps: 0,
-          errors: [],
-          debug: null,
-        };
-        try {
-          out.overlay = !!document.querySelector('[data-sbg-host]');
-          out.canvas = document.querySelectorAll('canvas.sbg-cv').length;
-          out.bgStyle = !!document.getElementById('sbg-global-bg');
-          out.bgOn = document.documentElement.getAttribute('data-sbg-on');
-          const a = window.__sbgApply;
-          if (a) { out.steps = (a.steps || []).length; out.errors = (a.errors || []).slice(-3); }
-          out.debug = window.__sbgDebug || null;
-        } catch (e) {
-          out.errors = ['probe: ' + String((e && e.message) || e)];
-        }
-        return out;
-      };
-
-      const [state, setState] = React.useState(probe);
-      React.useEffect(() => {
-        // 首帧之后副作用才跑，所以短轮询几次把真实状态收上来
-        let n = 0;
-        const timer = setInterval(() => {
-          setState(probe());
-          n += 1;
-          if (n >= 8) clearInterval(timer);
-        }, 400);
-        return () => clearInterval(timer);
-      }, [enabled]);
-
-      // ── 从设置行上报一次（诊断期专用）────────────────────────────────
-      // SpaceLayer 的副作用若因 enabled=false 提前返回，就永远不会上报；
-      // 而设置行总是会被渲染，所以从这里发一份，保证一定能看到真实状态。
-      React.useEffect(() => {
-        const timer = setTimeout(() => {
-          const p = probe();
-          const payload = {
-            from: 'SettingsRow',
-            at: Date.now(),
-            url: location.href,
-            enabled,
-            hasUseStore: typeof useStore === 'function',
-            hasActions: !!actions,
-            hasSetEnabled: typeof setEnabled === 'function',
-            probe: p,
-            persistRaw: (() => { try { return localStorage.getItem(PERSIST_KEY); } catch (e) { return 'unreadable'; } })(),
-            sbgDebugGlobal: (() => { try { return window.__sbgDebug || null; } catch (e) { return null; } })(),
-            sbgApply: (() => { try { const a = window.__sbgApply; return a ? { steps: (a.steps || []).length, errors: (a.errors || []).slice(-5), mount: a.mount || null } : null; } catch (e) { return null; } })(),
-          };
-          try {
-            fetch('/plugins/space-background/diag', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload),
-            }).catch(() => {});
-          } catch (e) { /* ignore */ }
-          try { localStorage.setItem('space-background/diag', JSON.stringify(payload)); } catch (e) { /* ignore */ }
-          try { window.__sbgDiag = payload; } catch (e) { /* ignore */ }
-        }, 900);
-        return () => clearTimeout(timer);
-      }, [enabled]);
-
-      const ok = state.overlay && state.canvas > 0;
-      const rowStyle = { fontSize: '12px', lineHeight: '18px', opacity: 0.85, marginTop: '6px' };
-      const lines = [
-        `${ok ? '✓' : '✗'} 星空层 ${state.overlay ? '已挂载' : '未挂载'} · canvas ${state.canvas} 个`,
-        `${state.bgOn === 'on' ? '✓' : '✗'} data-sbg-on=${state.bgOn ?? 'null'} · 兜底CSS ${state.bgStyle ? '已注入' : '未注入'}`,
-        `apply 步骤 ${state.steps}${state.debug && state.debug.tokensApplied ? ' · 令牌已覆盖' : ' · 令牌未覆盖'}`,
-      ];
-      if (state.errors.length > 0) lines.push('⚠ ' + state.errors.join(' | '));
-
-      return h('div', { className: 'sbg-row' },
-        h('div', { className: 'sbg-row-text' },
-          h('div', { className: 'sbg-row-title' }, t('rowTitle')),
-          h('div', { className: 'sbg-row-desc' }, t('rowDesc')),
-          h('div', { className: 'sbg-probe', style: rowStyle },
-            lines.map((line, i) => h('div', { key: String(i) }, line)))),
-        h('button', {
-          type: 'button',
-          className: 'sbg-switch',
-          role: 'switch',
-          'aria-checked': String(enabled),
-          'aria-label': t('rowTitle'),
-          onClick: () => {
-            if (typeof setEnabled === 'function') setEnabled(enabled !== true);
-            else if (typeof window.__sbgToggle === 'function') window.__sbgToggle(enabled !== true);
-          },
-        }, h('span', { className: 'sbg-switch-thumb' })));
+      return h('div', { className: 'sbg-card', style: { padding: '16px' } },
+        h('div', { className: 'sbg-card-header' },
+          h('div', null,
+            h('div', { className: 'sbg-card-title' }, (t && t('title')) || '深空背景'),
+            h('div', { className: 'sbg-card-desc' }, '请在左侧边栏「深空背景」页面进行全功能调节')),
+          h('button', {
+            type: 'button',
+            className: 'sbg-switch',
+            role: 'switch',
+            'aria-checked': String(enabled),
+            onClick: () => {
+              if (typeof setEnabled === 'function') setEnabled(enabled !== true);
+            },
+          }, h('span', { className: 'sbg-switch-thumb' }))));
     }
 
     /** 全局星空层（shell.overlay）：渲染 null，效果全部在副作用里。 */
@@ -1130,11 +1454,26 @@ window.__ModuleLoader__.load({
         }
         if (actions) boundActions = actions;
       }, [actions]);
-      const enabled = typeof useStore === 'function' ? useStore((s) => s.enabled !== false) : true;
+
+      const doc = typeof useStore === 'function' ? useStore((s) => s) : {};
+      boundDoc = doc;
+
+      const enabled = doc.enabled !== false;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.45;
+      const blur = typeof doc.blur === 'number' ? doc.blur : 16;
+      const autoContrast = doc.autoContrast !== false;
+      const textShadow = doc.textShadow !== false;
+      const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
+
+      React.useEffect(() => {
+        updateDynamicStyles({ enabled, surfaceOpacity, blur, autoContrast, textShadow });
+      }, [enabled, surfaceOpacity, blur, autoContrast, textShadow]);
+
       try {
         const d = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
         d.steps.push('SpaceLayer:render hasUseStore=' + (typeof useStore === 'function') + ' enabled=' + enabled);
       } catch (e) { /* ignore */ }
+
       React.useEffect(() => {
         if (!enabled) return undefined;
 
@@ -1152,31 +1491,16 @@ window.__ModuleLoader__.load({
 
         mark('SpaceLayer:effect:start');
 
-        // ── 整个副作用体包在 try 里 ──────────────────────────────────────
-        // React 会静默吞掉 effect 里抛出的异常：没有这层保护，任何一步失败
-        // （canvas 不可用、引擎初始化异常、主题服务未就绪……）都会让星空
-        // 永远不出现，而界面上看不到任何错误——这正是「装了却没效果」的
-        // 最难排查的一类失败。捕获后至少把原因写进 __sbgApply.errors。
         const cleanupParts = [];
         try {
           ensureStyles();
           mark('ensureStyles:ok');
 
           const debug = { canvas: false, themeReady: !!themeApi, tokensApplied: false, retries: 0, error: '' };
-          try { window.__sbgDebug = debug; } catch (e) { /* 页面限制时忽略诊断 */ }
+          try { window.__sbgDebug = debug; } catch (e) { /* ignore */ }
 
           const host = document.createElement('div');
           host.setAttribute('data-sbg-host', '');
-          // ── 为什么挂到 body 而不是留在这个 overlay 组件里 ───────────────
-          // `shell.overlay` 的容器是宿主的 `.overlayLayer`：
-          //   .mP3x-q_overlayLayer { z-index:20; position:absolute; inset:0; }
-          // 它是**最上层**的覆盖层。星空画布若挂在这层内部并给 `z-index:-1`，
-          // 只会沉到该容器背景之后——而容器本身没有背景，真正的 `.frame`
-          // 背景（`background:var(--dsw-alias-bg-base)`，完全不透明）在更外层，
-          // 于是画布被彻底盖住：canvas 在、引擎在跑、就是看不见。
-          //
-          // 挂到 body 下并给 `z-index:-1` 才是「位于所有内容之后」的正确位置。
-          // 同时也解释了为什么此前只有「运行中」而没有视觉效果。
           host.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
           if (document.body && document.body.firstChild !== undefined) {
             document.body.insertBefore(host, document.body.firstChild);
@@ -1187,10 +1511,6 @@ window.__ModuleLoader__.load({
           }
           cleanupParts.push(() => { try { host.remove(); } catch (e) { /* ignore */ } });
           mark('host:inserted');
-          // 记录实际挂载位置，自检面板与 __sbgApply 都能看到
-          try {
-            if (diag) diag.mount = { parent: host.parentElement && host.parentElement.tagName, zIndex: host.style.zIndex };
-          } catch (e) { /* ignore */ }
 
           const engine = createSpaceEngine(host, {
             interactive: false,
@@ -1198,23 +1518,13 @@ window.__ModuleLoader__.load({
             fpsCap: 30,
             autoDrift: 0.012,
             density: 1000,
-            speed: 0.4,
+            getSpeed: () => (boundDoc ? boundDoc.speed || 0.4 : speed),
           });
           cleanupParts.push(() => { try { engine.dispose(); } catch (e) { /* ignore */ } });
           debug.canvas = true;
           mark('engine:created');
 
-          const style = document.createElement('style');
-          style.id = 'sbg-global-bg';
-          style.textContent = GLOBAL_BG_CSS;
-          document.head.appendChild(style);
-          cleanupParts.push(() => { try { style.remove(); } catch (e) { /* ignore */ } });
-
-          document.documentElement.setAttribute('data-sbg-on', 'on');
-          cleanupParts.push(() => { try { document.documentElement.removeAttribute('data-sbg-on'); } catch (e) { /* ignore */ } });
-          mark('css:applied');
-
-          // 主题令牌覆盖：服务就绪即套用；未就绪则短间隔重试（最多 60 次）
+          // 主题令牌覆盖
           let disposeTokens = null;
           let retryTimer = null;
           let tries = 0;
@@ -1222,7 +1532,7 @@ window.__ModuleLoader__.load({
             if (disposeTokens) return true;
             if (themeApi && typeof themeApi.overrideTokens === 'function') {
               try {
-                disposeTokens = themeApi.overrideTokens(PANEL_ID, GLOBAL_TOKEN_OVERRIDES);
+                disposeTokens = themeApi.overrideTokens(PANEL_ID, generateTokenOverrides({ enabled, surfaceOpacity }));
                 debug.themeReady = true;
                 debug.tokensApplied = true;
                 mark('tokens:applied');
@@ -1248,12 +1558,7 @@ window.__ModuleLoader__.load({
             try { if (typeof disposeTokens === 'function') disposeTokens(); } catch (e) { /* ignore */ }
           });
 
-          // 兜底 CSS 独立生效，所以令牌覆盖失败也仍有半透明效果
           mark('SpaceLayer:effect:done');
-
-          // ── 上报真实测量结果给 Host（诊断期专用）─────────────────────
-          // 浏览器侧无法被模型直接观察，所以把「到底渲染出了什么」量出来
-          // 发回 Host 落盘：canvas 数量与尺寸、层级、CSS 是否命中、是否被遮挡。
           scheduleDiagReport(host, debug, diag);
         } catch (e) {
           fail('SpaceLayer:effect', e);
@@ -1264,20 +1569,14 @@ window.__ModuleLoader__.load({
           for (const fn of cleanupParts.reverse()) { try { fn(); } catch (e) { /* ignore */ } }
         };
       }, [enabled]);
+
       return null;
     }
 
     /* ======================================================================
-     * 诊断上报（诊断期专用；问题定位后删除）
+     * 诊断上报（诊断期专用）
      * ==================================================================== */
 
-    /**
-     * 测量当前页面真实状态并发给 Host。
-     *
-     * 为什么需要它：这个插件的效果全在浏览器侧，而失败又是静默的。模型看不到
-     * 浏览器，只能靠把「实际渲染出了什么」量下来回传——canvas 数量与尺寸、
-     * 画布所在层级、兜底 CSS 是否命中、框架背景是否已透明。
-     */
     function scheduleDiagReport(host, debug, diag) {
       const report = () => {
         const out = { at: Date.now(), url: location.href };
@@ -1305,41 +1604,15 @@ window.__ModuleLoader__.load({
               } catch (e) { return null; }
             })();
           }
+          const styleEl = document.getElementById('sbg-dynamic-style') || document.getElementById('sbg-global-bg');
+          out.globalBgStylePresent = !!styleEl;
           out.dataSbgOn = document.documentElement.getAttribute('data-sbg-on');
-          out.bgStyleInjected = !!document.getElementById('sbg-global-bg');
-          out.componentStyleInjected = !!document.getElementById('sbg-style');
-
-          // 框架根是否已透明（兜底 CSS 的关键目标）
-          const frame = document.querySelector('[class*="q_frame"],[class*="_frame"]');
-          out.frameFound = !!frame;
-          if (frame) {
-            const cs = getComputedStyle(frame);
-            out.frame = {
-              cls: frame.className,
-              backgroundColor: cs.backgroundColor,
-              backgroundImage: cs.backgroundImage,
-              isTransparent: /rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent/.test(cs.backgroundColor),
-            };
-          }
-
-          // 中点处最上层元素是谁——判断画布是否被别的元素盖住
-          try {
-            const el = document.elementFromPoint(
-              Math.floor(innerWidth / 2), Math.floor(innerHeight / 2),
-            );
-            out.topElementAtCenter = el ? (el.tagName + (el.className ? '.' + String(el.className).split(' ')[0] : '')) : null;
-          } catch (e) { /* ignore */ }
-
           out.applySteps = diag ? (diag.steps || []).length : 0;
           out.applyErrors = diag ? (diag.errors || []) : [];
-          out.applyMount = diag ? diag.mount || null : null;
           out.debug = debug || null;
-          out.sbgDebugGlobal = window.__sbgDebug || null;
         } catch (e) {
-          out.probeError = String((e && e.message) || e);
+          out.reportError = String((e && e.message) || e);
         }
-
-        // POST 给 Host 落盘；失败就退到 localStorage 便于用户手动查看
         try {
           fetch('/plugins/space-background/diag', {
             method: 'POST',
@@ -1351,7 +1624,6 @@ window.__ModuleLoader__.load({
         try { window.__sbgDiag = out; } catch (e) { /* ignore */ }
       };
 
-      // 首帧后立刻报一次，再等 1.5s 报一次（让引擎完成首次绘制）
       setTimeout(report, 300);
       setTimeout(report, 1800);
     }
@@ -1362,39 +1634,58 @@ window.__ModuleLoader__.load({
 
     function makeStore() {
       return defineStore({
-        init: () => ({ schemaVersion: STORE_SCHEMA_VERSION, enabled: true }),
+        init: () => ({
+          schemaVersion: STORE_SCHEMA_VERSION,
+          enabled: true,
+          surfaceOpacity: 0.45,
+          blur: 16,
+          autoContrast: true,
+          textShadow: true,
+          speed: 0.4,
+          density: 1000,
+        }),
         persist: PERSIST_KEY,
         actions: {
-          /**
-           * 把持久化文档归一成当前 schema。
-           *
-           * 这里必须做**真正的迁移**，而不只是「补默认值」：
-           * 早期版本写过 `speed` / `boost` 两个字段，它们后来被移除，
-           * 但旧文档会一直留在 localStorage 里。实测到的一份是
-           *   {"schemaVersion":1,"enabled":false,"speed":0.2,"boost":false}
-           * —— 带着 `enabled:false`，于是插件装好后开关是关的、星空永不出现，
-           * 而代码、包名、槽位注册全都正常，排查方向被彻底带偏。
-           *
-           * 规则：schemaVersion 低于当前值的文档视为旧版，**保留用户显式
-           * 关闭的意图没有意义**（旧版本根本没提供可用的开关交互），因此
-           * 迁移时把 enabled 复位成默认的 true，并丢弃已废弃字段。
-           */
           normalize(draft) {
             const previous = typeof draft.schemaVersion === 'number' ? draft.schemaVersion : 0;
             const isLegacy = previous < STORE_SCHEMA_VERSION;
-            // 丢弃已废弃字段（旧版本遗留）
-            delete draft.speed;
+            delete draft.speed_legacy;
             delete draft.boost;
             delete draft.hue;
             if (isLegacy) {
-              // 旧文档不可信：开关曾因没有可靠写入通道而被写成 false
               draft.enabled = true;
+              if (typeof draft.surfaceOpacity !== 'number') draft.surfaceOpacity = 0.45;
+              if (typeof draft.blur !== 'number') draft.blur = 16;
+              if (typeof draft.autoContrast !== 'boolean') draft.autoContrast = true;
+              if (typeof draft.textShadow !== 'boolean') draft.textShadow = true;
+              if (typeof draft.speed !== 'number') draft.speed = 0.4;
+              if (typeof draft.density !== 'number') draft.density = 1000;
             } else {
               draft.enabled = draft.enabled !== false;
+              draft.surfaceOpacity = clamp(typeof draft.surfaceOpacity === 'number' ? draft.surfaceOpacity : 0.45, 0.05, 0.95);
+              draft.blur = clamp(typeof draft.blur === 'number' ? draft.blur : 16, 0, 32);
+              draft.autoContrast = draft.autoContrast !== false;
+              draft.textShadow = draft.textShadow !== false;
+              draft.speed = clamp(typeof draft.speed === 'number' ? draft.speed : 0.4, 0.1, 1.5);
+              draft.density = clamp(typeof draft.density === 'number' ? draft.density : 1000, 300, 2000);
             }
             draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
           setEnabled(draft, on) { draft.enabled = on === true; },
+          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0.45, 0.05, 0.95); },
+          setBlur(draft, val) { draft.blur = clamp(Number(val) || 0, 0, 32); },
+          setAutoContrast(draft, on) { draft.autoContrast = on === true; },
+          setTextShadow(draft, on) { draft.textShadow = on === true; },
+          setSpeed(draft, val) { draft.speed = clamp(Number(val) || 0.4, 0.1, 1.5); },
+          resetDefaults(draft) {
+            draft.enabled = true;
+            draft.surfaceOpacity = 0.45;
+            draft.blur = 16;
+            draft.autoContrast = true;
+            draft.textShadow = true;
+            draft.speed = 0.4;
+            draft.density = 1000;
+          },
         },
       });
     }
@@ -1402,7 +1693,6 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'locale', 'layout'],
       apply(ctx) {
-        // ── 诊断标记：把每一步写进 window.__sbgApply，用于定位加载停在何处 ──
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
         const mark = (step) => { diag.steps.push(step); };
         mark('apply:enter');
@@ -1411,24 +1701,21 @@ window.__ModuleLoader__.load({
         mark('locale:register:ok');
         const t = ctx.locale.bind(NS);
         mark('locale:bind:ok');
-        // 主题服务句柄：能立即拿到就直接用，拿不到就异步等待——都不阻塞槽位注册
+
         try {
           const direct = typeof ctx.get === 'function' ? ctx.get('theme') : null;
           if (direct) themeApi = direct;
-        } catch (e) { /* 服务未就绪时 get 返回空/抛错，交给 inject 等待 */ }
+        } catch (e) { /* ignore */ }
         if (!themeApi && typeof ctx.inject === 'function') {
           try {
             ctx.inject(['theme'], (scope) => { themeApi = (scope && scope.theme) || themeApi; });
-          } catch (e) { /* 注入失败时令牌覆盖走兜底 CSS */ }
+          } catch (e) { /* ignore */ }
         }
+
         ctx.effect(() => {
           const store = makeStore();
           mark('store:created');
 
-          // ── 开关写入通道 ──────────────────────────────────────────────
-          // 宿主渲染槽位时把 `store.actions` 作为 props.actions 传给组件
-          // （app.asar: `return { kit, standard, actions: store?.actions }`）。
-          // 这里额外把 boundActions 导给 window.__sbgToggle，供宿主或诊断使用。
           const toggle = (next) => {
             try {
               if (boundActions && typeof boundActions.setEnabled === 'function') {
@@ -1439,6 +1726,7 @@ window.__ModuleLoader__.load({
           try { window.__sbgToggle = toggle; } catch (e) { /* ignore */ }
           mark('toggle:ready');
 
+          // 1. 全局星空层（shell.overlay）
           const disposeOverlay = ctx.slots.inject('shell.overlay', () => {
             mark('shell.overlay:injected');
             const d = ctx.slots.register(
@@ -1446,48 +1734,38 @@ window.__ModuleLoader__.load({
             mark('shell.overlay:registered');
             return d;
           });
-          const disposeRow = ctx.slots.inject('settings.general.item', () => {
-            mark('settings.general.item:injected');
-            // `label` 由宿主在渲染列表时调用；`inject` 提供稳定的动作面，
-            // 与宿主官方 `language` / `link-opening` 行的写法一致。
-            const d = ctx.slots.register({
-              name: 'settings.general.item',
-              id: PANEL_ID,
-              order: 12,
-              store,
-              locale: NS,
-              label: () => t('rowTitle'),
-              inject: () => ({
-                // 让组件拿到确定的写入函数，而不是依赖宿主是否透传 actions
-                setEnabled: toggle,
-                hooks: {
-                  // 只暴露一个只读快照函数；不依赖 store 上是否存在 .get()
-                  enabled: () => {
-                    try {
-                      const snap = typeof store.getSnapshot === 'function'
-                        ? store.getSnapshot()
-                        : (typeof store.get === 'function' ? store.get() : undefined);
-                      return snap === undefined ? true : snap.enabled !== false;
-                    } catch (e) { return true; }
-                  },
-                },
-              }),
-            }, SettingsRow);
-            mark('settings.general.item:registered');
+
+          // 2. 左侧边栏图标（sidebar.panellist）
+          const disposeIcon = ctx.slots.inject('sidebar.panellist', () => {
+            mark('sidebar.panellist:injected');
+            const d = ctx.slots.register(
+              { name: 'sidebar.panellist', id: PANEL_ID, order: 65, label: () => (t && t('title')) || '深空背景' }, PanelIcon);
+            mark('sidebar.panellist:registered');
             return d;
           });
+
+          // 3. 独立控制面板页面（main）
+          const disposeMain = ctx.slots.inject('main', () => {
+            mark('main:injected');
+            const d = ctx.slots.register(
+              { name: 'main', key: PANEL_ID, store, locale: NS }, SpaceBackgroundPage);
+            mark('main:registered');
+            return d;
+          });
+
           diag.ok = true;
           mark('apply:done');
-          return () => { disposeOverlay(); disposeRow(); };
-        }, 'space-background: overlay + settings row');
+          return () => { disposeOverlay(); disposeIcon(); disposeMain(); };
+        }, 'space-background: overlay + sidebar icon + main studio');
       },
-      /** 仅供 test/run.cjs 与 preview.html 使用的内部面；运行时不被加载器读取。 */
+      /** 仅供 test/run.cjs 与 preview.html 使用的内部面。 */
       __test__: {
-        PANEL_ID, NS, PERSIST_KEY,
+        PANEL_ID, NS, PERSIST_KEY, STORE_SCHEMA_VERSION,
         TINTS, DOT_STYLES, GLOBAL_TOKEN_OVERRIDES, GLOBAL_BG_CSS,
         clamp, pickTint, bandYFor, buildBasis, makeConstellations,
         makeStore, ensureStyles, createSpaceEngine,
-        Views: { SettingsRow, SpaceLayer },
+        generateDynamicCss, generateTokenOverrides,
+        Views: { SpaceBackgroundPage, SpaceLayer, PanelIcon, SettingsRow },
       },
     };
   },

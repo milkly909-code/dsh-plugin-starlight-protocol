@@ -1,7 +1,7 @@
 {
   "name": "@local/space-background",
   "version": "1.0.1",
-  "description": "深空背景 — DSH 主题与外观插件：在设置「通用」分区提供深空背景开关，开启后星空（银河、随机星座、行星、流星）成为整个应用的底层背景，界面表面经官方主题令牌半透明化",
+  "description": "深空背景 — DSH 主题与视觉控制中心：在左侧边栏提供独立控制页面，可无级调节界面通透度与毛玻璃磨砂效果，并具备智能文字反转与抗晕散微阴影保护，确保深空宇宙壁纸绚烂透出的同时文字清晰锐利。",
   "type": "module",
   "keywords": [
     "dsh-plugin",
@@ -53,8 +53,7 @@
       "platform": "web",
       "immediately": true,
       "inject": [
-        "@deepseek-ai/dsh-client-ui-layout",
-        "@deepseek-ai/dsh-client-ui-settings-general"
+        "@deepseek-ai/dsh-client-ui-layout"
       ]
     }
   }
