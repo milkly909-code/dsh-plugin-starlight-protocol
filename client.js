@@ -1051,15 +1051,20 @@ window.__ModuleLoader__.load({
         // 3.1 玻璃不透明度全局视窗遮罩层：用户拖动玻璃不透明度滑块时，在星空之上施加轻柔深空微膜，全屏即时生效
         `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(8, 12, 22, ${(op * 0.75).toFixed(2)}) !important; z-index: 2; transition: background-color 0.15s ease; }`,
 
-        // 4. 解决文字上滑遮挡聊天框：聊天底座保持通透无黑边，输入卡片自身为防穿透深空悬浮仓
-        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="Composer"], html[data-sbg-on] [class*="GRgSLq_root"] { z-index: 10 !important; background: transparent !important; box-shadow: none !important; }',
+        // 4. 解决文字上滑遮挡聊天框与底部穿透：吸底座席定制平滑深空渐隐（顶部自然羽化、底部完全不透，彻底遮蔽划到底部和打字区下方的所有文字）
+        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0px, rgba(8, 12, 22, 0.65) 28px, rgba(8, 12, 22, 0.96) 60px, rgba(8, 12, 22, 1) 90px, rgba(8, 12, 22, 1) 100%) !important; box-shadow: none !important; }',
+        'html[data-sbg-on] [data-composer-dock], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="GRgSLq_root"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="composer"]:not([class*="card"]):not([class*="composerSeat"]), html[data-sbg-on] [class*="Composer"]:not([class*="card"]):not([class*="composerSeat"]) { background: transparent !important; box-shadow: none !important; }',
 
-        // 聊天输入卡片：高对比防穿透悬浮舱，杜绝滚动历史文字在输入框内透出，四周透明留白完整显露星空
-        'html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { background: rgba(12, 17, 28, 0.94) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important; }',
+        // 聊天输入卡片：高对比防穿透悬浮舱（置于座席之上，内部全不透，杜绝历史文字透出）
+        'html[data-sbg-on] [data-composer-card], html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { z-index: 12 !important; position: relative !important; background: rgba(13, 18, 30, 0.96) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important; }',
         'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"], html[data-sbg-on] [class*="input"], html[data-sbg-on] [class*="q_input"] { background: transparent !important; background-color: transparent !important; color: #FFFFFF !important; }',
 
         // 5. 底部运行状态、Token用量、上下文步数栏：纯白高对比文字与图标，清晰醒目（响应用户明确要求）
-        `html[data-sbg-on] [class*="_dock"],
+        `html[data-sbg-on] [data-composer-dock],
+        html[data-sbg-on] [data-composer-dock] *,
+        html[data-sbg-on] [data-slot="conversation.composer.dock"],
+        html[data-sbg-on] [data-slot="conversation.composer.dock"] *,
+        html[data-sbg-on] [class*="_dock"],
         html[data-sbg-on] [class*="q_dock"],
         html[data-sbg-on] [class*="GRgSLq_dock"],
         html[data-sbg-on] [class*="TurnUsage"],
