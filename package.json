@@ -1,0 +1,61 @@
+{
+  "name": "@local/space-background",
+  "version": "1.0.1",
+  "description": "深空背景 — DSH 主题与外观插件：在设置「通用」分区提供深空背景开关，开启后星空（银河、随机星座、行星、流星）成为整个应用的底层背景，界面表面经官方主题令牌半透明化",
+  "type": "module",
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "theme",
+    "appearance",
+    "background",
+    "starfield"
+  ],
+  "license": "MIT",
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CHANGE_ME/dsh-space-background.git"
+  },
+  "homepage": "https://github.com/CHANGE_ME/dsh-space-background#readme",
+  "bugs": {
+    "url": "https://github.com/CHANGE_ME/dsh-space-background/issues"
+  },
+  "scripts": {
+    "check": "node --check client.js && node --check index.js && node test/run.cjs",
+    "test": "node test/run.cjs"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.1-rc.1"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-settings-general"
+      ]
+    }
+  }
+}

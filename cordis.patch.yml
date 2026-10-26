@@ -1,0 +1,4 @@
+- insert:
+    - id: space-background
+      name: '@local/space-background'
+      config: {}

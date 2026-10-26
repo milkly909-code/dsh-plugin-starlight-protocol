@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>深空背景 · DSH 外观插件预览</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f2f3f5; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  #app { position: fixed; inset: 0; }
+  /* 模拟 DSH 壳层：默认不透明；data-sbg-on 时半透明（对应真实插件的主题令牌覆盖效果） */
+  .demo_frame { position: absolute; inset: 30px 0 0 0; display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 1fr 40px; background: #fff; }
+  html[data-sbg-on] .demo_frame { background: rgba(243,245,249,0.88); }
+  .demo_titlebar { position: absolute; top: 0; left: 0; right: 0; height: 30px; background: #ececf0; z-index: 3; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #666; }
+  html[data-sbg-on] .demo_titlebar { background: rgba(235,236,241,0.8); }
+  .demo_sidebar { background: #ececf0; border-right: 1px solid rgba(0,0,0,.06); padding: 12px 8px; color: #333; overflow: auto; }
+  html[data-sbg-on] .demo_sidebar { background: rgba(235,236,241,0.8); }
+  .demo_center { background: #fff; overflow: auto; padding: 26px 30px; color: #333; }
+  html[data-sbg-on] .demo_center { background: rgba(243,245,249,0.88); }
+  .demo_bottom { grid-column: 1 / -1; background: #fff; border-top: 1px solid rgba(0,0,0,.06); display: flex; align-items: center; padding: 0 14px; color: #555; font-size: 12px; }
+  html[data-sbg-on] .demo_bottom { background: rgba(243,245,249,0.88); }
+  .demo-side-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; margin-bottom: 2px; }
+  .demo-side-item.on { background: rgba(0,0,0,.06); font-weight: 600; }
+  .demo-settings { max-width: 620px; }
+  .demo-settings h2 { font-size: 15px; margin: 0 0 4px; }
+  .demo-settings .sub { font-size: 12px; color: #888; margin-bottom: 8px; }
+  /* 模拟内置「外观」行与「版本」行，衬托真实「深空背景」行 */
+  .demo-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
+  .demo-row-title { font-size: 14px; line-height: 22px; }
+  .demo-cubes { display: flex; gap: 8px; }
+  .demo-cube { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; padding: 8px 14px; border: 1px solid rgba(0,0,0,.1); border-radius: 8px; background: #fafafa; cursor: default; }
+  .demo-cube.on { border-color: #4176e6; box-shadow: 0 0 0 1px #4176e6; }
+  .demo-note { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 12px; color: rgba(255,255,255,.9); background: rgba(10,16,30,.6); padding: 6px 14px; border-radius: 999px; pointer-events: none; backdrop-filter: blur(4px); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script>
+  // ModuleLoader 垫片：捕获 client.js 工厂并注入平台模块替身
+  window.__ModuleLoader__ = {
+    load(mod) {
+      function shimRequire(name) {
+        if (name === 'react') return React;
+        if (name === '@deepseek-ai/dsh-client-store') {
+          return { defineStore: (spec) => ({ spec }) }; // 预览环境不落盘
+        }
+        throw new Error('preview shim: unexpected require: ' + name);
+      }
+      window.__sbgModule = mod.factory(shimRequire);
+    },
+  };
+</script>
+<script src="./client.js"></script>
+<script>
+  (function () {
+    const h = React.createElement;
+    const mod = window.__sbgModule;
+    const Views = mod && mod.__test__ && mod.__test__.Views;
+    if (!Views) {
+      document.body.insertAdjacentHTML('beforeend', '<div style="color:#c33;padding:24px">client.js 模块加载失败：请用本地服务器打开本页（file:// 可能被 fetch 拦截）。</div>');
+      return;
+    }
+    const ZH = { rowTitle: '深空背景', rowDesc: '银河、星座与行星在窗口底层缓缓流动，界面表面保持可读' };
+    const t = (k) => ZH[k] || k;
+
+    function App() {
+      // 与真实插件同构的状态：设置行开关直接驱动星空层
+      const [enabled, setEnabled] = React.useState(true);
+      const state = React.useMemo(() => ({ enabled }), [enabled]);
+      const useStore = (sel) => sel(state);
+      const actions = React.useMemo(() => ({ setEnabled }), []);
+
+      return h(React.Fragment, null,
+        // 真实星空层（shell.overlay 组件）：开关开启时挂载底层画布
+        h(Views.SpaceLayer, { useStore, actions, t }),
+        h('div', { className: 'demo_titlebar' }, 'DSH · 模拟壳层（预览） · 深空背景为主题与外观插件'),
+        h('div', { className: 'demo_frame' },
+          h('div', { className: 'demo_sidebar' },
+            h('div', { className: 'demo-side-item on' }, 'ⓘ 通用'),
+            h('div', { className: 'demo-side-item' }, '会话'),
+            h('div', { className: 'demo-side-item' }, '快捷键'),
+            h('div', { className: 'demo-side-item' }, '插件')),
+          h('div', { className: 'demo_center' },
+            h('div', { className: 'demo-settings' },
+              h('h2', null, '通用'),
+              h('div', { className: 'sub' }, '外观、字号与背景偏好（模拟 DSH 设置页，中间一行是真实插件组件）'),
+              h('div', { className: 'demo-row' },
+                h('div', { className: 'demo-row-title' }, '外观'),
+                h('div', { className: 'demo-cubes' },
+                  h('div', { className: 'demo-cube on' }, '☀', '浅色'),
+                  h('div', { className: 'demo-cube' }, '🌙', '深色'),
+                  h('div', { className: 'demo-cube' }, '🖥', '跟随系统'))),
+              // 真实的「深空背景」外观行（客户端组件 + 官方开关样式）
+              h(Views.SettingsRow, { useStore, actions, t }),
+              h('div', { className: 'demo-row', style: { borderBottom: 'none' } },
+                h('div', { className: 'demo-row-title' }, '当前版本'),
+                h('div', { style: { fontSize: 12, color: '#888' } }, 'DSH 0.2.1-rc.3')))),
+          h('div', { className: 'demo_bottom' }, '状态栏 · 天幕每隔十几秒淡入新星域（银河 / 星座 / 星云 / 行星 / 流星）')),
+        h('div', { className: 'demo-note' }, '真实插件行为：开关经官方主题令牌把中栏 / 侧栏 / 底栏半透明化，星空从底层透出'));
+    }
+
+    ReactDOM.createRoot(document.getElementById('app')).render(h(App));
+  })();
+</script>
+</body>
+</html>

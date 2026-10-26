@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Deep Space Background",
+    "description": "Theme & appearance plugin: a Deep Space switch in Settings → General. When on, the Milky Way, random constellations, planets and meteors drift behind translucent shell surfaces via official theme token overrides; turn it off to restore instantly."
+  }
+}

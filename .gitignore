@@ -1,0 +1,28 @@
+# 构建产物 / 依赖
+node_modules/
+dist/
+lib/
+*.tgz
+
+# 编辑器与系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 本地备份（插件调试时产生）
+*.bak
+*.bak-*
+*.backup-*
+*~
+
+# 日志与临时文件
+*.log
+*.tmp
+.cache/
+
+# 本地安装后由宿主生成的状态（绝不提交）
+.workbuddy-*/
+.dsh-qoder-connect/
+space-background/
