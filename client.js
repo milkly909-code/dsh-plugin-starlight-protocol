@@ -1029,6 +1029,8 @@ window.__ModuleLoader__.load({
       if (!enabled) return '';
       const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.95);
       const surfaceBg = op > 0 ? `rgba(10, 15, 26, ${op.toFixed(2)})` : 'transparent';
+      const sidebarBg = op > 0 ? `rgba(8, 12, 22, ${(op * 0.85).toFixed(2)})` : 'transparent';
+      const cardBg = op > 0 ? `rgba(16, 24, 40, ${(0.20 + op * 0.65).toFixed(2)})` : 'rgba(15, 20, 32, 0.35)';
 
       return [
         // 1. 彻底禁用全局常规背景模糊（纯净无模糊模式）
@@ -1042,27 +1044,63 @@ window.__ModuleLoader__.load({
         'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="view"], html[data-sbg-on] [class*="View"], html[data-sbg-on] [class*="section"], html[data-sbg-on] [class*="Section"] { background: transparent !important; background-color: transparent !important; }',
 
-        // 3. 聊天主工作区、中栏、侧栏（动态响应用户调节的玻璃不透明度）
-        `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; }`,
-        'html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: transparent !important; background-color: transparent !important; }',
+        // 3. 聊天主工作区、中栏、侧栏（动态响应用户调节的玻璃不透明度，实时平滑变幻）
+        `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"], html[data-sbg-on] [class*="ChatView"], html[data-sbg-on] [class*="V4vHZW"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; transition: background-color 0.15s ease; }`,
+        `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${sidebarBg} !important; background-color: ${sidebarBg} !important; transition: background-color 0.15s ease; }`,
 
-        // 3.1 玻璃不透明度全局视窗遮罩层：用户拖动玻璃不透明度滑块时，在星空之上施加轻柔深空微膜，立即全景生效
-        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(8, 12, 22, ${op.toFixed(2)}) !important; z-index: 2; transition: background-color 0.1s ease; }`,
+        // 3.1 玻璃不透明度全局视窗遮罩层：用户拖动玻璃不透明度滑块时，在星空之上施加轻柔深空微膜，全屏即时生效
+        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(8, 12, 22, ${(op * 0.75).toFixed(2)}) !important; z-index: 2; transition: background-color 0.15s ease; }`,
 
-        // 4. 解决文字上滑遮挡聊天框：消息滚动区域底部加渐隐遮罩（mask-image），文字接近底部时自动淡出透明，避免遮挡聊天框
-        'html[data-sbg-on] [class*="viewArea"], html[data-sbg-on] [data-slot="conversation.session"], html[data-sbg-on] [class*="scrollBody"] { mask-image: linear-gradient(180deg, #000 0%, #000 calc(100% - 130px), transparent calc(100% - 15px)); -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 calc(100% - 130px), transparent calc(100% - 15px)); }',
+        // 4. 解决文字上滑遮挡聊天框：聊天底座保持通透无黑边，输入卡片自身为防穿透深空悬浮仓
+        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="Composer"], html[data-sbg-on] [class*="GRgSLq_root"] { z-index: 10 !important; background: transparent !important; box-shadow: none !important; }',
 
-        // 聊天底栏与输入座席：柔和通透深空微渐变，彻底告别死黑过深问题，与星空背景自然协调
-        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="Composer"] { z-index: 7 !important; background: linear-gradient(180deg, rgba(6, 9, 18, 0) 0px, rgba(6, 9, 18, 0.30) 24px, rgba(6, 9, 18, 0.48) 100%) !important; box-shadow: none !important; }',
-
-        // 聊天框输入区域卡片：轻透微线框，半透明深空蓝黑底色，协调雅致、透出星光
-        'html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { background: rgba(12, 18, 30, 0.50) !important; border: 1px solid rgba(255, 255, 255, 0.16) !important; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important; }',
+        // 聊天输入卡片：高对比防穿透悬浮舱，杜绝滚动历史文字在输入框内透出，四周透明留白完整显露星空
+        'html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { background: rgba(12, 17, 28, 0.94) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important; }',
         'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"], html[data-sbg-on] [class*="input"], html[data-sbg-on] [class*="q_input"] { background: transparent !important; background-color: transparent !important; color: #FFFFFF !important; }',
 
-        // 5. 消息气泡与其它页面卡片项：轻量纯净线框
-        'html[data-sbg-on] [class*="_card"], html[data-sbg-on] [class*="q_card"], html[data-sbg-on] [class*="_item"], html[data-sbg-on] [class*="q_item"], html[data-sbg-on] [class*="bubble"] { background: rgba(15, 20, 32, 0.35) !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; }',
+        // 5. 底部运行状态、Token用量、上下文步数栏：纯白高对比文字与图标，清晰醒目（响应用户明确要求）
+        `html[data-sbg-on] [class*="_dock"],
+        html[data-sbg-on] [class*="q_dock"],
+        html[data-sbg-on] [class*="GRgSLq_dock"],
+        html[data-sbg-on] [class*="TurnUsage"],
+        html[data-sbg-on] [class*="StatsPills"],
+        html[data-sbg-on] [class*="ContextMeter"],
+        html[data-sbg-on] [class*="BI5uFG"],
+        html[data-sbg-on] [class*="hNGZaa"],
+        html[data-sbg-on] [class*="A6Bq1a"],
+        html[data-sbg-on] [class*="_dock"] *,
+        html[data-sbg-on] [class*="q_dock"] *,
+        html[data-sbg-on] [class*="GRgSLq_dock"] *,
+        html[data-sbg-on] [class*="TurnUsage"] *,
+        html[data-sbg-on] [class*="StatsPills"] *,
+        html[data-sbg-on] [class*="ContextMeter"] *,
+        html[data-sbg-on] [class*="BI5uFG"] *,
+        html[data-sbg-on] [class*="hNGZaa"] *,
+        html[data-sbg-on] [class*="A6Bq1a"] * {
+          color: #FFFFFF !important;
+          stroke: #FFFFFF !important;
+          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95) !important;
+          opacity: 1 !important;
+        }
+        html[data-sbg-on] [class*="A6Bq1a_track"] {
+          stroke: rgba(255, 255, 255, 0.28) !important;
+        }
+        html[data-sbg-on] [class*="A6Bq1a_fill"] {
+          stroke: #38bdf8 !important;
+        }
+        html[data-sbg-on] [class*="_dock"] button:hover,
+        html[data-sbg-on] [class*="q_dock"] button:hover,
+        html[data-sbg-on] [class*="BI5uFG_trigger"]:hover,
+        html[data-sbg-on] [class*="hNGZaa_pill"]:hover,
+        html[data-sbg-on] [class*="A6Bq1a_trigger"]:hover {
+          background: rgba(255, 255, 255, 0.15) !important;
+          color: #FFFFFF !important;
+        }`,
 
-        // 5.1 底部步数、token用量、上下文弹窗与菜单：绝不透明，提供高对比深空暗色卡片背景，保证数据一目了然
+        // 6. 消息气泡与其它页面卡片项：动态响应玻璃不透明度
+        `html[data-sbg-on] [class*="_card"], html[data-sbg-on] [class*="q_card"], html[data-sbg-on] [class*="_item"], html[data-sbg-on] [class*="q_item"], html[data-sbg-on] [class*="bubble"], html[data-sbg-on] [class*="Message"] { background: ${cardBg} !important; border: 1px solid rgba(255, 255, 255, ${(0.12 + op * 0.12).toFixed(2)}) !important; }`,
+
+        // 7. 底部步数、token用量、上下文弹窗与菜单：绝不透明，提供高对比深空暗色卡片背景，保证数据一目了然
         `html[data-sbg-on] [role="dialog"],
         html[data-sbg-on] [role="menu"],
         html[data-sbg-on] [role="listbox"],
@@ -1094,28 +1132,28 @@ window.__ModuleLoader__.load({
           text-shadow: none !important;
         }`,
 
-        // 6. 全景视窗微暗角（Cockpit Vignette）：中央阅读区柔和压暗，四周边缘纯透星光璀璨，0 模糊且极大提升阅读对比度
+        // 8. 全景视窗微暗角（Cockpit Vignette）：中央阅读区柔和压暗，四周边缘纯透星光璀璨，0 模糊且极大提升阅读对比度
         '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6, 9, 18, 0.28) 0%, rgba(6, 9, 18, 0.10) 60%, transparent 100%); z-index: 1; }',
 
-        // 7. 深空专属极简滚动条：5px 超窄全透明轨道，消除原生滚动条切割星空的突兀感
+        // 9. 深空专属极简滚动条：5px 超窄全透明轨道，消除原生滚动条切割星空的突兀感
         'html[data-sbg-on] *::-webkit-scrollbar { width: 5px; height: 5px; }',
         'html[data-sbg-on] *::-webkit-scrollbar-track { background: transparent !important; }',
         'html[data-sbg-on] *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16) !important; border-radius: 999px; transition: background 0.2s ease; }',
         'html[data-sbg-on] *::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.45) !important; box-shadow: 0 0 6px rgba(56, 189, 248, 0.35); }',
 
-        // 8. 聊天输入框 Focus 全息冰蓝呼吸微光：聚焦时激活流光微框，强化交互响应
-        'html[data-sbg-on] [class*="composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="composer"]:focus-within [class*="_card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="composer-wrapper"]:focus-within { border-color: rgba(56, 189, 248, 0.45) !important; box-shadow: 0 0 12px rgba(56, 189, 248, 0.18) !important; background: rgba(10, 15, 26, 0.65) !important; }',
+        // 10. 聊天输入框 Focus 全息冰蓝呼吸微光：聚焦时激活流光微框，强化交互响应
+        'html[data-sbg-on] [class*="composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="composer"]:focus-within [class*="_card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"]:focus-within, html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="composer-wrapper"]:focus-within { border-color: rgba(56, 189, 248, 0.5) !important; box-shadow: 0 0 16px rgba(56, 189, 248, 0.25) !important; background: rgba(14, 20, 32, 0.96) !important; }',
 
-        // 9. 代码块与引用块微光盾：保证密集语法高亮清晰可辨，防止密集星群干扰
+        // 11. 代码块与引用块微光盾：保证密集语法高亮清晰可辨，防止密集星群干扰
         'html[data-sbg-on] pre, html[data-sbg-on] code[class*="language-"], html[data-sbg-on] [class*="codeblock"], html[data-sbg-on] [class*="code-block"] { background: rgba(8, 12, 22, 0.65) !important; border: 1px solid rgba(255, 255, 255, 0.14) !important; border-radius: 8px !important; }',
         'html[data-sbg-on] blockquote { background: rgba(15, 23, 42, 0.35) !important; border-left: 3px solid #38bdf8 !important; padding: 6px 12px !important; }',
 
-        // 10. 太空全息 HUD 文字防晕散与高对比度保护（确保全透明下所有内容绝对看得见）
+        // 12. 太空全息 HUD 文字防晕散与高对比度保护（确保全透明下所有内容绝对看得见）
         `html[data-sbg-on] {
           --dsw-alias-label-primary: #FFFFFF !important;
           --dsw-alias-label-secondary: rgba(235, 242, 255, 0.88) !important;
-          --dsw-alias-label-tertiary: rgba(215, 230, 255, 0.72) !important;
-          --dsw-alias-label-quaternary: rgba(200, 220, 255, 0.55) !important;
+          --dsw-alias-label-tertiary: #FFFFFF !important;
+          --dsw-alias-label-quaternary: rgba(200, 220, 255, 0.65) !important;
           --dsw-alias-border-l1: rgba(255, 255, 255, 0.14) !important;
           --dsw-alias-border-l2: rgba(255, 255, 255, 0.22) !important;
           --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.12) !important;
@@ -1498,14 +1536,13 @@ window.__ModuleLoader__.load({
 
       React.useEffect(ensureStyles, []);
 
+      // 1. 样式与主题动态响应副作用（独立于 Canvas 引擎，滑块调节时毫秒级无感知响应，绝不销毁重建物件）
       React.useEffect(() => {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-        diag.steps.push(`SpaceLayer:effect:start: enabled=${enabled} op=${surfaceOpacity}`);
+        diag.steps.push(`SpaceLayer:styles:start: enabled=${enabled} op=${surfaceOpacity}`);
 
-        // 1. 动态生成并注入全局全域穿透 CSS（支持实时调节表面透明度）
         updateDynamicStyles({ enabled, surfaceOpacity });
 
-        // 2. 官方主题服务令牌动态覆盖
         let disposeThemeOverride = null;
         if (themeApi && typeof themeApi.overrideTokens === 'function') {
           try {
@@ -1518,15 +1555,20 @@ window.__ModuleLoader__.load({
           }
         }
 
+        return () => {
+          if (disposeThemeOverride) disposeThemeOverride();
+        };
+      }, [enabled, surfaceOpacity]);
+
+      // 2. 星空 Canvas 引擎生命周期（只在开关和粒子密度变更时响应，滑动不透明度或速度绝不重建）
+      React.useEffect(() => {
+        const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
         if (!enabled) {
-          diag.steps.push('SpaceLayer:effect:disabled');
-          return () => {
-            if (disposeThemeOverride) disposeThemeOverride();
-            updateDynamicStyles({ enabled: false });
-          };
+          diag.steps.push('SpaceLayer:engine:disabled');
+          updateDynamicStyles({ enabled: false });
+          return;
         }
 
-        // 3. 挂载星空 Canvas 到窗口根
         let engine = null;
         let root = null;
         try {
@@ -1550,13 +1592,12 @@ window.__ModuleLoader__.load({
         }
 
         return () => {
-          if (disposeThemeOverride) disposeThemeOverride();
           updateDynamicStyles({ enabled: false });
           if (engine) engine.dispose();
           if (root && root.parentNode) root.parentNode.removeChild(root);
-          diag.steps.push('SpaceLayer:effect:cleanup');
+          diag.steps.push('SpaceLayer:engine:cleanup');
         };
-      }, [enabled, density, surfaceOpacity]);
+      }, [enabled, density]);
 
       // 渲染右下角悬浮调控球与面板
       return h(SpaceFloatControl, { useStore, actions });
