@@ -1,7 +1,7 @@
 {
   "name": "@local/space-background",
-  "version": "1.0.1",
-  "description": "深空背景 — DSH 主题与视觉控制中心：在左侧边栏提供独立控制页面，可无级调节界面通透度与毛玻璃磨砂效果，并具备智能文字反转与抗晕散微阴影保护，确保深空宇宙壁纸绚烂透出的同时文字清晰锐利。",
+  "version": "1.0.2",
+  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：直接将界面各层背景置为全透以完整展现深空星空，集成 360° 无缝流动银河、3D 相机正交投影星座、光环巨行星与穿梭流星，具备太空 HUD 全息文字防晕散保护与节能架构。",
   "type": "module",
   "keywords": [
     "dsh-plugin",

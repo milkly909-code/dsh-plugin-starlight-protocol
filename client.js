@@ -940,7 +940,8 @@ window.__ModuleLoader__.load({
     }
 
     /* ======================================================================
-     * 外观集成：独立控制台面板 (main) + 侧边栏图标 + 全局星空层 (overlay)
+     * 外观集成：插件详情页专属板块 (plugins.detail.section) + 全局星空层 (overlay)
+     * 注：不向侧边栏 (sidebar.panellist) 注册任何按钮，保持侧栏干净无杂物
      * ==================================================================== */
 
     /** 主题服务句柄（apply 内 ctx.inject(['theme']) 就绪后写入）。 */
@@ -952,68 +953,79 @@ window.__ModuleLoader__.load({
       zh: {
         title: '深空背景',
         studioTitle: '深空背景控制中心',
-        studioSubtitle: '调整界面通透度、毛玻璃质感与智能文字对比度，让深空宇宙与内容保持完美平衡',
+        studioSubtitle: '全域通透宇宙视界 · 界面全透、毛玻璃磨砂与太空 HUD 全息文字保护',
         statusRunning: '星空运行中',
         statusDisabled: '背景已关闭',
         masterSwitch: '启用深空背景',
-        masterSwitchDesc: '在整个应用底层渲染无缝漂移的银河、随机星座、行星与流星',
-        transparencySection: '界面通透度调节 (Surface Transparency)',
-        transparencyDesc: '降低界面各区域的不透明度以透出底层星空。数值越低越通透，底层星空越清晰。',
+        masterSwitchDesc: '在整个应用底层渲染 360° 无缝流动银河、随机星座、带环行星与穿梭流星',
+        transparencySection: '界面全透度与通透调节 (Surface Transparency)',
+        transparencyDesc: '直接将界面各层背景置为全透以完整展现深空宇宙。数值越低越透，0% 为极致全透。',
+        presetPure: '纯粹全景 (0%)',
+        presetDeep: '深空通透 (25%)',
         presetBalanced: '毛玻璃适中 (45%)',
         presetSubtle: '轻透微澜 (75%)',
-        presetDeep: '深空通透 (25%)',
-        presetClear: '纯净全景 (10%)',
         sliderLabel: '界面表面不透明度',
         blurSection: '毛玻璃磨砂度 (Backdrop Blur)',
-        blurDesc: '在前景界面与底层星空之间形成磨砂柔化过渡，保证信息层级与层次感。',
+        blurDesc: '在前景卡片与底层星空之间形成磨砂柔化过渡，保证信息层级与立体质感。',
         blurNone: '无模糊 (0px)',
         blurSoft: '轻柔 (8px)',
-        blurMedium: '经典 (16px)',
-        blurDeep: '深度 (24px)',
-        readabilitySection: '智能文字可读性与高对比度保护',
-        readabilityDesc: '高通透度下深色星空会成为主色调，智能对比度会自动提亮文字并增加微阴影，防止暗色文字在黑夜星空下难以辨别。',
+        blurMedium: '经典 (12px)',
+        blurDeep: '深度 (20px)',
+        readabilitySection: '太空全息 HUD 文字防晕散与高对比度保护',
+        readabilityDesc: '全透明模式下深邃星空成为主背景，智能算法自动提亮文字并增加微阴影，防止暗色字在黑夜星空下难以辨别。',
         autoContrast: '文字智能增亮与反转',
-        autoContrastDesc: '在通透度较高时自动将正文与标题增强为高对比度银白色',
-        textShadow: '抗晕散文字轮廓阴影',
-        textShadowDesc: '为文字边缘增加细微环境阴影，防止明亮星芒干扰阅读',
-        dynamicsSection: '天体运行节奏',
-        speedLabel: '漂移速度',
-        speedSlow: '沉静慢速 (0.2x)',
+        autoContrastDesc: '在通透度较高时自动将正文、标题与边框增强为高对比度银白色',
+        textShadow: '抗晕散双层文字轮廓阴影',
+        textShadowDesc: '为文字边缘注入深色抗晕光分界线，无论明亮恒星或行星划过，字迹清晰立现',
+        dynamicsSection: '天体动力学运行节奏',
+        speedLabel: '漂移航速',
+        speedSlow: '沉静缓速 (0.2x)',
         speedNormal: '自然流转 (0.4x)',
         speedFast: '快速巡航 (0.8x)',
         previewSection: '透光与文字辨识度实测预览',
         previewTitle: '标题：DeepSeek Harness 专业级会话',
-        previewBody: '星汉灿烂，若出其里；日月之行，若出其中。在当前通透度与高对比度保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。',
-        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.45, blur: 16 });',
-        resetDefaults: '恢复推荐配置',
+        previewBody: '星汉灿烂，若出其里；日月之行，若出其中。在当前全景通透度与高对比度 HUD 保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。',
+        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.0, blur: 12, hud: true });',
+        resetDefaults: '恢复默认全透配置',
+        // 项目全景说明文案
+        projectOverviewTitle: '深空背景 · 项目全景说明与技术架构',
+        projectOverviewSubtitle: '专为 DeepSeek Harness 打造的全域穿透宇宙视界引擎',
+        cardPhilosophyTitle: '🌟 项目设计理念 (Design Philosophy)',
+        cardPhilosophyDesc: '彻底打破传统软件封闭沉闷的纯黑/深灰死板界面，将整个 DSH 窗口化身为太空飞船的「全景舷窗」。通过全域穿透技术将各层阻挡背景一扫而空，让日常代码编写与智能交互轻盈地悬浮在浩瀚深邃的宇宙星空之中。',
+        cardEngineTitle: '🌌 天体动力学引擎 (Celestial Engine)',
+        cardEngineDesc: '• 360° 正弦无缝银河：采用 bandYFor 连续周期曲面算法，星际尘埃自然闭合无缝对接\n• 3D 正交投影星座：随机生成 4~8 节点星链与分支星群，随相机正交基三维旋转投影\n• 行星与星云：多层漫反射星云与掠过视界的带环气态巨行星\n• 瞬态高光流星：随机划破天际的高速流星轨迹引擎',
+        cardHudTitle: '🛡️ 太空全息 HUD 文字防晕散 (HUD Readability)',
+        cardHudDesc: '界面彻底全透后，文字直接叠在星空之上。引擎搭载智能对比度增强与双层抗晕散微阴影（Text Shadow），配合极轻量磨砂毛玻璃卡片，保证任何高亮恒星与星云划过时文字依然锐利分明、丝毫不受干扰。',
+        cardPerfTitle: '⚡ 超低能耗节能架构 (High Performance)',
+        cardPerfDesc: '• 30fps 节能帧率锁定，避免无谓 GPU 负载\n• 0.6x 离屏双缓冲降采样天幕，1.2 万星点分帧填充\n• Page Visibility 页面隐藏自动休眠挂起\n• 纯净生命周期：关闭或卸载即彻底释放全部 Canvas 与定时器，零后台开销',
       },
       en: {
         title: 'Deep Space',
         studioTitle: 'Deep Space Studio',
-        studioSubtitle: 'Tune shell transparency, frosted glass blur, and smart text legibility for the perfect balance',
+        studioSubtitle: 'Full-Surface Panoramic Viewport · Zero Opacity, Glass Blur & Holographic HUD Text',
         statusRunning: 'Engine Running',
         statusDisabled: 'Background Off',
         masterSwitch: 'Enable Deep Space',
-        masterSwitchDesc: 'Renders the drifting Milky Way, constellations, planets, and meteors in background',
-        transparencySection: 'Surface Transparency',
-        transparencyDesc: 'Lower surface opacity to reveal the cosmic backdrop. Lower values are more translucent.',
-        presetBalanced: 'Balanced (45%)',
-        presetSubtle: 'Subtle (75%)',
+        masterSwitchDesc: 'Renders 360° seamless drifting Milky Way, constellations, planets, and meteors in background',
+        transparencySection: 'Surface Transparency & Pure Cosmic View',
+        transparencyDesc: 'Punctures opaque backgrounds to fully expose the cosmos. 0% is pure complete transparency.',
+        presetPure: 'Pure Cosmic (0%)',
         presetDeep: 'Deep Space (25%)',
-        presetClear: 'Ultra Clear (10%)',
+        presetBalanced: 'Balanced Glass (45%)',
+        presetSubtle: 'Subtle Breeze (75%)',
         sliderLabel: 'Surface Opacity',
         blurSection: 'Backdrop Blur',
         blurDesc: 'Softens the starry backdrop to create elegant frosted glass depth.',
         blurNone: 'None (0px)',
         blurSoft: 'Soft (8px)',
-        blurMedium: 'Classic (16px)',
-        blurDeep: 'Deep (24px)',
-        readabilitySection: 'Smart Readability & Contrast Protection',
-        readabilityDesc: 'Under high transparency, text automatically shifts to crisp contrast with subtle shadows.',
+        blurMedium: 'Classic (12px)',
+        blurDeep: 'Deep (20px)',
+        readabilitySection: 'Smart HUD Text Contrast & Anti-Glare Shield',
+        readabilityDesc: 'Under high transparency, text automatically shifts to crisp contrast with subtle drop shadows.',
         autoContrast: 'Smart Text Brightening',
         autoContrastDesc: 'Enhances text to high-contrast crisp white when surface opacity is low',
-        textShadow: 'Text Contour Shadow',
-        textShadowDesc: 'Adds subtle shadows behind text to prevent stars from interfering with reading',
+        textShadow: 'Dual-Layer Anti-Glare Text Shadow',
+        textShadowDesc: 'Adds protective shadows behind text to prevent bright stars from washing out words',
         dynamicsSection: 'Stellar Dynamics',
         speedLabel: 'Drift Speed',
         speedSlow: 'Calm (0.2x)',
@@ -1021,94 +1033,127 @@ window.__ModuleLoader__.load({
         speedFast: 'Cruise (0.8x)',
         previewSection: 'Live Readability & Transparency Preview',
         previewTitle: 'Title: DeepSeek Harness Studio Session',
-        previewBody: 'The stars shine brilliant in the night sky. With smart readability active, text remains exceptionally crisp and readable over any cosmic backdrop.',
-        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.45, blur: 16 });',
-        resetDefaults: 'Reset to Recommended',
+        previewBody: 'The stars shine brilliant across the vast cosmos. With holographic HUD readability active, text remains exceptionally crisp and readable over any starry background.',
+        previewCode: 'const space = new CosmicBackdrop({ opacity: 0.0, blur: 12, hud: true });',
+        resetDefaults: 'Reset to Default (0% Pure)',
+        projectOverviewTitle: 'Deep Space Background · Architecture & Overview',
+        projectOverviewSubtitle: 'An Immersive Cosmic Viewport Engine for DeepSeek Harness',
+        cardPhilosophyTitle: '🌟 Design Philosophy',
+        cardPhilosophyDesc: 'Transforms the entire DSH window into a spacecraft panoramic viewport. Code and chats float seamlessly over the vast cosmic horizon without heavy opaque panels.',
+        cardEngineTitle: '🌌 Celestial Dynamics Engine',
+        cardEngineDesc: '• 360° Seamless Milky Way: Continuous periodic sine algorithm with zero visible seams\n• 3D Constellations: Procedural 4-8 star chains with 3D camera orthogonal projection\n• Ringed Planets & Nebulae: Ambient nebular clouds and drifting ringed gas giants\n• High-velocity meteors slicing across the cosmic sky',
+        cardHudTitle: '🛡️ Holographic HUD Readability',
+        cardHudDesc: 'When fully transparent, text is guarded by high-contrast illumination and dual-layer drop shadows, ensuring perfect legibility across moving stars and bright planetary bodies.',
+        cardPerfTitle: '⚡ High Performance & Zero Waste',
+        cardPerfDesc: '• 30fps energy-saving cap\n• 0.6x offscreen downscaled double-buffer sky rendering\n• Automatic tab visibility pause\n• Clean disposal: releases all canvases and intervals immediately on close',
       },
     };
 
-    /** 动态根据配置生成全局 CSS 规则（界面各列半透明 + 毛玻璃 + 浅色模式高透文字增亮保护）。 */
+    /** 动态根据配置生成全局 CSS 规则（全域穿透 + 各列半透/全透 + 毛玻璃 + 文字太空 HUD 保护）。 */
     function generateDynamicCss(options) {
       const {
         enabled = true,
-        surfaceOpacity = 0.45,
-        blur = 16,
+        surfaceOpacity = 0.0,
+        blur = 12,
         autoContrast = true,
         textShadow = true,
       } = options || {};
 
       if (!enabled) return '';
 
-      const op = clamp(surfaceOpacity, 0.05, 0.95);
+      const op = clamp(surfaceOpacity, 0.0, 0.95);
       const blurPx = clamp(blur, 0, 32);
+      const isPureTransparent = op === 0;
 
-      // 浅色模式各列背景色（带透明度）
-      const lightCenter = `rgba(243, 245, 249, ${op})`;
-      const lightSidebar = `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`;
-      const lightBottom = `rgba(243, 245, 249, ${Math.min(op + 0.1, 0.98)})`;
+      // 浅色模式各列背景色
+      const lightCenter = isPureTransparent ? 'transparent' : `rgba(243, 245, 249, ${op})`;
+      const lightSidebar = isPureTransparent ? 'transparent' : `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`;
+      const lightBottom = isPureTransparent ? 'transparent' : `rgba(243, 245, 249, ${Math.min(op + 0.1, 0.98)})`;
 
       // 深色模式各列背景色
-      const darkCenter = `rgba(7, 10, 19, ${op * 0.9})`;
-      const darkSidebar = `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`;
-      const darkBottom = `rgba(7, 10, 19, ${Math.min(op * 0.9 + 0.1, 0.95)})`;
+      const darkCenter = isPureTransparent ? 'transparent' : `rgba(7, 10, 19, ${op * 0.9})`;
+      const darkSidebar = isPureTransparent ? 'transparent' : `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`;
+      const darkBottom = isPureTransparent ? 'transparent' : `rgba(7, 10, 19, ${Math.min(op * 0.9 + 0.1, 0.95)})`;
 
       const blurRule = blurPx > 0
         ? `backdrop-filter: blur(${blurPx}px) saturate(180%) !important; -webkit-backdrop-filter: blur(${blurPx}px) saturate(180%) !important;`
         : '';
 
-      // 当表面不透明度小于 0.65 且开启自动对比度时，在浅色模式下深色字叠在黑底星空上看不清，必须提亮为高对比度银白字
-      const needBrightTextLight = autoContrast && op < 0.65;
       const textShadowRule = textShadow
-        ? 'text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8), 0 0 1px rgba(0, 0, 0, 0.9) !important;'
+        ? 'text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95) !important;'
         : '';
 
       return [
-        'html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; }',
-        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"] { background: transparent !important; }',
+        // 1. 全窗口容器全透化（击穿 body, #root, #app, frame, content, panel, page, settings, detail）
+        'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_panel"], html[data-sbg-on] [class*="q_panel"], html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_page"], html[data-sbg-on] [class*="q_page"], html[data-sbg-on] [class*="_settings"], html[data-sbg-on] [class*="q_settings"] { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="view"], html[data-sbg-on] [class*="View"], html[data-sbg-on] [class*="section"], html[data-sbg-on] [class*="Section"] { background: transparent !important; background-color: transparent !important; }',
+
+        // 2. 主聊天栏、侧边栏、底栏透光
         `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"] { background: ${lightCenter} !important; ${blurRule} }`,
         `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${lightSidebar} !important; ${blurRule} }`,
         `html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"] { background: ${lightBottom} !important; ${blurRule} }`,
-        
-        // 深色模式适配
+
+        // 3. 深色模式各列适配
         `html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"], html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_centerCol"], html[data-sbg-on][data-ds-dark-theme] [class*="q_centerCol"] { background: ${darkCenter} !important; ${blurRule} }`,
         `html[data-sbg-on] body[data-ds-dark-theme] [class*="_sidebarCol"], html[data-sbg-on][data-ds-dark-theme] [class*="_sidebarCol"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_sidebarCol"], html[data-sbg-on][data-ds-dark-theme] [class*="q_sidebarCol"] { background: ${darkSidebar} !important; ${blurRule} }`,
         `html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_bottomRow"], html[data-sbg-on][data-ds-dark-theme] [class*="q_bottomRow"] { background: ${darkBottom} !important; ${blurRule} }`,
 
-        // 内部卡片与气泡磨砂通透化
-        `html[data-sbg-on] [class*="bubble"], html[data-sbg-on] [class*="composer"], html[data-sbg-on] [class*="card"] { ${blurRule} }`,
+        // 4. 插件详情页与设置内部的卡片项（变成精致通透的毛玻璃卡片，消灭死黑厚重块）
+        `html[data-sbg-on] [class*="_card"], html[data-sbg-on] [class*="q_card"], html[data-sbg-on] [class*="_item"], html[data-sbg-on] [class*="q_item"], html[data-sbg-on] [class*="bubble"], html[data-sbg-on] [class*="composer"] {
+          background: rgba(255, 255, 255, 0.05) !important;
+          border-color: rgba(255, 255, 255, 0.12) !important;
+          ${blurRule || 'backdrop-filter: blur(12px) saturate(180%) !important; -webkit-backdrop-filter: blur(12px) saturate(180%) !important;'}
+        }`,
+        `html[data-sbg-on][data-ds-dark-theme] [class*="_card"], html[data-sbg-on] body[data-ds-dark-theme] [class*="_card"], html[data-sbg-on][data-ds-dark-theme] [class*="q_card"], html[data-sbg-on] body[data-ds-dark-theme] [class*="q_card"], html[data-sbg-on][data-ds-dark-theme] [class*="_item"], html[data-sbg-on] body[data-ds-dark-theme] [class*="_item"] {
+          background: rgba(15, 20, 32, 0.35) !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
+        }`,
 
-        // 浅色模式高透时的文字反转与增亮保护（解决“黑字在黑夜星空下看不清”的根因）
-        needBrightTextLight ? `
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) {
+        // 5. 太空全息 HUD 文字防晕散与高对比度保护（确保全透明下所有内容绝对看得见）
+        autoContrast ? `
+        html[data-sbg-on] {
           --dsw-alias-label-primary: #FFFFFF !important;
-          --dsw-alias-label-secondary: rgba(255, 255, 255, 0.85) !important;
-          --dsw-alias-label-tertiary: rgba(255, 255, 255, 0.65) !important;
-          --dsw-alias-label-quaternary: rgba(255, 255, 255, 0.45) !important;
-          --dsw-alias-border-l1: rgba(255, 255, 255, 0.16) !important;
-          --dsw-alias-border-l2: rgba(255, 255, 255, 0.26) !important;
+          --dsw-alias-label-secondary: rgba(235, 242, 255, 0.88) !important;
+          --dsw-alias-label-tertiary: rgba(215, 230, 255, 0.72) !important;
+          --dsw-alias-label-quaternary: rgba(200, 220, 255, 0.55) !important;
+          --dsw-alias-border-l1: rgba(255, 255, 255, 0.14) !important;
+          --dsw-alias-border-l2: rgba(255, 255, 255, 0.22) !important;
           --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.12) !important;
-          color: #FFFFFF !important;
         }
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] p,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] span,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h1,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h2,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h3,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] h4,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] li,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] pre,
-        html[data-sbg-on]:not([data-ds-dark-theme]) body:not([data-ds-dark-theme]) [class*="_centerCol"] code {
+        html[data-sbg-on] h1, html[data-sbg-on] h2, html[data-sbg-on] h3, html[data-sbg-on] h4,
+        html[data-sbg-on] [class*="title"], html[data-sbg-on] [class*="Title"],
+        html[data-sbg-on] [class*="heading"], html[data-sbg-on] strong, html[data-sbg-on] b {
+          color: #FFFFFF !important;
+          ${textShadowRule}
+        }
+        html[data-sbg-on] p, html[data-sbg-on] span, html[data-sbg-on] label, html[data-sbg-on] li,
+        html[data-sbg-on] button, html[data-sbg-on] a {
+          ${textShadowRule}
+        }
+        html[data-sbg-on] [class*="desc"], html[data-sbg-on] [class*="Desc"],
+        html[data-sbg-on] [class*="secondary"], html[data-sbg-on] [class*="subtitle"],
+        html[data-sbg-on] [class*="Subtitle"], html[data-sbg-on] [class*="caption"] {
+          color: rgba(235, 242, 255, 0.88) !important;
+          ${textShadowRule}
+        }
+        html[data-sbg-on] code, html[data-sbg-on] pre, html[data-sbg-on] [class*="tag"],
+        html[data-sbg-on] [class*="badge"], html[data-sbg-on] [class*="path"] {
+          background: rgba(0, 0, 0, 0.4) !important;
+          color: #7dd3fc !important;
+          border: 1px solid rgba(255, 255, 255, 0.16) !important;
           ${textShadowRule}
         }
         ` : '',
 
-        // 深色模式下的文字抗晕散微阴影
+        // 6. 深色模式下阴影兜底
         textShadow ? `
-        html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"] p,
-        html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"] p,
-        html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"] span,
-        html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"] span {
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+        html[data-sbg-on][data-ds-dark-theme] p, html[data-sbg-on] body[data-ds-dark-theme] p,
+        html[data-sbg-on][data-ds-dark-theme] span, html[data-sbg-on] body[data-ds-dark-theme] span {
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
         }
         ` : ''
       ].join('\n');
@@ -1117,28 +1162,47 @@ window.__ModuleLoader__.load({
     /** 动态根据配置生成官方主题令牌覆盖。 */
     function generateTokenOverrides(options) {
       const opts = typeof options === 'number' ? { surfaceOpacity: options } : (options || {});
-      const { enabled = true, surfaceOpacity = 0.45 } = opts;
+      const { enabled = true, surfaceOpacity = 0.0 } = opts;
       if (!enabled) return {};
-      const op = clamp(surfaceOpacity, 0.05, 0.95);
+      const op = clamp(surfaceOpacity, 0.0, 0.95);
+      const isZero = op === 0;
+      const zeroColor = 'rgba(0, 0, 0, 0)';
+
       return {
         '--dsw-alias-bg-base': {
-          light: `rgba(243, 245, 249, ${op})`,
-          dark: `rgba(7, 10, 19, ${op * 0.9})`,
+          light: isZero ? zeroColor : `rgba(243, 245, 249, ${op})`,
+          dark: isZero ? zeroColor : `rgba(7, 10, 19, ${op * 0.9})`,
         },
         '--dsw-alias-bg-layer-1': {
-          light: `rgba(249, 250, 252, ${Math.min(op + 0.08, 0.98)})`,
-          dark: `rgba(13, 17, 29, ${Math.min(op * 0.9 + 0.08, 0.95)})`,
+          light: isZero ? zeroColor : `rgba(249, 250, 252, ${Math.min(op + 0.08, 0.98)})`,
+          dark: isZero ? zeroColor : `rgba(13, 17, 29, ${Math.min(op * 0.9 + 0.08, 0.95)})`,
+        },
+        '--dsw-alias-bg-layer-2': {
+          light: isZero ? zeroColor : `rgba(243, 245, 249, ${Math.min(op + 0.05, 0.98)})`,
+          dark: isZero ? zeroColor : `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.05, 0.95)})`,
+        },
+        '--dsw-alias-bg-layer-3': {
+          light: isZero ? zeroColor : `rgba(249, 250, 252, ${Math.min(op + 0.1, 0.98)})`,
+          dark: isZero ? zeroColor : `rgba(15, 20, 32, ${Math.min(op * 0.9 + 0.1, 0.95)})`,
+        },
+        '--dsw-alias-bg-layer-4': {
+          light: isZero ? zeroColor : `rgba(249, 250, 252, ${Math.min(op + 0.12, 0.98)})`,
+          dark: isZero ? zeroColor : `rgba(18, 24, 38, ${Math.min(op * 0.9 + 0.12, 0.95)})`,
+        },
+        '--dsw-alias-settings-card-fill': {
+          light: isZero ? 'rgba(255, 255, 255, 0.05)' : `rgba(255, 255, 255, ${Math.min(op + 0.1, 0.9)})`,
+          dark: isZero ? 'rgba(255, 255, 255, 0.04)' : `rgba(18, 24, 38, ${Math.min(op * 0.9 + 0.1, 0.9)})`,
         },
         '--dsw-specific-sidebar-fill': {
-          light: `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`,
-          dark: `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`,
+          light: isZero ? zeroColor : `rgba(235, 236, 241, ${Math.min(op + 0.06, 0.98)})`,
+          dark: isZero ? zeroColor : `rgba(9, 13, 24, ${Math.min(op * 0.9 + 0.06, 0.95)})`,
         },
       };
     }
 
     /** 静态兜底兼容导出（供旧单测与外部引用）。 */
-    const GLOBAL_TOKEN_OVERRIDES = generateTokenOverrides({ enabled: true, surfaceOpacity: 0.45 });
-    const GLOBAL_BG_CSS = generateDynamicCss({ enabled: true, surfaceOpacity: 0.45, blur: 16, autoContrast: true, textShadow: true });
+    const GLOBAL_TOKEN_OVERRIDES = generateTokenOverrides({ enabled: true, surfaceOpacity: 0.0 });
+    const GLOBAL_BG_CSS = generateDynamicCss({ enabled: true, surfaceOpacity: 0.0, blur: 12, autoContrast: true, textShadow: true });
 
     function updateDynamicStyles(options) {
       if (!options || options.enabled === false) {
@@ -1164,63 +1228,54 @@ window.__ModuleLoader__.load({
       el.id = 'sbg-style';
       el.textContent = [
         '.sbg-cv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}',
-        '.sbg-page{display:flex;flex-direction:column;width:100%;height:100%;overflow-y:auto;box-sizing:border-box;background:transparent;}',
-        '.sbg-page-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 32px;border-bottom:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-base);backdrop-filter:blur(16px);}',
+        '.sbg-page{display:flex;flex-direction:column;width:100%;box-sizing:border-box;background:transparent;margin-top:16px;}',
+        '.sbg-page-topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 20px;border-radius:12px;border:1px solid rgba(255,255,255,0.14);background:rgba(15,20,32,0.35);backdrop-filter:blur(16px);}',
         '.sbg-brand{display:flex;align-items:center;gap:12px;min-width:0;}',
-        '.sbg-brand-mark{width:36px;height:36px;border-radius:10px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-brand-primary);display:grid;place-items:center;flex-shrink:0;}',
-        '.sbg-brand-title{font-size:18px;font-weight:700;color:var(--dsw-alias-label-primary);letter-spacing:-0.3px;}',
-        '.sbg-brand-subtitle{font-size:12px;color:var(--dsw-alias-label-secondary);margin-top:2px;}',
-        '.sbg-brand-tag{font-size:11px;font-weight:600;color:var(--dsw-alias-label-secondary);padding:2px 6px;border-radius:4px;background:var(--dsw-alias-bg-layer-2);margin-left:8px;}',
+        '.sbg-brand-mark{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.12);color:#7dd3fc;display:grid;place-items:center;flex-shrink:0;}',
+        '.sbg-brand-title{font-size:16px;font-weight:700;color:#FFFFFF;letter-spacing:-0.3px;text-shadow:0 1px 3px rgba(0,0,0,0.9);}',
+        '.sbg-brand-subtitle{font-size:12px;color:rgba(235,242,255,0.85);margin-top:2px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-brand-tag{font-size:11px;font-weight:600;color:#7dd3fc;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,0.1);margin-left:8px;border:1px solid rgba(255,255,255,0.15);}',
         '.sbg-topbar-actions{display:flex;align-items:center;gap:12px;flex-shrink:0;}',
-        '.sbg-page-content{padding:28px 32px 64px;max-width:920px;width:100%;margin:0 auto;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;}',
-        '.sbg-card{background:var(--dsw-alias-bg-base);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:20px 24px;display:flex;flex-direction:column;gap:16px;backdrop-filter:blur(16px);}',
+        '.sbg-page-content{padding:16px 0 32px;width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;}',
+        '.sbg-card{background:rgba(15,20,32,0.35);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:18px 22px;display:flex;flex-direction:column;gap:14px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}',
         '.sbg-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;}',
-        '.sbg-card-title{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary);}',
-        '.sbg-card-desc{font-size:13px;color:var(--dsw-alias-label-secondary);line-height:1.5;margin-top:4px;}',
+        '.sbg-card-title{font-size:15px;font-weight:600;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-card-desc{font-size:13px;color:rgba(235,242,255,0.88);line-height:1.5;margin-top:4px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
         '.sbg-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}',
-        '.sbg-preset-btn{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:8px;padding:12px 10px;font-size:12px;text-align:center;color:var(--dsw-alias-label-primary);cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;align-items:center;gap:4px;}',
-        '.sbg-preset-btn:hover{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-interactive-bg-hover);}',
-        '.sbg-preset-btn.active{border-color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-brand-primary);color:#fff;font-weight:600;}',
-        '.sbg-preset-tag{font-size:10px;font-weight:500;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.25);}',
+        '.sbg-preset-btn{border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);border-radius:8px;padding:10px 8px;font-size:12px;text-align:center;color:#FFFFFF;cursor:pointer;transition:all .15s ease;display:flex;flex-direction:column;align-items:center;gap:4px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-preset-btn:hover{border-color:#38bdf8;background:rgba(56,189,248,0.15);}',
+        '.sbg-preset-btn.active{border-color:#38bdf8;background:#0284c7;color:#fff;font-weight:600;box-shadow:0 0 12px rgba(2,132,199,0.5);}',
+        '.sbg-preset-tag{font-size:10px;font-weight:500;padding:1px 5px;border-radius:3px;background:rgba(255,255,255,0.22);}',
         '.sbg-slider-row{display:flex;align-items:center;gap:16px;margin-top:8px;}',
-        '.sbg-slider{flex:1;accent-color:var(--dsw-alias-brand-primary,#4176E6);height:6px;border-radius:3px;cursor:pointer;}',
-        '.sbg-slider-val{font-size:13px;font-weight:600;color:var(--dsw-alias-brand-primary);min-width:140px;text-align:right;font-variant-numeric:tabular-nums;}',
+        '.sbg-slider{flex:1;accent-color:#38bdf8;height:6px;border-radius:3px;cursor:pointer;}',
+        '.sbg-slider-val{font-size:13px;font-weight:600;color:#7dd3fc;min-width:140px;text-align:right;font-variant-numeric:tabular-nums;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
         '.sbg-chips{display:flex;flex-wrap:wrap;gap:8px;}',
-        '.sbg-chip{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:6px;padding:7px 14px;font-size:12px;color:var(--dsw-alias-label-secondary);cursor:pointer;transition:all .15s ease;}',
-        '.sbg-chip:hover{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-label-primary);}',
-        '.sbg-chip.active{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary);background:var(--dsw-alias-interactive-bg-hover);font-weight:600;}',
+        '.sbg-chip{border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.06);border-radius:6px;padding:7px 14px;font-size:12px;color:rgba(235,242,255,0.88);cursor:pointer;transition:all .15s ease;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-chip:hover{border-color:#38bdf8;color:#FFFFFF;background:rgba(56,189,248,0.15);}',
+        '.sbg-chip.active{border-color:#38bdf8;color:#FFFFFF;background:#0284c7;font-weight:600;box-shadow:0 0 10px rgba(2,132,199,0.4);}',
         '.sbg-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:16px;}',
-        '.sbg-preview-card{border:1px solid var(--dsw-alias-border-l2);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:10px;margin-top:6px;}',
-        '.sbg-btn{border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-1);border-radius:7px;color:var(--dsw-alias-label-primary);padding:7px 14px;font-size:12px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;}',
-        '.sbg-btn:hover{background:var(--dsw-alias-interactive-bg-hover);}',
-        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid transparent;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.15));position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
-        '.sbg-switch[aria-checked="true"]{background:var(--dsw-alias-brand-primary,#4176E6);}',
-        '.sbg-switch-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.25);}',
+        '.sbg-preview-card{border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;margin-top:6px;}',
+        '.sbg-btn{border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.08);border-radius:7px;color:#FFFFFF;padding:6px 12px;font-size:12px;cursor:pointer;transition:all .15s ease;display:inline-flex;align-items:center;gap:6px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-btn:hover{background:rgba(255,255,255,0.16);border-color:#38bdf8;}',
+        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
+        '.sbg-switch[aria-checked="true"]{background:#0284c7;border-color:#38bdf8;}',
+        '.sbg-switch-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.35);}',
         '.sbg-switch[aria-checked="true"] .sbg-switch-thumb{left:20px;}',
-        '.sbg-status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);}',
+        '.sbg-status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.1);color:#FFFFFF;border:1px solid rgba(255,255,255,0.15);}',
         '.sbg-status-dot{width:8px;height:8px;border-radius:50%;}',
         '.sbg-status-dot.on{background:#10B981;box-shadow:0 0 8px #10B981;}',
         '.sbg-status-dot.off{background:#9CA3AF;}',
-        '@media (max-width:768px){.sbg-presets{grid-template-columns:repeat(2,1fr);}.sbg-page-topbar{padding:16px 20px;}.sbg-page-content{padding:20px 16px;}}',
+        // 项目全景说明专属栅格
+        '.sbg-doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:6px;}',
+        '.sbg-doc-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;}',
+        '.sbg-doc-card-title{font-size:13.5px;font-weight:600;color:#7dd3fc;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-doc-card-body{font-size:12px;color:rgba(235,242,255,0.88);line-height:1.6;white-space:pre-line;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '@media (max-width:768px){.sbg-presets{grid-template-columns:repeat(2,1fr);}.sbg-page-topbar{padding:14px 16px;}.sbg-doc-grid{grid-template-columns:1fr;}}',
       ].join('\n');
       document.head.appendChild(el);
     }
 
-    /** 左侧边栏定制星座图标 (sidebar.panellist)。 */
-    function PanelIcon({ size = 20, active }) {
-      return h('svg', {
-        viewBox: '0 0 24 24', width: size, height: size, 'aria-hidden': true,
-        style: { display: 'block', color: active ? 'var(--dsw-alias-brand-primary)' : 'currentColor' },
-      },
-        h('rect', { x: 2, y: 2, width: 20, height: 20, rx: 5, fill: active ? 'var(--dsw-alias-brand-primary)' : 'currentColor', opacity: active ? 0.2 : 0.08 }),
-        h('path', { d: 'M4.5 14.5 8.5 12l2.6 3 3-4.2 2.2 2.5L19.5 9.5', fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' }),
-        h('circle', { cx: 16.5, cy: 6.5, r: 1.4, fill: 'currentColor' }),
-        h('circle', { cx: 7, cy: 7.5, r: 0.9, fill: 'currentColor' }),
-        h('circle', { cx: 12, cy: 18.5, r: 0.8, fill: 'currentColor' })
-      );
-    }
-
-    /** 深空背景独立控制中心面板（main 槽位）。 */
+    /** 独立控制面板组件（嵌入在插件详情页）。 */
     function SpaceBackgroundPage({ useStore, actions, t }) {
       const doc = typeof useStore === 'function' ? useStore((s) => s) : {};
       React.useEffect(() => {
@@ -1232,8 +1287,8 @@ window.__ModuleLoader__.load({
       React.useEffect(ensureStyles, []);
 
       const enabled = doc.enabled !== false;
-      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.45;
-      const blur = typeof doc.blur === 'number' ? doc.blur : 16;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
+      const blur = typeof doc.blur === 'number' ? doc.blur : 12;
       const autoContrast = doc.autoContrast !== false;
       const textShadow = doc.textShadow !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
@@ -1242,21 +1297,21 @@ window.__ModuleLoader__.load({
       const transparencyPct = 100 - pct;
 
       const presets = [
-        { label: (t && t('presetBalanced')) || '毛玻璃适中 (45%)', op: 0.45, tag: '官方推荐' },
-        { label: (t && t('presetSubtle')) || '轻透微澜 (75%)', op: 0.75 },
+        { label: (t && t('presetPure')) || '纯粹全景 (0%)', op: 0.0, tag: '强烈推荐·全透' },
         { label: (t && t('presetDeep')) || '深空通透 (25%)', op: 0.25 },
-        { label: (t && t('presetClear')) || '纯净全景 (10%)', op: 0.10 },
+        { label: (t && t('presetBalanced')) || '毛玻璃适中 (45%)', op: 0.45 },
+        { label: (t && t('presetSubtle')) || '轻透微澜 (75%)', op: 0.75 },
       ];
 
       const blurs = [
         { label: (t && t('blurNone')) || '无模糊 (0px)', val: 0 },
         { label: (t && t('blurSoft')) || '轻柔 (8px)', val: 8 },
-        { label: (t && t('blurMedium')) || '经典 (16px)', val: 16 },
-        { label: (t && t('blurDeep')) || '深度 (24px)', val: 24 },
+        { label: (t && t('blurMedium')) || '经典 (12px)', val: 12 },
+        { label: (t && t('blurDeep')) || '深度 (20px)', val: 20 },
       ];
 
       const speeds = [
-        { label: (t && t('speedSlow')) || '沉静慢速 (0.2x)', val: 0.2 },
+        { label: (t && t('speedSlow')) || '沉静缓速 (0.2x)', val: 0.2 },
         { label: (t && t('speedNormal')) || '自然流转 (0.4x)', val: 0.4 },
         { label: (t && t('speedFast')) || '快速巡航 (0.8x)', val: 0.8 },
       ];
@@ -1264,12 +1319,10 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'sbg-page' },
         h('header', { className: 'sbg-page-topbar' },
           h('div', { className: 'sbg-brand' },
-            h('div', { className: 'sbg-brand-mark' },
-              h(PanelIcon, { size: 22, active: enabled })),
             h('div', null,
               h('div', { className: 'sbg-brand-title' }, (t && t('studioTitle')) || '深空背景控制中心'),
-              h('div', { className: 'sbg-brand-subtitle' }, (t && t('studioSubtitle')) || '全界面通透度、星空动态与文字可读性调整')),
-            h('span', { className: 'sbg-brand-tag' }, 'v1.1.0')),
+              h('div', { className: 'sbg-brand-subtitle' }, (t && t('studioSubtitle')) || '全域通透宇宙视界 · 界面全透、毛玻璃磨砂与太空 HUD 全息文字保护')),
+            h('span', { className: 'sbg-brand-tag' }, 'v1.2.0')),
           h('div', { className: 'sbg-topbar-actions' },
             h('span', { className: 'sbg-status-badge' },
               h('span', { className: 'sbg-status-dot ' + (enabled ? 'on' : 'off') }),
@@ -1278,27 +1331,13 @@ window.__ModuleLoader__.load({
               type: 'button',
               className: 'sbg-btn',
               onClick: () => actions && actions.resetDefaults && actions.resetDefaults(),
-            }, (t && t('resetDefaults')) || '恢复推荐配置'))),
+            }, (t && t('resetDefaults')) || '恢复默认全透配置'))),
         h('main', { className: 'sbg-page-content' },
-          // 卡片 1: 总开关
-          h('section', { className: 'sbg-card' },
-            h('div', { className: 'sbg-card-header' },
-              h('div', null,
-                h('div', { className: 'sbg-card-title' }, (t && t('masterSwitch')) || '启用深空背景'),
-                h('div', { className: 'sbg-card-desc' }, (t && t('masterSwitchDesc')) || '在整个应用底层渲染无缝漂移的银河、星座、行星与流星')),
-              h('button', {
-                type: 'button',
-                className: 'sbg-switch',
-                role: 'switch',
-                'aria-checked': String(enabled),
-                onClick: () => actions && actions.setEnabled && actions.setEnabled(!enabled),
-              }, h('span', { className: 'sbg-switch-thumb' })))),
-
-          // 卡片 2: 界面通透度与毛玻璃
+          // 卡片 1: 界面全透度与毛玻璃
           h('section', { className: 'sbg-card' },
             h('div', null,
-              h('div', { className: 'sbg-card-title' }, (t && t('transparencySection')) || '界面透光度调节 (Surface Transparency)'),
-              h('div', { className: 'sbg-card-desc' }, (t && t('transparencyDesc')) || '降低界面表面不透明度以透出底层星空。数值越低越通透，底层星空越清晰。')),
+              h('div', { className: 'sbg-card-title' }, (t && t('transparencySection')) || '界面全透度与通透调节 (Surface Transparency)'),
+              h('div', { className: 'sbg-card-desc' }, (t && t('transparencyDesc')) || '直接将界面各层背景置为全透以完整展现深空宇宙。数值越低越透，0% 为极致全透。')),
             h('div', { className: 'sbg-presets' },
               presets.map((p) => h('button', {
                 key: String(p.op),
@@ -1309,11 +1348,11 @@ window.__ModuleLoader__.load({
                 h('div', { style: { fontWeight: 600 } }, p.label),
                 p.tag ? h('span', { className: 'sbg-preset-tag' }, p.tag) : null))),
             h('div', { className: 'sbg-slider-row' },
-              h('span', { style: { fontSize: '13px', color: 'var(--dsw-alias-label-secondary)' } }, (t && t('sliderLabel')) || '界面表面不透明度'),
+              h('span', { style: { fontSize: '13px', color: 'rgba(235,242,255,0.85)' } }, (t && t('sliderLabel')) || '界面表面不透明度'),
               h('input', {
                 type: 'range',
                 className: 'sbg-slider',
-                min: 5,
+                min: 0,
                 max: 95,
                 step: 1,
                 value: pct,
@@ -1321,7 +1360,7 @@ window.__ModuleLoader__.load({
               }),
               h('span', { className: 'sbg-slider-val' }, `${pct}% (透光 ${transparencyPct}%)`)),
             h('div', { style: { marginTop: '12px' } },
-              h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)', marginBottom: '8px' } }, (t && t('blurSection')) || '毛玻璃磨砂度 (Backdrop Blur)'),
+              h('div', { style: { fontSize: '13px', fontWeight: 600, color: '#FFFFFF', marginBottom: '8px' } }, (t && t('blurSection')) || '毛玻璃磨砂度 (Backdrop Blur)'),
               h('div', { className: 'sbg-chips' },
                 blurs.map((b) => h('button', {
                   key: String(b.val),
@@ -1330,15 +1369,15 @@ window.__ModuleLoader__.load({
                   onClick: () => actions && actions.setBlur && actions.setBlur(b.val),
                 }, b.label))))),
 
-          // 卡片 3: 专业文字可读性与高对比度保护
+          // 卡片 2: 太空 HUD 全息文字可读性与防晕散保护
           h('section', { className: 'sbg-card' },
             h('div', null,
-              h('div', { className: 'sbg-card-title' }, (t && t('readabilitySection')) || '智能文字可读性与高对比度保护'),
-              h('div', { className: 'sbg-card-desc' }, (t && t('readabilityDesc')) || '高通透度下深色星空会成为主色调，智能对比度会自动提亮文字并增加微阴影，防止暗色文字在黑夜星空下难以辨别。')),
+              h('div', { className: 'sbg-card-title' }, (t && t('readabilitySection')) || '太空全息 HUD 文字防晕散与高对比度保护'),
+              h('div', { className: 'sbg-card-desc' }, (t && t('readabilityDesc')) || '全透明模式下深邃星空成为主背景，智能算法自动提亮文字并增加微阴影，防止暗色字在黑夜星空下难以辨别。')),
             h('div', { className: 'sbg-toggle-row' },
               h('div', null,
-                h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)' } }, (t && t('autoContrast')) || '文字智能增亮与反转'),
-                h('div', { style: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary)', marginTop: '2px' } }, (t && t('autoContrastDesc')) || '在通透度较高时自动将主文字提升为高对比度银白色')),
+                h('div', { style: { fontSize: '13px', fontWeight: 600, color: '#FFFFFF' } }, (t && t('autoContrast')) || '文字智能增亮与反转'),
+                h('div', { style: { fontSize: '12px', color: 'rgba(235,242,255,0.82)', marginTop: '2px' } }, (t && t('autoContrastDesc')) || '在通透度较高时自动将主文字提升为高对比度银白色')),
               h('button', {
                 type: 'button',
                 className: 'sbg-switch',
@@ -1346,10 +1385,10 @@ window.__ModuleLoader__.load({
                 'aria-checked': String(autoContrast),
                 onClick: () => actions && actions.setAutoContrast && actions.setAutoContrast(!autoContrast),
               }, h('span', { className: 'sbg-switch-thumb' }))),
-            h('div', { className: 'sbg-toggle-row', style: { borderTop: '1px solid var(--dsw-alias-border-l1)', paddingTop: '12px' } },
+            h('div', { className: 'sbg-toggle-row', style: { borderTop: '1px solid rgba(255,255,255,0.12)', paddingTop: '12px' } },
               h('div', null,
-                h('div', { style: { fontSize: '13px', fontWeight: 600, color: 'var(--dsw-alias-label-primary)' } }, (t && t('textShadow')) || '抗晕散文字轮廓阴影'),
-                h('div', { style: { fontSize: '12px', color: 'var(--dsw-alias-label-secondary)', marginTop: '2px' } }, (t && t('textShadowDesc')) || '为文字边缘增加细微环境阴影，防止明亮星芒干扰阅读')),
+                h('div', { style: { fontSize: '13px', fontWeight: 600, color: '#FFFFFF' } }, (t && t('textShadow')) || '抗晕散双层文字轮廓阴影'),
+                h('div', { style: { fontSize: '12px', color: 'rgba(235,242,255,0.82)', marginTop: '2px' } }, (t && t('textShadowDesc')) || '为文字边缘注入深色抗晕光分界线，无论明亮恒星或行星划过，字迹清晰立现')),
               h('button', {
                 type: 'button',
                 className: 'sbg-switch',
@@ -1358,15 +1397,15 @@ window.__ModuleLoader__.load({
                 onClick: () => actions && actions.setTextShadow && actions.setTextShadow(!textShadow),
               }, h('span', { className: 'sbg-switch-thumb' })))),
 
-          // 卡片 4: 实时效果透视预览
+          // 卡片 3: 实时效果透视预览
           h('section', { className: 'sbg-card' },
             h('div', null,
               h('div', { className: 'sbg-card-title' }, (t && t('previewSection')) || '透光与文字辨识度实测预览'),
-              h('div', { className: 'sbg-card-desc' }, '本卡片模拟在当前通透度与对比度设置下，正文、标题与代码的视觉呈现：')),
+              h('div', { className: 'sbg-card-desc' }, '本卡片模拟在当前全透度与对比度设置下，正文、标题与代码的视觉呈现：')),
             h('div', {
               className: 'sbg-preview-card',
               style: {
-                background: `rgba(243, 245, 249, ${surfaceOpacity})`,
+                background: surfaceOpacity === 0 ? 'rgba(255, 255, 255, 0.04)' : `rgba(243, 245, 249, ${surfaceOpacity})`,
                 backdropFilter: blur > 0 ? `blur(${blur}px) saturate(180%)` : 'none',
                 WebkitBackdropFilter: blur > 0 ? `blur(${blur}px) saturate(180%)` : 'none',
               },
@@ -1375,34 +1414,34 @@ window.__ModuleLoader__.load({
                 style: {
                   fontSize: '15px',
                   fontWeight: 700,
-                  color: (autoContrast && surfaceOpacity < 0.65) ? '#FFFFFF' : 'var(--dsw-alias-label-primary)',
-                  textShadow: textShadow ? '0 1px 2px rgba(0,0,0,0.8)' : 'none',
+                  color: '#FFFFFF',
+                  textShadow: textShadow ? '0 1px 3px rgba(0,0,0,0.95), 0 0 2px rgba(0,0,0,0.95)' : 'none',
                 },
               }, (t && t('previewTitle')) || '标题：DeepSeek Harness 专业级会话'),
               h('div', {
                 style: {
                   fontSize: '13px',
                   lineHeight: 1.6,
-                  color: (autoContrast && surfaceOpacity < 0.65) ? 'rgba(255,255,255,0.88)' : 'var(--dsw-alias-label-secondary)',
-                  textShadow: textShadow ? '0 1px 2px rgba(0,0,0,0.7)' : 'none',
+                  color: 'rgba(235,242,255,0.92)',
+                  textShadow: textShadow ? '0 1px 2px rgba(0,0,0,0.9)' : 'none',
                 },
-              }, (t && t('previewBody')) || '星汉灿烂，若出其里；日月之行，若出其中。在当前通透度与高对比度保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。'),
+              }, (t && t('previewBody')) || '星汉灿烂，若出其里；日月之行，若出其中。在当前全景通透度与高对比度 HUD 保护下，正文无论在浅色还是深色星空背景上都具有卓越的可读性。'),
               h('code', {
                 style: {
                   fontSize: '12px',
                   padding: '6px 10px',
                   borderRadius: '6px',
-                  background: 'rgba(0,0,0,0.25)',
-                  color: '#93C5FD',
+                  background: 'rgba(0,0,0,0.4)',
+                  color: '#7dd3fc',
                   display: 'inline-block',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.16)',
                 },
-              }, (t && t('previewCode')) || `const space = new CosmicBackdrop({ opacity: ${surfaceOpacity}, blur: ${blur} });`))),
+              }, (t && t('previewCode')) || `const space = new CosmicBackdrop({ opacity: ${surfaceOpacity}, blur: ${blur}, hud: true });`))),
 
-          // 卡片 5: 天体动力学运行节奏
+          // 卡片 4: 天体动力学运行节奏
           h('section', { className: 'sbg-card' },
             h('div', null,
-              h('div', { className: 'sbg-card-title' }, (t && t('dynamicsSection')) || '天体运行节奏'),
+              h('div', { className: 'sbg-card-title' }, (t && t('dynamicsSection')) || '天体动力学运行节奏'),
               h('div', { className: 'sbg-card-desc' }, '调整银河旋转与全天天幕的漂移速度：')),
             h('div', { className: 'sbg-chips' },
               speeds.map((s) => h('button', {
@@ -1410,9 +1449,43 @@ window.__ModuleLoader__.load({
                 type: 'button',
                 className: 'sbg-chip ' + (speed === s.val ? 'active' : ''),
                 onClick: () => actions && actions.setSpeed && actions.setSpeed(s.val),
-              }, s.label))))
+              }, s.label)))),
+
+          // 卡片 5: 项目全景说明与技术架构 (Project Overview & Cosmic Guide)
+          h('section', { className: 'sbg-card' },
+            h('div', null,
+              h('div', { className: 'sbg-card-title', style: { fontSize: '16px', color: '#38bdf8' } },
+                (t && t('projectOverviewTitle')) || '深空背景 · 项目全景说明与技术架构'),
+              h('div', { className: 'sbg-card-desc' },
+                (t && t('projectOverviewSubtitle')) || '专为 DeepSeek Harness 打造的全域穿透宇宙视界引擎')),
+            h('div', { className: 'sbg-doc-grid' },
+              h('div', { className: 'sbg-doc-card' },
+                h('div', { className: 'sbg-doc-card-title' }, (t && t('cardPhilosophyTitle')) || '🌟 项目设计理念'),
+                h('div', { className: 'sbg-doc-card-body' }, (t && t('cardPhilosophyDesc')) || '彻底打破传统软件封闭沉闷的纯黑/深灰死板界面，将整个 DSH 窗口化身为太空飞船的「全景舷窗」。通过全域穿透技术将各层阻挡背景一扫而空，让日常代码编写与智能交互轻盈地悬浮在浩瀚深邃的宇宙星空之中。')),
+              h('div', { className: 'sbg-doc-card' },
+                h('div', { className: 'sbg-doc-card-title' }, (t && t('cardEngineTitle')) || '🌌 天体动力学引擎'),
+                h('div', { className: 'sbg-doc-card-body' }, (t && t('cardEngineDesc')) || '• 360° 正弦无缝银河：采用 bandYFor 连续周期曲面算法，星际尘埃自然闭合无缝对接\n• 3D 正交投影星座：随机生成 4~8 节点星链与分支星群，随相机正交基三维旋转投影\n• 行星与星云：多层漫反射星云与掠过视界的带环气态巨行星\n• 瞬态高光流星：随机划破天际的高速流星轨迹引擎')),
+              h('div', { className: 'sbg-doc-card' },
+                h('div', { className: 'sbg-doc-card-title' }, (t && t('cardHudTitle')) || '🛡️ 太空全息 HUD 文字防晕散'),
+                h('div', { className: 'sbg-doc-card-body' }, (t && t('cardHudDesc')) || '界面彻底全透后，文字直接叠在星空之上。引擎搭载智能对比度增强与双层抗晕散微阴影（Text Shadow），配合极轻量磨砂毛玻璃卡片，保证任何高亮恒星与星云划过时文字依然锐利分明、丝毫不受干扰。')),
+              h('div', { className: 'sbg-doc-card' },
+                h('div', { className: 'sbg-doc-card-title' }, (t && t('cardPerfTitle')) || '⚡ 超低能耗节能架构'),
+                h('div', { className: 'sbg-doc-card-body' }, (t && t('cardPerfDesc')) || '• 30fps 节能帧率锁定，避免无谓 GPU 负载\n• 0.6x 离屏双缓冲降采样天幕，1.2 万星点分帧填充\n• Page Visibility 页面隐藏自动休眠挂起\n• 纯净生命周期：关闭或卸载即彻底释放全部 Canvas 与定时器，零后台开销')))
+          )
         )
       );
+    }
+
+    /** 插件详情页面槽位组件（plugins.detail.section）。 */
+    function PluginDetailSection(props) {
+      const subject = props && props.subject;
+      const pkgName = subject && subject.pkg && subject.pkg.name;
+      const id = subject && subject.id;
+      // 仅当用户在「深空背景」插件详情页时展示专属项目说明与调控面板
+      if (pkgName !== '@local/space-background' && id !== '@local/space-background' && id !== PANEL_ID) {
+        return null;
+      }
+      return h(SpaceBackgroundPage, props);
     }
 
     /** 兼容保留：设置行视图（供单测与可选挂载）。 */
@@ -1432,7 +1505,7 @@ window.__ModuleLoader__.load({
         h('div', { className: 'sbg-card-header' },
           h('div', null,
             h('div', { className: 'sbg-card-title' }, (t && t('title')) || '深空背景'),
-            h('div', { className: 'sbg-card-desc' }, '请在左侧边栏「深空背景」页面进行全功能调节')),
+            h('div', { className: 'sbg-card-desc' }, '请在插件管理「深空背景」详情页进行全功能调节')),
           h('button', {
             type: 'button',
             className: 'sbg-switch',
@@ -1448,197 +1521,92 @@ window.__ModuleLoader__.load({
     function SpaceLayer(props) {
       const useStore = props && props.useStore;
       const actions = props && props.actions;
-      React.useEffect(() => {
-        if (actions && typeof actions.normalize === 'function') {
-          actions.normalize();
-        }
-        if (actions) boundActions = actions;
-      }, [actions]);
-
       const doc = typeof useStore === 'function' ? useStore((s) => s) : {};
-      boundDoc = doc;
-
       const enabled = doc.enabled !== false;
-      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.45;
-      const blur = typeof doc.blur === 'number' ? doc.blur : 16;
+      const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
+      const density = typeof doc.density === 'number' ? doc.density : 1000;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
+      const blur = typeof doc.blur === 'number' ? doc.blur : 12;
       const autoContrast = doc.autoContrast !== false;
       const textShadow = doc.textShadow !== false;
-      const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
 
       React.useEffect(() => {
+        boundDoc = doc;
+        if (actions && typeof actions.normalize === 'function') actions.normalize();
+        if (actions) boundActions = actions;
+      }, [doc, actions]);
+
+      React.useEffect(ensureStyles, []);
+
+      React.useEffect(() => {
+        const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
+        diag.steps.push(`SpaceLayer:effect:start: enabled=${enabled} op=${surfaceOpacity}`);
+
+        // 1. 动态生成并注入全局全域穿透 CSS
         updateDynamicStyles({ enabled, surfaceOpacity, blur, autoContrast, textShadow });
-      }, [enabled, surfaceOpacity, blur, autoContrast, textShadow]);
 
-      try {
-        const d = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-        d.steps.push('SpaceLayer:render hasUseStore=' + (typeof useStore === 'function') + ' enabled=' + enabled);
-      } catch (e) { /* ignore */ }
-
-      React.useEffect(() => {
-        if (!enabled) return undefined;
-
-        const diag = (() => {
-          try { return (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false }); }
-          catch (e) { return null; }
-        })();
-        const mark = (s) => { try { diag && diag.steps.push(s); } catch (e) { /* ignore */ } };
-        const fail = (where, e) => {
-          const msg = where + ': ' + String((e && e.message) || e);
-          try { diag && diag.errors.push(msg); } catch (_) { /* ignore */ }
-          try { if (window.__sbgDebug) window.__sbgDebug.error = msg; } catch (_) { /* ignore */ }
-          try { console.error('[space-background]', msg); } catch (_) { /* ignore */ }
-        };
-
-        mark('SpaceLayer:effect:start');
-
-        const cleanupParts = [];
-        try {
-          ensureStyles();
-          mark('ensureStyles:ok');
-
-          const debug = { canvas: false, themeReady: !!themeApi, tokensApplied: false, retries: 0, error: '' };
-          try { window.__sbgDebug = debug; } catch (e) { /* ignore */ }
-
-          const host = document.createElement('div');
-          host.setAttribute('data-sbg-host', '');
-          host.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
-          if (document.body && document.body.firstChild !== undefined) {
-            document.body.insertBefore(host, document.body.firstChild);
-          } else if (document.body) {
-            document.body.appendChild(host);
-          } else {
-            throw new Error('document.body unavailable');
-          }
-          cleanupParts.push(() => { try { host.remove(); } catch (e) { /* ignore */ } });
-          mark('host:inserted');
-
-          const engine = createSpaceEngine(host, {
-            interactive: false,
-            hud: false,
-            fpsCap: 30,
-            autoDrift: 0.012,
-            density: 1000,
-            getSpeed: () => (boundDoc ? boundDoc.speed || 0.4 : speed),
-          });
-          cleanupParts.push(() => { try { engine.dispose(); } catch (e) { /* ignore */ } });
-          debug.canvas = true;
-          mark('engine:created');
-
-          // 主题令牌覆盖
-          let disposeTokens = null;
-          let retryTimer = null;
-          let tries = 0;
-          const applyTokens = () => {
-            if (disposeTokens) return true;
-            if (themeApi && typeof themeApi.overrideTokens === 'function') {
-              try {
-                disposeTokens = themeApi.overrideTokens(PANEL_ID, generateTokenOverrides({ enabled, surfaceOpacity }));
-                debug.themeReady = true;
-                debug.tokensApplied = true;
-                mark('tokens:applied');
-                return true;
-              } catch (e) {
-                fail('theme.overrideTokens', e);
-                return false;
-              }
+        // 2. 官方主题服务令牌动态覆盖
+        let disposeThemeOverride = null;
+        if (themeApi && typeof themeApi.overrideTokens === 'function') {
+          try {
+            if (enabled) {
+              const tokens = generateTokenOverrides({ enabled, surfaceOpacity });
+              disposeThemeOverride = themeApi.overrideTokens(PANEL_ID, tokens);
             }
-            return false;
-          };
-          if (!applyTokens()) {
-            retryTimer = setInterval(() => {
-              debug.retries = ++tries;
-              if (applyTokens() || tries >= 60) {
-                if (retryTimer) clearInterval(retryTimer);
-                retryTimer = null;
-              }
-            }, 1000);
+          } catch (e) {
+            diag.errors.push(`themeApi.overrideTokens:${e.message}`);
           }
-          cleanupParts.push(() => { if (retryTimer) clearInterval(retryTimer); });
-          cleanupParts.push(() => {
-            try { if (typeof disposeTokens === 'function') disposeTokens(); } catch (e) { /* ignore */ }
-          });
+        }
 
-          mark('SpaceLayer:effect:done');
-          scheduleDiagReport(host, debug, diag);
+        if (!enabled) {
+          diag.steps.push('SpaceLayer:effect:disabled');
+          return () => {
+            if (disposeThemeOverride) disposeThemeOverride();
+            updateDynamicStyles({ enabled: false });
+          };
+        }
+
+        // 3. 挂载星空 Canvas 到窗口根
+        let engine = null;
+        let root = null;
+        try {
+          root = document.createElement('div');
+          root.id = 'sbg-canvas-root';
+          root.setAttribute('data-sbg-root', '1');
+          root.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;pointer-events:none;z-index:0;overflow:hidden;';
+          document.body.prepend(root);
+
+          engine = createSpaceEngine(root, {
+            density,
+            speed,
+            interactive: false,
+            showHud: false,
+            getSpeed: () => (boundDoc ? (typeof boundDoc.speed === 'number' ? boundDoc.speed : 0.4) : speed),
+          });
+          diag.steps.push('SpaceLayer:engine:running');
         } catch (e) {
-          fail('SpaceLayer:effect', e);
-          scheduleDiagReport(null, null, diag);
+          diag.errors.push(`createSpaceEngine:${e.message}`);
         }
 
         return () => {
-          for (const fn of cleanupParts.reverse()) { try { fn(); } catch (e) { /* ignore */ } }
+          if (disposeThemeOverride) disposeThemeOverride();
+          updateDynamicStyles({ enabled: false });
+          if (engine) engine.dispose();
+          if (root && root.parentNode) root.parentNode.removeChild(root);
+          diag.steps.push('SpaceLayer:effect:cleanup');
         };
-      }, [enabled]);
+      }, [enabled, surfaceOpacity, blur, autoContrast, textShadow, density]);
 
       return null;
     }
-
-    /* ======================================================================
-     * 诊断上报（诊断期专用）
-     * ==================================================================== */
-
-    function scheduleDiagReport(host, debug, diag) {
-      const report = () => {
-        const out = { at: Date.now(), url: location.href };
-        try {
-          const canvases = [...document.querySelectorAll('canvas.sbg-cv')];
-          out.canvasCount = canvases.length;
-          out.canvases = canvases.map((c) => ({
-            w: c.width, h: c.height,
-            cssW: c.clientWidth, cssH: c.clientHeight,
-          }));
-          const hostEl = document.querySelector('[data-sbg-host]');
-          out.hostPresent = !!hostEl;
-          if (hostEl) {
-            const cs = getComputedStyle(hostEl);
-            out.hostStyle = {
-              parent: hostEl.parentElement ? hostEl.parentElement.tagName : null,
-              position: cs.position, zIndex: cs.zIndex, opacity: cs.opacity,
-              display: cs.display, visibility: cs.visibility,
-              rect: (() => { try { const r = hostEl.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; } catch (e) { return null; } })(),
-            };
-            out.hostInViewport = (() => {
-              try {
-                const r = hostEl.getBoundingClientRect();
-                return r.width > 0 && r.height > 0;
-              } catch (e) { return null; }
-            })();
-          }
-          const styleEl = document.getElementById('sbg-dynamic-style') || document.getElementById('sbg-global-bg');
-          out.globalBgStylePresent = !!styleEl;
-          out.dataSbgOn = document.documentElement.getAttribute('data-sbg-on');
-          out.applySteps = diag ? (diag.steps || []).length : 0;
-          out.applyErrors = diag ? (diag.errors || []) : [];
-          out.debug = debug || null;
-        } catch (e) {
-          out.reportError = String((e && e.message) || e);
-        }
-        try {
-          fetch('/plugins/space-background/diag', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(out),
-          }).catch(() => {});
-        } catch (e) { /* ignore */ }
-        try { localStorage.setItem('space-background/diag', JSON.stringify(out)); } catch (e) { /* ignore */ }
-        try { window.__sbgDiag = out; } catch (e) { /* ignore */ }
-      };
-
-      setTimeout(report, 300);
-      setTimeout(report, 1800);
-    }
-
-    /* ======================================================================
-     * 插件装配
-     * ==================================================================== */
 
     function makeStore() {
       return defineStore({
         init: () => ({
           schemaVersion: STORE_SCHEMA_VERSION,
           enabled: true,
-          surfaceOpacity: 0.45,
-          blur: 16,
+          surfaceOpacity: 0.0, // 默认 0.0 极致纯粹全透，彻底展示整个星空背景！
+          blur: 12,
           autoContrast: true,
           textShadow: true,
           speed: 0.4,
@@ -1654,16 +1622,16 @@ window.__ModuleLoader__.load({
             delete draft.hue;
             if (isLegacy) {
               draft.enabled = true;
-              if (typeof draft.surfaceOpacity !== 'number') draft.surfaceOpacity = 0.45;
-              if (typeof draft.blur !== 'number') draft.blur = 16;
+              draft.surfaceOpacity = 0.0;
+              if (typeof draft.blur !== 'number') draft.blur = 12;
               if (typeof draft.autoContrast !== 'boolean') draft.autoContrast = true;
               if (typeof draft.textShadow !== 'boolean') draft.textShadow = true;
               if (typeof draft.speed !== 'number') draft.speed = 0.4;
               if (typeof draft.density !== 'number') draft.density = 1000;
             } else {
               draft.enabled = draft.enabled !== false;
-              draft.surfaceOpacity = clamp(typeof draft.surfaceOpacity === 'number' ? draft.surfaceOpacity : 0.45, 0.05, 0.95);
-              draft.blur = clamp(typeof draft.blur === 'number' ? draft.blur : 16, 0, 32);
+              draft.surfaceOpacity = clamp(typeof draft.surfaceOpacity === 'number' ? draft.surfaceOpacity : 0.0, 0.0, 0.95);
+              draft.blur = clamp(typeof draft.blur === 'number' ? draft.blur : 12, 0, 32);
               draft.autoContrast = draft.autoContrast !== false;
               draft.textShadow = draft.textShadow !== false;
               draft.speed = clamp(typeof draft.speed === 'number' ? draft.speed : 0.4, 0.1, 1.5);
@@ -1672,15 +1640,15 @@ window.__ModuleLoader__.load({
             draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
           setEnabled(draft, on) { draft.enabled = on === true; },
-          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0.45, 0.05, 0.95); },
+          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0, 0.0, 0.95); },
           setBlur(draft, val) { draft.blur = clamp(Number(val) || 0, 0, 32); },
           setAutoContrast(draft, on) { draft.autoContrast = on === true; },
           setTextShadow(draft, on) { draft.textShadow = on === true; },
           setSpeed(draft, val) { draft.speed = clamp(Number(val) || 0.4, 0.1, 1.5); },
           resetDefaults(draft) {
             draft.enabled = true;
-            draft.surfaceOpacity = 0.45;
-            draft.blur = 16;
+            draft.surfaceOpacity = 0.0;
+            draft.blur = 12;
             draft.autoContrast = true;
             draft.textShadow = true;
             draft.speed = 0.4;
@@ -1691,7 +1659,7 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      inject: ['slots', 'locale', 'layout'],
+      inject: ['slots', 'locale'],
       apply(ctx) {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
         const mark = (step) => { diag.steps.push(step); };
@@ -1720,8 +1688,14 @@ window.__ModuleLoader__.load({
             try {
               if (boundActions && typeof boundActions.setEnabled === 'function') {
                 boundActions.setEnabled(next);
+                return;
               }
-            } catch (e) { diag.errors.push('toggle:' + e); }
+              const d = store.get ? store.get() : (store.getSnapshot ? store.getSnapshot() : null);
+              if (d && typeof d === 'object') {
+                d.enabled = next;
+                if (typeof store.set === 'function') store.set(d);
+              }
+            } catch (e) { /* ignore */ }
           };
           try { window.__sbgToggle = toggle; } catch (e) { /* ignore */ }
           mark('toggle:ready');
@@ -1730,33 +1704,24 @@ window.__ModuleLoader__.load({
           const disposeOverlay = ctx.slots.inject('shell.overlay', () => {
             mark('shell.overlay:injected');
             const d = ctx.slots.register(
-              { name: 'shell.overlay', id: PANEL_ID, order: 100, store, locale: NS }, SpaceLayer);
+              { name: 'shell.overlay', id: PANEL_ID, order: 0, store }, SpaceLayer);
             mark('shell.overlay:registered');
             return d;
           });
 
-          // 2. 左侧边栏图标（sidebar.panellist）
-          const disposeIcon = ctx.slots.inject('sidebar.panellist', () => {
-            mark('sidebar.panellist:injected');
+          // 2. 插件详情页专属板块（plugins.detail.section）——无侧边栏按钮，纯粹嵌入插件自身页面！
+          const disposeDetail = ctx.slots.inject('plugins.detail.section', () => {
+            mark('plugins.detail.section:injected');
             const d = ctx.slots.register(
-              { name: 'sidebar.panellist', id: PANEL_ID, order: 65, label: () => (t && t('title')) || '深空背景' }, PanelIcon);
-            mark('sidebar.panellist:registered');
-            return d;
-          });
-
-          // 3. 独立控制面板页面（main）
-          const disposeMain = ctx.slots.inject('main', () => {
-            mark('main:injected');
-            const d = ctx.slots.register(
-              { name: 'main', key: PANEL_ID, store, locale: NS }, SpaceBackgroundPage);
-            mark('main:registered');
+              { name: 'plugins.detail.section', id: PANEL_ID, order: 10, store, locale: NS }, PluginDetailSection);
+            mark('plugins.detail.section:registered');
             return d;
           });
 
           diag.ok = true;
           mark('apply:done');
-          return () => { disposeOverlay(); disposeIcon(); disposeMain(); };
-        }, 'space-background: overlay + sidebar icon + main studio');
+          return () => { disposeOverlay(); disposeDetail(); };
+        }, 'space-background: overlay + plugin detail section');
       },
       /** 仅供 test/run.cjs 与 preview.html 使用的内部面。 */
       __test__: {
@@ -1765,7 +1730,7 @@ window.__ModuleLoader__.load({
         clamp, pickTint, bandYFor, buildBasis, makeConstellations,
         makeStore, ensureStyles, createSpaceEngine,
         generateDynamicCss, generateTokenOverrides,
-        Views: { SpaceBackgroundPage, SpaceLayer, PanelIcon, SettingsRow },
+        Views: { SpaceBackgroundPage, SpaceLayer, PluginDetailSection, SettingsRow },
       },
     };
   },
