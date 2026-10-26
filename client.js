@@ -932,15 +932,25 @@ window.__ModuleLoader__.load({
     };
 
     /** 兜底样式：令牌覆盖之外的第二层保险（浅/深双色，数据属性门控，关闭即撤）。 */
+    /**
+     * 兜底样式：令牌覆盖之外的第二层保险（浅/深双色，数据属性门控，关闭即撤）。
+     *
+     * 选择器为什么写成 `[class*="_frame"]` 与 `[class*="q_frame"]` 两种：
+     * 宿主用 CSS Modules，类名形如 `mP3x-q_frame` / `mP3x-q_centerCol`。
+     * 旧写法只匹配 `_frame`（以下划线开头），而真实类名是 `q_frame`——
+     * 下划线在哈希段之后，`[class*="_frame"]` 根本命中不了，于是兜底样式
+     * 一直没生效。这里同时保留两种拼写，哈希算法换了前缀也不会再断。
+     */
     const GLOBAL_BG_CSS = [
       'html[data-sbg-on] body,html[data-sbg-on] #root,html[data-sbg-on] #app{background:transparent !important;}',
-      'html[data-sbg-on] [class*="_frame"]{background:transparent !important;}',
-      'html[data-sbg-on] [class*="_centerCol"],html[data-sbg-on] [class*="_rightbarCol"]{background:rgba(243,245,249,0.88) !important;}',
-      'html[data-sbg-on] [class*="_sidebarCol"]{background:rgba(235,236,241,0.8) !important;}',
-      'html[data-sbg-on] [class*="_bottomRow"]{background:rgba(243,245,249,0.9) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="_rightbarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"]{background:rgba(7,10,19,0.82) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_sidebarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_sidebarCol"]{background:rgba(9,13,24,0.76) !important;}',
-      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"],html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"]{background:rgba(7,10,19,0.86) !important;}',
+      // 框架根：宿主的 .frame 带不透明 background，必须让它透出底层星空
+      'html[data-sbg-on] [class*="_frame"],html[data-sbg-on] [class*="q_frame"]{background:transparent !important;}',
+      'html[data-sbg-on] [class*="_centerCol"],html[data-sbg-on] [class*="_rightbarCol"],html[data-sbg-on] [class*="q_centerCol"],html[data-sbg-on] [class*="q_rightbarCol"]{background:rgba(243,245,249,0.88) !important;}',
+      'html[data-sbg-on] [class*="_sidebarCol"],html[data-sbg-on] [class*="q_sidebarCol"]{background:rgba(235,236,241,0.8) !important;}',
+      'html[data-sbg-on] [class*="_bottomRow"],html[data-sbg-on] [class*="q_bottomRow"]{background:rgba(243,245,249,0.9) !important;}',
+      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="_rightbarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_centerCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_rightbarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="q_centerCol"]{background:rgba(7,10,19,0.82) !important;}',
+      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_sidebarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="_sidebarCol"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_sidebarCol"],html[data-sbg-on][data-ds-dark-theme] [class*="q_sidebarCol"]{background:rgba(9,13,24,0.76) !important;}',
+      'html[data-sbg-on] body[data-ds-dark-theme] [class*="_bottomRow"],html[data-sbg-on][data-ds-dark-theme] [class*="_bottomRow"],html[data-sbg-on] body[data-ds-dark-theme] [class*="q_bottomRow"],html[data-sbg-on][data-ds-dark-theme] [class*="q_bottomRow"]{background:rgba(7,10,19,0.86) !important;}',
     ].join('\n');
 
     /** 组件样式（一次性注入；设置行使用 DSH token 融入原生外观）。 */
@@ -1081,6 +1091,16 @@ window.__ModuleLoader__.load({
 
           const host = document.createElement('div');
           host.setAttribute('data-sbg-host', '');
+          // ── 为什么挂到 body 而不是留在这个 overlay 组件里 ───────────────
+          // `shell.overlay` 的容器是宿主的 `.overlayLayer`：
+          //   .mP3x-q_overlayLayer { z-index:20; position:absolute; inset:0; }
+          // 它是**最上层**的覆盖层。星空画布若挂在这层内部并给 `z-index:-1`，
+          // 只会沉到该容器背景之后——而容器本身没有背景，真正的 `.frame`
+          // 背景（`background:var(--dsw-alias-bg-base)`，完全不透明）在更外层，
+          // 于是画布被彻底盖住：canvas 在、引擎在跑、就是看不见。
+          //
+          // 挂到 body 下并给 `z-index:-1` 才是「位于所有内容之后」的正确位置。
+          // 同时也解释了为什么此前只有「运行中」而没有视觉效果。
           host.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
           if (document.body && document.body.firstChild !== undefined) {
             document.body.insertBefore(host, document.body.firstChild);
@@ -1091,6 +1111,10 @@ window.__ModuleLoader__.load({
           }
           cleanupParts.push(() => { try { host.remove(); } catch (e) { /* ignore */ } });
           mark('host:inserted');
+          // 记录实际挂载位置，自检面板与 __sbgApply 都能看到
+          try {
+            if (diag) diag.mount = { parent: host.parentElement && host.parentElement.tagName, zIndex: host.style.zIndex };
+          } catch (e) { /* ignore */ }
 
           const engine = createSpaceEngine(host, {
             interactive: false,

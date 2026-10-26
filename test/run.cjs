@@ -149,6 +149,15 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
     ['body', '#root', '#app', '_centerCol', '_sidebarCol', '_bottomRow', 'data-ds-dark-theme']
       .every((s) => X.GLOBAL_BG_CSS.includes(s)));
 
+  // 宿主用 CSS Modules，真实类名形如 `mP3x-q_frame`（哈希段 + `q_` 前缀）。
+  // 只写 `[class*="_frame"]` 会漏掉它——那正是「兜底样式一直没生效」的原因，
+  // 所以这里把两种拼写都断言住，哈希前缀变了也不会再静默失效。
+  check('兜底样式同时匹配 CSS Modules 的 q_ 前缀类名',
+    ['q_frame', 'q_centerCol', 'q_sidebarCol', 'q_bottomRow']
+      .every((s) => X.GLOBAL_BG_CSS.includes(s)));
+  check('框架根被显式置透明（否则不透明 .frame 会盖住底层星空）',
+    /html\[data-sbg-on\]\s+\[class\*="q_frame"\]\{background:transparent !important;\}/.test(X.GLOBAL_BG_CSS));
+
   check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
 
   // store：默认开启（装好即见效果），动作可关闭
