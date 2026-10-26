@@ -148,27 +148,31 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('色温表 6 档均为 rgb 串', X.TINTS.length === 6 && X.TINTS.every((s) => /^\d+,\d+,\d+$/.test(s)));
 
   // 主题覆盖层：全透 (0%) 下令牌全部为纯透明 rgba(0, 0, 0, 0)
-  const zeroTokens = X.generateTokenOverrides(0.0);
+  const zeroTokens = X.generateTokenOverrides({ enabled: true });
   const tokenEntries = Object.entries(zeroTokens);
   check('全透模式主题覆盖层非空且全部为 dsw 别名令牌', tokenEntries.length >= 5 && tokenEntries.every(([k]) => k.startsWith('--dsw-')));
   check('全透模式背景令牌被清空为透明 (0, 0, 0, 0)', zeroTokens['--dsw-alias-bg-base'].light === 'rgba(0, 0, 0, 0)' && zeroTokens['--dsw-alias-bg-base'].dark === 'rgba(0, 0, 0, 0)');
+  check('输入框 major 背景令牌被清空为透明', zeroTokens['--dsw-specific-input-major'].light === 'rgba(0, 0, 0, 0)');
 
-  // 动态 CSS 引擎全域穿透检查
-  const fullCss = X.generateDynamicCss({ enabled: true, surfaceOpacity: 0.0, blur: 12, autoContrast: true, textShadow: true });
+  // 动态 CSS 引擎全域穿透检查（无模糊 + 聊天框全透一致性）
+  const fullCss = X.generateDynamicCss({ enabled: true });
+  check('无模糊纯净视界：彻底禁用全局 backdrop-filter 模糊', fullCss.includes('html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }'));
   check('全域穿透：html/body/#root/#app 彻底全透明', fullCss.includes('html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important;'));
   check('全域穿透：frame/panel/page/settings/detail 全透明',
     ['_frame', 'q_frame', '_content', '_panel', '_page', '_settings', 'detail'].every((s) => fullCss.includes(s)));
-  check('全域穿透：内部卡片变为高通透毛玻璃卡片 (rgba(255, 255, 255, 0.05))', fullCss.includes('rgba(255, 255, 255, 0.05)'));
+  check('聊天框与底栏全透：与其它页面保持一致的全透无模糊',
+    ['_bottomRow', 'q_bottomRow', '_dock', 'q_dock', 'composer', 'Composer'].every((s) => fullCss.includes(s)));
+  check('聊天框卡片线框：无模糊轻量深色透明底 + 细微边框', fullCss.includes('rgba(10, 15, 26, 0.45)'));
   check('文字 HUD 保护：标题白色且注入抗晕散立体阴影', fullCss.includes('text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)'));
   check('文字 HUD 保护：代码路径标签样式优化', fullCss.includes('background: rgba(0, 0, 0, 0.4)'));
 
   check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
 
-  // store：默认开启，默认通透度为 0.0（纯粹全景），毛玻璃 12px
+  // store：默认开启，纯净无模糊全透（surfaceOpacity: 0.0, blur: 0）
   const storeSpec = X.makeStore().spec;
   const initial = storeSpec.init();
   check('store 默认开启且通透度推荐为 0.0（纯粹全景）', initial.enabled === true && initial.surfaceOpacity === 0.0);
-  check('store 默认毛玻璃为 12px 且智能对比度默认开启', initial.blur === 12 && initial.autoContrast === true && initial.textShadow === true);
+  check('store 默认无模糊（blur: 0）且智能对比度默认开启', initial.blur === 0 && initial.autoContrast === true && initial.textShadow === true);
 
   const draft = { enabled: 'x' };
   storeSpec.actions.normalize(draft);
@@ -181,29 +185,27 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   const d3 = {};
   storeSpec.actions.setSurfaceOpacity(d3, 0.0);
   check('setSurfaceOpacity 支持 0.0 纯粹全透', d3.surfaceOpacity === 0.0);
-  storeSpec.actions.setSurfaceOpacity(d3, 0.45);
-  check('setSurfaceOpacity 支持数值设置', d3.surfaceOpacity === 0.45);
 
   const d4 = {};
-  storeSpec.actions.setBlur(d4, 16);
-  check('setBlur 支持毛玻璃数值设置', d4.blur === 16);
+  storeSpec.actions.setBlur(d4, 0);
+  check('setBlur 设置无模糊 (0)', d4.blur === 0);
 
-  const d5 = { surfaceOpacity: 0.8, blur: 0, autoContrast: false };
+  const d5 = { surfaceOpacity: 0.8, blur: 16, autoContrast: false };
   storeSpec.actions.resetDefaults(d5);
-  check('resetDefaults 恢复官方推荐全透状态 (0.0)', d5.surfaceOpacity === 0.0 && d5.blur === 12 && d5.autoContrast === true);
+  check('resetDefaults 恢复官方推荐无模糊全透状态 (0.0, blur: 0)', d5.surfaceOpacity === 0.0 && d5.blur === 0 && d5.autoContrast === true);
 
   // ── 旧版持久化文档迁移至 Schema 3 ────────────────────────────────────
   const legacy = { schemaVersion: 1, enabled: false, speed: 0.2, boost: false };
   storeSpec.actions.normalize(legacy);
   check('旧版文档迁移后 enabled 复位为 true', legacy.enabled === true);
   check('旧版文档的废弃字段 boost 被清除', !('boost' in legacy));
-  check('旧版文档迁移后默认 surfaceOpacity 为 0.0', legacy.surfaceOpacity === 0.0);
+  check('旧版文档迁移后默认 surfaceOpacity 为 0.0 且 blur 为 0', legacy.surfaceOpacity === 0.0 && legacy.blur === 0);
   check('迁移后 schemaVersion 升到当前版本 3', legacy.schemaVersion === 3);
 
   // 当前版本文档保留用户个性化设置
-  const current = { schemaVersion: 3, enabled: false, surfaceOpacity: 0.25 };
+  const current = { schemaVersion: 3, enabled: false };
   storeSpec.actions.normalize(current);
-  check('当前版本文档保留用户设置（enabled: false, opacity: 0.25）', current.enabled === false && current.surfaceOpacity === 0.25);
+  check('当前版本文档保留用户显式开关设置（enabled: false）', current.enabled === false);
 
   finish();
 
