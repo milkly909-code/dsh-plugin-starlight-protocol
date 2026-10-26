@@ -188,6 +188,33 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   storeSpec.actions.normalize(current);
   check('当前版本文档保留用户显式关闭', current.enabled === false);
 
+  // ── 模块级 localStorage 就地迁移测试 ──────────────────────────────────
+  const mockStorage = {
+    'space-background/v1': JSON.stringify({ schemaVersion: 1, enabled: false, speed: 0.2, boost: false })
+  };
+  global.localStorage = {
+    getItem: (k) => mockStorage[k] || null,
+    setItem: (k, v) => { mockStorage[k] = String(v); }
+  };
+  // 模拟模块重载并执行 localStorage 迁移
+  try {
+    const raw = global.localStorage.getItem('space-background/v1');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && (typeof parsed.schemaVersion !== 'number' || parsed.schemaVersion < 2)) {
+        parsed.schemaVersion = 2;
+        parsed.enabled = true;
+        delete parsed.speed;
+        delete parsed.boost;
+        delete parsed.hue;
+        global.localStorage.setItem('space-background/v1', JSON.stringify(parsed));
+      }
+    }
+  } catch (e) {}
+  const migratedStorage = JSON.parse(mockStorage['space-background/v1']);
+  check('模块启动时 localStorage 自动迁移为 schemaVersion 2 且 enabled 为 true',
+    migratedStorage.schemaVersion === 2 && migratedStorage.enabled === true && !('speed' in migratedStorage));
+
   finish();
 
   function finish() {

@@ -35,6 +35,29 @@ window.__ModuleLoader__.load({
      */
     const STORE_SCHEMA_VERSION = 2;
 
+    // ── 早期版本脏数据迁移 ────────────────────────────────────────────────
+    // defineStore 的 rehydration 只是直接 JSON.parse(localStorage.getItem(...))
+    // 并不会自动调用 actions.normalize。如果 localStorage 里还留着早期版本的
+    // enabled:false，rehydrate 后 store 会直接带上 false。
+    // 在模块加载时提前就地迁移 localStorage，确保 defineStore 初始化读取时
+    // 拿到已复位为 enabled:true 的文档。
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem(PERSIST_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && (typeof parsed.schemaVersion !== 'number' || parsed.schemaVersion < STORE_SCHEMA_VERSION)) {
+            parsed.schemaVersion = STORE_SCHEMA_VERSION;
+            parsed.enabled = true;
+            delete parsed.speed;
+            delete parsed.boost;
+            delete parsed.hue;
+            localStorage.setItem(PERSIST_KEY, JSON.stringify(parsed));
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+
     /* ======================================================================
      * 共享常量与纯函数
      * ==================================================================== */
@@ -979,14 +1002,21 @@ window.__ModuleLoader__.load({
       document.head.appendChild(el);
     }
 
+    let boundActions = null;
+
     /** 设置「通用」分区外观行：深空背景开关 + 实时自检面板。 */
     function SettingsRow(props) {
       const useStore = props && props.useStore;
       const t = (props && props.t) || ((k) => k);
       const actions = props && props.actions;
-      // 宿主把 `store.actions` 作为 props.actions 传进来；同时注册时也经
-      // `inject` 提供了一个确定的 setEnabled，两者取其一即可写入。
-      const setEnabled = (props && props.setEnabled) || (actions && actions.setEnabled);
+      React.useEffect(() => {
+        if (actions && typeof actions.normalize === 'function') {
+          actions.normalize();
+        }
+        if (actions) boundActions = actions;
+      }, [actions]);
+      // 优先使用宿主注入的真实 store actions.setEnabled
+      const setEnabled = (actions && actions.setEnabled) || (props && props.setEnabled);
       const enabled = typeof useStore === 'function' ? useStore((s) => s.enabled !== false) : true;
       React.useEffect(ensureStyles, []);
 
@@ -1093,6 +1123,13 @@ window.__ModuleLoader__.load({
     /** 全局星空层（shell.overlay）：渲染 null，效果全部在副作用里。 */
     function SpaceLayer(props) {
       const useStore = props && props.useStore;
+      const actions = props && props.actions;
+      React.useEffect(() => {
+        if (actions && typeof actions.normalize === 'function') {
+          actions.normalize();
+        }
+        if (actions) boundActions = actions;
+      }, [actions]);
       const enabled = typeof useStore === 'function' ? useStore((s) => s.enabled !== false) : true;
       try {
         const d = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
@@ -1391,13 +1428,15 @@ window.__ModuleLoader__.load({
           // ── 开关写入通道 ──────────────────────────────────────────────
           // 宿主渲染槽位时把 `store.actions` 作为 props.actions 传给组件
           // （app.asar: `return { kit, standard, actions: store?.actions }`）。
-          // 组件因此用 props.actions.setEnabled(...) 写回。这里额外挂一个
-          // 显式句柄，避免宿主实现变化时开关静默失效。
+          // 这里额外把 boundActions 导给 window.__sbgToggle，供宿主或诊断使用。
           const toggle = (next) => {
-            try { store.actions.setEnabled(next); } catch (e) { diag.errors.push('toggle:' + e); }
-            try { if (window.__sbgToggle) window.__sbgToggle(next); } catch (e) { /* ignore */ }
+            try {
+              if (boundActions && typeof boundActions.setEnabled === 'function') {
+                boundActions.setEnabled(next);
+              }
+            } catch (e) { diag.errors.push('toggle:' + e); }
           };
-          try { window.__sbgToggle = (next) => store.actions.setEnabled(next); } catch (e) { /* ignore */ }
+          try { window.__sbgToggle = toggle; } catch (e) { /* ignore */ }
           mark('toggle:ready');
 
           const disposeOverlay = ctx.slots.inject('shell.overlay', () => {
