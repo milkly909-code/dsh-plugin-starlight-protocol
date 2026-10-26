@@ -962,7 +962,7 @@ window.__ModuleLoader__.load({
       document.head.appendChild(el);
     }
 
-    /** 设置「通用」分区外观行：深空背景开关。 */
+    /** 设置「通用」分区外观行：深空背景开关 + 实时自检面板。 */
     function SettingsRow(props) {
       const useStore = props && props.useStore;
       const t = (props && props.t) || ((k) => k);
@@ -972,10 +972,62 @@ window.__ModuleLoader__.load({
       const setEnabled = (props && props.setEnabled) || (actions && actions.setEnabled);
       const enabled = typeof useStore === 'function' ? useStore((s) => s.enabled !== false) : true;
       React.useEffect(ensureStyles, []);
+
+      // ── 自检面板 ─────────────────────────────────────────────────────
+      // 为什么把诊断画在界面上：这个插件的效果全部在一个渲染 null 的
+      // overlay 组件里，一旦副作用静默失败，用户在界面上得不到任何反馈，
+      // 只能靠开发者工具。把状态直接铺在这一行，能一眼看出卡在哪一步。
+      const probe = () => {
+        const out = {
+          overlay: false,
+          canvas: 0,
+          bgStyle: false,
+          bgOn: null,
+          steps: 0,
+          errors: [],
+          debug: null,
+        };
+        try {
+          out.overlay = !!document.querySelector('[data-sbg-host]');
+          out.canvas = document.querySelectorAll('canvas.sbg-cv').length;
+          out.bgStyle = !!document.getElementById('sbg-global-bg');
+          out.bgOn = document.documentElement.getAttribute('data-sbg-on');
+          const a = window.__sbgApply;
+          if (a) { out.steps = (a.steps || []).length; out.errors = (a.errors || []).slice(-3); }
+          out.debug = window.__sbgDebug || null;
+        } catch (e) {
+          out.errors = ['probe: ' + String((e && e.message) || e)];
+        }
+        return out;
+      };
+
+      const [state, setState] = React.useState(probe);
+      React.useEffect(() => {
+        // 首帧之后副作用才跑，所以短轮询几次把真实状态收上来
+        let n = 0;
+        const timer = setInterval(() => {
+          setState(probe());
+          n += 1;
+          if (n >= 8) clearInterval(timer);
+        }, 400);
+        return () => clearInterval(timer);
+      }, [enabled]);
+
+      const ok = state.overlay && state.canvas > 0;
+      const rowStyle = { fontSize: '12px', lineHeight: '18px', opacity: 0.85, marginTop: '6px' };
+      const lines = [
+        `${ok ? '✓' : '✗'} 星空层 ${state.overlay ? '已挂载' : '未挂载'} · canvas ${state.canvas} 个`,
+        `${state.bgOn === 'on' ? '✓' : '✗'} data-sbg-on=${state.bgOn ?? 'null'} · 兜底CSS ${state.bgStyle ? '已注入' : '未注入'}`,
+        `apply 步骤 ${state.steps}${state.debug && state.debug.tokensApplied ? ' · 令牌已覆盖' : ' · 令牌未覆盖'}`,
+      ];
+      if (state.errors.length > 0) lines.push('⚠ ' + state.errors.join(' | '));
+
       return h('div', { className: 'sbg-row' },
         h('div', { className: 'sbg-row-text' },
           h('div', { className: 'sbg-row-title' }, t('rowTitle')),
-          h('div', { className: 'sbg-row-desc' }, t('rowDesc'))),
+          h('div', { className: 'sbg-row-desc' }, t('rowDesc')),
+          h('div', { className: 'sbg-probe', style: rowStyle },
+            lines.map((line, i) => h('div', { key: String(i) }, line)))),
         h('button', {
           type: 'button',
           className: 'sbg-switch',
