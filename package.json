@@ -12,14 +12,14 @@
     "starfield"
   ],
   "license": "MIT",
-  "author": "",
+  "author": "milkly909-code",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/CHANGE_ME/dsh-space-background.git"
+    "url": "git+https://github.com/milkly909-code/dsh-space-background.git"
   },
-  "homepage": "https://github.com/CHANGE_ME/dsh-space-background#readme",
+  "homepage": "https://github.com/milkly909-code/dsh-space-background#readme",
   "bugs": {
-    "url": "https://github.com/CHANGE_ME/dsh-space-background/issues"
+    "url": "https://github.com/milkly909-code/dsh-space-background/issues"
   },
   "scripts": {
     "check": "node --check client.js && node --check index.js && node test/run.cjs",
