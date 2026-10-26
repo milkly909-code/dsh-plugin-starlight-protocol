@@ -999,66 +999,111 @@ window.__ModuleLoader__.load({
       } catch (e) { /* ignore */ }
       React.useEffect(() => {
         if (!enabled) return undefined;
-        try {
-          const d = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-          d.steps.push('SpaceLayer:effect:start');
-        } catch (e) { /* ignore */ }
-        ensureStyles();
-        const debug = { canvas: false, themeReady: !!themeApi, tokensApplied: false, retries: 0, error: '' };
-        try { window.__sbgDebug = debug; } catch (e) { /* 页面限制时忽略诊断 */ }
-        const host = document.createElement('div');
-        host.setAttribute('data-sbg-host', '');
-        host.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
-        document.body.insertBefore(host, document.body.firstChild);
-        const engine = createSpaceEngine(host, {
-          interactive: false,
-          hud: false,
-          fpsCap: 30,
-          autoDrift: 0.012,
-          density: 1000,
-          speed: 0.4,
-        });
-        debug.canvas = true;
-        const style = document.createElement('style');
-        style.id = 'sbg-global-bg';
-        style.textContent = GLOBAL_BG_CSS;
-        document.head.appendChild(style);
-        document.documentElement.setAttribute('data-sbg-on', 'on');
-        // 主题令牌覆盖：服务就绪即套用；未就绪则短间隔重试（最多 60 次）
-        let disposeTokens = null;
-        let retryTimer = null;
-        let tries = 0;
-        const applyTokens = () => {
-          if (disposeTokens) return true;
-          if (themeApi && typeof themeApi.overrideTokens === 'function') {
-            try {
-              disposeTokens = themeApi.overrideTokens(PANEL_ID, GLOBAL_TOKEN_OVERRIDES);
-              debug.themeReady = true;
-              debug.tokensApplied = true;
-              return true;
-            } catch (e) {
-              debug.error = String(e && e.message || e);
-              return false;
-            }
-          }
-          return false;
+
+        const diag = (() => {
+          try { return (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false }); }
+          catch (e) { return null; }
+        })();
+        const mark = (s) => { try { diag && diag.steps.push(s); } catch (e) { /* ignore */ } };
+        const fail = (where, e) => {
+          const msg = where + ': ' + String((e && e.message) || e);
+          try { diag && diag.errors.push(msg); } catch (_) { /* ignore */ }
+          try { if (window.__sbgDebug) window.__sbgDebug.error = msg; } catch (_) { /* ignore */ }
+          try { console.error('[space-background]', msg); } catch (_) { /* ignore */ }
         };
-        if (!applyTokens()) {
-          retryTimer = setInterval(() => {
-            debug.retries = ++tries;
-            if (applyTokens() || tries >= 60) {
-              if (retryTimer) clearInterval(retryTimer);
-              retryTimer = null;
+
+        mark('SpaceLayer:effect:start');
+
+        // ── 整个副作用体包在 try 里 ──────────────────────────────────────
+        // React 会静默吞掉 effect 里抛出的异常：没有这层保护，任何一步失败
+        // （canvas 不可用、引擎初始化异常、主题服务未就绪……）都会让星空
+        // 永远不出现，而界面上看不到任何错误——这正是「装了却没效果」的
+        // 最难排查的一类失败。捕获后至少把原因写进 __sbgApply.errors。
+        const cleanupParts = [];
+        try {
+          ensureStyles();
+          mark('ensureStyles:ok');
+
+          const debug = { canvas: false, themeReady: !!themeApi, tokensApplied: false, retries: 0, error: '' };
+          try { window.__sbgDebug = debug; } catch (e) { /* 页面限制时忽略诊断 */ }
+
+          const host = document.createElement('div');
+          host.setAttribute('data-sbg-host', '');
+          host.style.cssText = 'position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;';
+          if (document.body && document.body.firstChild !== undefined) {
+            document.body.insertBefore(host, document.body.firstChild);
+          } else if (document.body) {
+            document.body.appendChild(host);
+          } else {
+            throw new Error('document.body unavailable');
+          }
+          cleanupParts.push(() => { try { host.remove(); } catch (e) { /* ignore */ } });
+          mark('host:inserted');
+
+          const engine = createSpaceEngine(host, {
+            interactive: false,
+            hud: false,
+            fpsCap: 30,
+            autoDrift: 0.012,
+            density: 1000,
+            speed: 0.4,
+          });
+          cleanupParts.push(() => { try { engine.dispose(); } catch (e) { /* ignore */ } });
+          debug.canvas = true;
+          mark('engine:created');
+
+          const style = document.createElement('style');
+          style.id = 'sbg-global-bg';
+          style.textContent = GLOBAL_BG_CSS;
+          document.head.appendChild(style);
+          cleanupParts.push(() => { try { style.remove(); } catch (e) { /* ignore */ } });
+
+          document.documentElement.setAttribute('data-sbg-on', 'on');
+          cleanupParts.push(() => { try { document.documentElement.removeAttribute('data-sbg-on'); } catch (e) { /* ignore */ } });
+          mark('css:applied');
+
+          // 主题令牌覆盖：服务就绪即套用；未就绪则短间隔重试（最多 60 次）
+          let disposeTokens = null;
+          let retryTimer = null;
+          let tries = 0;
+          const applyTokens = () => {
+            if (disposeTokens) return true;
+            if (themeApi && typeof themeApi.overrideTokens === 'function') {
+              try {
+                disposeTokens = themeApi.overrideTokens(PANEL_ID, GLOBAL_TOKEN_OVERRIDES);
+                debug.themeReady = true;
+                debug.tokensApplied = true;
+                mark('tokens:applied');
+                return true;
+              } catch (e) {
+                fail('theme.overrideTokens', e);
+                return false;
+              }
             }
-          }, 1000);
+            return false;
+          };
+          if (!applyTokens()) {
+            retryTimer = setInterval(() => {
+              debug.retries = ++tries;
+              if (applyTokens() || tries >= 60) {
+                if (retryTimer) clearInterval(retryTimer);
+                retryTimer = null;
+              }
+            }, 1000);
+          }
+          cleanupParts.push(() => { if (retryTimer) clearInterval(retryTimer); });
+          cleanupParts.push(() => {
+            try { if (typeof disposeTokens === 'function') disposeTokens(); } catch (e) { /* ignore */ }
+          });
+
+          // 兜底 CSS 独立生效，所以令牌覆盖失败也仍有半透明效果
+          mark('SpaceLayer:effect:done');
+        } catch (e) {
+          fail('SpaceLayer:effect', e);
         }
+
         return () => {
-          if (retryTimer) clearInterval(retryTimer);
-          engine.dispose();
-          host.remove();
-          style.remove();
-          document.documentElement.removeAttribute('data-sbg-on');
-          if (typeof disposeTokens === 'function') disposeTokens();
+          for (const fn of cleanupParts.reverse()) { try { fn(); } catch (e) { /* ignore */ } }
         };
       }, [enabled]);
       return null;

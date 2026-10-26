@@ -26,3 +26,15 @@ desktop.ini
 .workbuddy-*/
 .dsh-qoder-connect/
 space-background/
+
+# ── 本地工作区目录（不随包发布）─────────────────────────────────────────
+# _backups      改文件前的原件快照
+# _community    提交到 awesome-dsh-plugin 的条目 YAML
+# _diagnostics  离线加载/解析模拟脚本
+# _findings     排查记录
+# 这些是开发过程的辅助材料：`npm pack` 的 files 白名单本就不含它们，
+# 这里再排除一次，避免被 git 误跟踪。
+_backups/
+_community/
+_diagnostics/
+_findings/
