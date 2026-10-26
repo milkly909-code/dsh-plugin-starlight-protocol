@@ -1174,8 +1174,14 @@ window.__ModuleLoader__.load({
 
           // 兜底 CSS 独立生效，所以令牌覆盖失败也仍有半透明效果
           mark('SpaceLayer:effect:done');
+
+          // ── 上报真实测量结果给 Host（诊断期专用）─────────────────────
+          // 浏览器侧无法被模型直接观察，所以把「到底渲染出了什么」量出来
+          // 发回 Host 落盘：canvas 数量与尺寸、层级、CSS 是否命中、是否被遮挡。
+          scheduleDiagReport(host, debug, diag);
         } catch (e) {
           fail('SpaceLayer:effect', e);
+          scheduleDiagReport(null, null, diag);
         }
 
         return () => {
@@ -1183,6 +1189,95 @@ window.__ModuleLoader__.load({
         };
       }, [enabled]);
       return null;
+    }
+
+    /* ======================================================================
+     * 诊断上报（诊断期专用；问题定位后删除）
+     * ==================================================================== */
+
+    /**
+     * 测量当前页面真实状态并发给 Host。
+     *
+     * 为什么需要它：这个插件的效果全在浏览器侧，而失败又是静默的。模型看不到
+     * 浏览器，只能靠把「实际渲染出了什么」量下来回传——canvas 数量与尺寸、
+     * 画布所在层级、兜底 CSS 是否命中、框架背景是否已透明。
+     */
+    function scheduleDiagReport(host, debug, diag) {
+      const report = () => {
+        const out = { at: Date.now(), url: location.href };
+        try {
+          const canvases = [...document.querySelectorAll('canvas.sbg-cv')];
+          out.canvasCount = canvases.length;
+          out.canvases = canvases.map((c) => ({
+            w: c.width, h: c.height,
+            cssW: c.clientWidth, cssH: c.clientHeight,
+          }));
+          const hostEl = document.querySelector('[data-sbg-host]');
+          out.hostPresent = !!hostEl;
+          if (hostEl) {
+            const cs = getComputedStyle(hostEl);
+            out.hostStyle = {
+              parent: hostEl.parentElement ? hostEl.parentElement.tagName : null,
+              position: cs.position, zIndex: cs.zIndex, opacity: cs.opacity,
+              display: cs.display, visibility: cs.visibility,
+              rect: (() => { try { const r = hostEl.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; } catch (e) { return null; } })(),
+            };
+            out.hostInViewport = (() => {
+              try {
+                const r = hostEl.getBoundingClientRect();
+                return r.width > 0 && r.height > 0;
+              } catch (e) { return null; }
+            })();
+          }
+          out.dataSbgOn = document.documentElement.getAttribute('data-sbg-on');
+          out.bgStyleInjected = !!document.getElementById('sbg-global-bg');
+          out.componentStyleInjected = !!document.getElementById('sbg-style');
+
+          // 框架根是否已透明（兜底 CSS 的关键目标）
+          const frame = document.querySelector('[class*="q_frame"],[class*="_frame"]');
+          out.frameFound = !!frame;
+          if (frame) {
+            const cs = getComputedStyle(frame);
+            out.frame = {
+              cls: frame.className,
+              backgroundColor: cs.backgroundColor,
+              backgroundImage: cs.backgroundImage,
+              isTransparent: /rgba?\(\s*0\s*,\s*0\s*,\s*0\s*,\s*0\s*\)|transparent/.test(cs.backgroundColor),
+            };
+          }
+
+          // 中点处最上层元素是谁——判断画布是否被别的元素盖住
+          try {
+            const el = document.elementFromPoint(
+              Math.floor(innerWidth / 2), Math.floor(innerHeight / 2),
+            );
+            out.topElementAtCenter = el ? (el.tagName + (el.className ? '.' + String(el.className).split(' ')[0] : '')) : null;
+          } catch (e) { /* ignore */ }
+
+          out.applySteps = diag ? (diag.steps || []).length : 0;
+          out.applyErrors = diag ? (diag.errors || []) : [];
+          out.applyMount = diag ? diag.mount || null : null;
+          out.debug = debug || null;
+          out.sbgDebugGlobal = window.__sbgDebug || null;
+        } catch (e) {
+          out.probeError = String((e && e.message) || e);
+        }
+
+        // POST 给 Host 落盘；失败就退到 localStorage 便于用户手动查看
+        try {
+          fetch('/plugins/space-background/diag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(out),
+          }).catch(() => {});
+        } catch (e) { /* ignore */ }
+        try { localStorage.setItem('space-background/diag', JSON.stringify(out)); } catch (e) { /* ignore */ }
+        try { window.__sbgDiag = out; } catch (e) { /* ignore */ }
+      };
+
+      // 首帧后立刻报一次，再等 1.5s 报一次（让引擎完成首次绘制）
+      setTimeout(report, 300);
+      setTimeout(report, 1800);
     }
 
     /* ======================================================================
