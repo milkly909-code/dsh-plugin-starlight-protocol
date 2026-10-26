@@ -2,107 +2,538 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>深空背景 · DSH 外观插件预览</title>
+<title>深空背景 v2 · 双主题视觉验证</title>
 <style>
-  html, body { margin: 0; height: 100%; background: #f2f3f5; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
-  #app { position: fixed; inset: 0; }
-  /* 模拟 DSH 壳层：默认不透明；data-sbg-on 时半透明（对应真实插件的主题令牌覆盖效果） */
-  .demo_frame { position: absolute; inset: 30px 0 0 0; display: grid; grid-template-columns: 220px 1fr; grid-template-rows: 1fr 40px; background: #fff; }
-  html[data-sbg-on] .demo_frame { background: rgba(243,245,249,0.88); }
-  .demo_titlebar { position: absolute; top: 0; left: 0; right: 0; height: 30px; background: #ececf0; z-index: 3; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: #666; }
-  html[data-sbg-on] .demo_titlebar { background: rgba(235,236,241,0.8); }
-  .demo_sidebar { background: #ececf0; border-right: 1px solid rgba(0,0,0,.06); padding: 12px 8px; color: #333; overflow: auto; }
-  html[data-sbg-on] .demo_sidebar { background: rgba(235,236,241,0.8); }
-  .demo_center { background: #fff; overflow: auto; padding: 26px 30px; color: #333; }
-  html[data-sbg-on] .demo_center { background: rgba(243,245,249,0.88); }
-  .demo_bottom { grid-column: 1 / -1; background: #fff; border-top: 1px solid rgba(0,0,0,.06); display: flex; align-items: center; padding: 0 14px; color: #555; font-size: 12px; }
-  html[data-sbg-on] .demo_bottom { background: rgba(243,245,249,0.88); }
-  .demo-side-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 13px; margin-bottom: 2px; }
-  .demo-side-item.on { background: rgba(0,0,0,.06); font-weight: 600; }
-  .demo-settings { max-width: 620px; }
-  .demo-settings h2 { font-size: 15px; margin: 0 0 4px; }
-  .demo-settings .sub { font-size: 12px; color: #888; margin-bottom: 8px; }
-  /* 模拟内置「外观」行与「版本」行，衬托真实「深空背景」行 */
-  .demo-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
-  .demo-row-title { font-size: 14px; line-height: 22px; }
-  .demo-cubes { display: flex; gap: 8px; }
-  .demo-cube { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; padding: 8px 14px; border: 1px solid rgba(0,0,0,.1); border-radius: 8px; background: #fafafa; cursor: default; }
-  .demo-cube.on { border-color: #4176e6; box-shadow: 0 0 0 1px #4176e6; }
-  .demo-note { position: fixed; bottom: 50px; left: 50%; transform: translateX(-50%); z-index: 50; font-size: 12px; color: rgba(255,255,255,.9); background: rgba(10,16,30,.6); padding: 6px 14px; border-radius: 999px; pointer-events: none; backdrop-filter: blur(4px); white-space: nowrap; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  body { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+
+  .pane { position: relative; overflow: hidden; }
+  .pane-label {
+    position: absolute; top: 8px; left: 8px; z-index: 100;
+    font-size: 11px; font-weight: 700; letter-spacing: .5px;
+    padding: 3px 9px; border-radius: 999px;
+    background: rgba(0,0,0,.55); color: #fff;
+  }
+
+  /* ── 星空画布 ── */
+  /* 关键：必须显式给 100% 尺寸，否则 canvas 用属性尺寸（DPR 缩放后）显示，
+     只盖住面板一部分，下方会露出 .frame 半透背景叠在 body 上的脏灰色。 */
+  .space { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
+
+  /* ── DSH 壳层：全部用令牌驱动 ── */
+  .frame {
+    position: absolute; inset: 0; z-index: 1;
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    grid-template-rows: 1fr 64px;
+    background: var(--dsw-alias-bg-base);
+    color: var(--dsw-alias-label-primary);
+  }
+  .sidebar {
+    background: var(--dsw-specific-sidebar-fill);
+    border-right: 1px solid var(--dsw-alias-border-l3);
+    padding: 10px 8px; overflow: auto;
+  }
+  .center {
+    padding: 18px 20px; overflow: auto;
+  }
+  .dock {
+    grid-column: 1 / -1;
+    background: var(--dsw-alias-bg-base);
+    border-top: 1px solid var(--dsw-alias-border-l3);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 16px; font-size: 12px;
+    color: var(--dsw-alias-label-tertiary);
+  }
+
+  /* 侧栏项 */
+  .nav-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 9px; border-radius: 8px; font-size: 13px;
+    color: var(--dsw-alias-label-secondary);
+    margin-bottom: 2px; cursor: default;
+  }
+  .nav-item.on { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); font-weight: 600; }
+  .nav-sep { height: 1px; background: var(--dsw-alias-border-l1); margin: 8px 4px; }
+
+  /* 标题 / 正文 */
+  h1 { font-size: 17px; margin: 0 0 3px; color: var(--dsw-alias-label-primary); }
+  .sub { font-size: 12px; color: var(--dsw-alias-label-tertiary); margin-bottom: 14px; }
+
+  /* 卡片（层级 1） */
+  .card {
+    background: var(--dsw-alias-bg-layer-1);
+    border: 1px solid var(--dsw-alias-border-l2);
+    border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .card-title { font-size: 13.5px; font-weight: 600; color: var(--dsw-alias-label-primary); margin-bottom: 3px; }
+  .card-desc { font-size: 12px; color: var(--dsw-alias-label-secondary); line-height: 1.5; }
+
+  /* 内嵌卡片（层级 2，验证层次感） */
+  .inner {
+    background: var(--dsw-alias-bg-layer-2);
+    border: 1px solid var(--dsw-alias-border-l1);
+    border-radius: 8px; padding: 8px 10px; margin-top: 8px;
+    font-size: 11.5px; color: var(--dsw-alias-label-secondary);
+  }
+
+  /* 标签胶囊 */
+  .tag {
+    display: inline-flex; align-items: center;
+    font-size: 11px; padding: 2px 8px; border-radius: 4px;
+    background: rgba(56,189,248,.12);
+    border: 1px solid rgba(56,189,248,.28);
+    color: #7dd3fc; margin-right: 6px;
+  }
+  /* data-theme 挂在 .pane 上（不是 html），选择器必须跟着改 */
+  [data-theme="light"] .tag { background: rgba(2,132,199,.09); border-color: rgba(2,132,199,.26); color: #0284C7; }
+
+  /* 下拉触发器 */
+  .trigger {
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 10px;
+    min-width: 120px; padding: 6px 11px; border-radius: 6px;
+    background: var(--dsw-specific-input-major);
+    border: 1px solid var(--dsw-alias-border-l3);
+    color: var(--dsw-alias-label-primary);
+    font-size: 12.5px; cursor: default;
+  }
+
+  /* 菜单（模拟真实弹窗，验证磨砂 + 圆角 + 无嵌套框） */
+  /* 放在面板中部偏右的空旷区，不压正文卡片、不压 composer、不压审计面板 */
+  .menu {
+    position: absolute; right: 16px; top: 340px; z-index: 60;
+    width: 168px; padding: 5px;
+    background: var(--dsw-specific-menu);
+    border: 1px solid var(--dsw-alias-border-l2);
+    border-radius: var(--dsw-radius-lg, 10px);
+    box-shadow: 0 16px 36px rgba(0,0,0,.35);
+    backdrop-filter: var(--dsw-menu-backdrop-filter);
+    -webkit-backdrop-filter: var(--dsw-menu-backdrop-filter);
+  }
+  .menu-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 9px; border-radius: 6px;
+    font-size: 12.5px; color: var(--dsw-alias-label-secondary);
+    cursor: default;
+  }
+  .menu-item:hover { background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+  .menu-item .ic { width: 14px; text-align: center; opacity: .85; }
+  .menu-badge {
+    margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: .4px;
+    padding: 1px 5px; border-radius: 3px;
+    background: rgba(56,189,248,.18); border: 1px solid rgba(56,189,248,.35); color: #38bdf8;
+  }
+  [data-theme="light"] .menu-badge { background: rgba(2,132,199,.13); border-color: rgba(2,132,199,.32); color: #0284C7; }
+  /* 输入卡片 */
+  .composer {
+    position: absolute; left: 50%; transform: translateX(-50%);
+    bottom: 70px; width: 88%; max-width: 520px; z-index: 20;
+    background: var(--dsw-specific-input-major);
+    border: 1px solid var(--dsw-alias-border-l3);
+    border-radius: 14px;
+    padding: 12px 14px 10px;
+    box-shadow: 0 6px 24px rgba(0,0,0,.28);
+    color: var(--dsw-alias-label-primary);
+    font-size: 13px;
+  }
+  .composer .ph { color: var(--dsw-alias-label-tertiary); }
+  .composer-row { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; font-size: 11.5px; color: var(--dsw-alias-label-tertiary); }
+
+  /* 审计面板：固定在 pane 顶部右侧的空白带，不遮挡任何待观察元素 */
+  .audit {
+    position: absolute; right: 8px; top: 8px; z-index: 200;
+    font: 10px/1.45 ui-monospace, Consolas, monospace;
+    background: rgba(0,0,0,.80); color: #d1fae5;
+    padding: 7px 9px; border-radius: 6px;
+    max-width: 250px; white-space: pre-wrap;
+  }
+  .audit .bad { color: #fca5a5; }
+  .audit .good { color: #86efac; }
 </style>
 </head>
 <body>
-<div id="app"></div>
 
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script>
-  // ModuleLoader 垫片：捕获 client.js 工厂并注入平台模块替身
-  window.__ModuleLoader__ = {
-    load(mod) {
-      function shimRequire(name) {
-        if (name === 'react') return React;
-        if (name === '@deepseek-ai/dsh-client-store') {
-          return { defineStore: (spec) => ({ spec }) }; // 预览环境不落盘
-        }
-        throw new Error('preview shim: unexpected require: ' + name);
-      }
-      window.__sbgModule = mod.factory(shimRequire);
+<div class="pane" id="pane-dark">
+  <span class="pane-label">DARK · 深空半透玻璃</span>
+  <canvas class="space" id="space-dark"></canvas>
+  <div class="frame" data-mock>
+    <aside class="sidebar">
+      <div class="nav-item">✦ 插件</div>
+      <div class="nav-item">▦ 插件市场</div>
+      <div class="nav-item">◉ 自动化任务</div>
+      <div class="nav-item">▭ 上下文洞察</div>
+      <div class="nav-sep"></div>
+      <div class="nav-item on">◈ 00-小助理</div>
+      <div class="nav-item">◇ 01-外观插件</div>
+    </aside>
+    <main class="center">
+      <h1>通用设置</h1>
+      <div class="sub">验证深浅主题下文字与表面的对比度</div>
+
+      <div class="card">
+        <div class="card-title">权限</div>
+        <div class="card-desc">选择新会话的默认权限模式</div>
+        <div class="inner">
+          <span class="tag">persona</span><span class="tag">agent-instructions</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">外观</div>
+        <div class="card-desc">选择界面配色方案</div>
+        <div class="inner" style="display:flex;gap:8px;align-items:center;">
+          <span>完全权限</span>
+          <span class="trigger">完全权限 ⌄</span>
+        </div>
+      </div>
+    </main>
+    <div class="dock">
+      <span>43 轮 969 步 · 125 tok/s</span>
+      <span>295M tok · 缓存命中 97%</span>
+      <span>上下文 15%</span>
+    </div>
+  </div>
+  <div class="composer">
+    <div class="ph">发消息或创建任务，/ 调用指令，@ 文件或对话</div>
+    <div class="composer-row"><span>＋ ⊙ 完全权限</span><span>Gemini 3.8 Flash high ⌄ ⏎</span></div>
+  </div>
+  <div class="menu">
+    <div class="menu-item"><span class="ic">⚙</span><span>设置</span></div>
+    <div class="menu-item"><span class="ic">➤</span><span>意见反馈</span></div>
+    <div class="menu-item"><span class="ic">⇥</span><span>退出登录</span></div>
+    <div class="menu-item"><span class="ic">◈</span><span>自动审查</span><span class="menu-badge">EXP</span></div>
+  </div>
+  <div class="audit" id="audit-dark"></div>
+</div>
+
+<div class="pane" id="pane-light">
+  <span class="pane-label">LIGHT · 晨雾磨砂玻璃</span>
+  <canvas class="space" id="space-light"></canvas>
+  <div class="frame" data-mock>
+    <aside class="sidebar">
+      <div class="nav-item">✦ 插件</div>
+      <div class="nav-item">▦ 插件市场</div>
+      <div class="nav-item">◉ 自动化任务</div>
+      <div class="nav-item">▭ 上下文洞察</div>
+      <div class="nav-sep"></div>
+      <div class="nav-item on">◈ 00-小助理</div>
+      <div class="nav-item">◇ 01-外观插件</div>
+    </aside>
+    <main class="center">
+      <h1>通用设置</h1>
+      <div class="sub">验证深浅主题下文字与表面的对比度</div>
+
+      <div class="card">
+        <div class="card-title">权限</div>
+        <div class="card-desc">选择新会话的默认权限模式</div>
+        <div class="inner">
+          <span class="tag">persona</span><span class="tag">agent-instructions</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">外观</div>
+        <div class="card-desc">选择界面配色方案</div>
+        <div class="inner" style="display:flex;gap:8px;align-items:center;">
+          <span>完全权限</span>
+          <span class="trigger">完全权限 ⌄</span>
+        </div>
+      </div>
+    </main>
+    <div class="dock">
+      <span>43 轮 969 步 · 125 tok/s</span>
+      <span>295M tok · 缓存命中 97%</span>
+      <span>上下文 15%</span>
+    </div>
+  </div>
+  <div class="composer">
+    <div class="ph">发消息或创建任务，/ 调用指令，@ 文件或对话</div>
+    <div class="composer-row"><span>＋ ⊙ 完全权限</span><span>Gemini 3.8 Flash high ⌄ ⏎</span></div>
+  </div>
+  <div class="menu">
+    <div class="menu-item"><span class="ic">⚙</span><span>设置</span></div>
+    <div class="menu-item"><span class="ic">➤</span><span>意见反馈</span></div>
+    <div class="menu-item"><span class="ic">⇥</span><span>退出登录</span></div>
+    <div class="menu-item"><span class="ic">◈</span><span>自动审查</span><span class="menu-badge">EXP</span></div>
+  </div>
+  <div class="audit" id="audit-light"></div>
+</div>
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════
+   从真实 client.js 提取 PALETTE，保证预览与运行时完全一致
+   ══════════════════════════════════════════════════════════════ */
+// file:// 下 fetch 被 Chromium 拦截，因此内联一份与 client.js PALETTE 完全一致的副本。
+// 一致性由 test/engine.cjs 的「预览调色板与运行时一致」断言来保证。
+let PALETTE;
+{
+  PALETTE = {
+    dark: {
+      '--dsw-alias-bg-base': 'rgba(6, 10, 20, 0.58)',
+      '--dsw-alias-bg-layer-1': 'rgba(12, 18, 30, 0.64)',
+      '--dsw-alias-bg-layer-2': 'rgba(16, 24, 38, 0.70)',
+      '--dsw-alias-bg-layer-3': 'rgba(20, 30, 46, 0.76)',
+      '--dsw-alias-bg-layer-4': 'rgba(24, 36, 54, 0.82)',
+      '--dsw-alias-settings-card-fill': 'rgba(16, 24, 38, 0.72)',
+      '--dsw-specific-sidebar-fill': 'rgba(8, 12, 22, 0.66)',
+      '--dsw-specific-input-major': 'rgba(10, 16, 26, 0.74)',
+      '--dsw-specific-menu': 'rgba(13, 19, 30, 0.97)',
+      '--dsw-alias-label-primary': '#FFFFFF',
+      '--dsw-alias-label-secondary': '#E8F0FF',
+      '--dsw-alias-label-tertiary': '#C8DCFF',
+      '--dsw-alias-label-quaternary': 'rgba(200, 220, 255, 0.62)',
+      '--dsw-alias-border-l1': 'rgba(255, 255, 255, 0.12)',
+      '--dsw-alias-border-l2': 'rgba(255, 255, 255, 0.16)',
+      '--dsw-alias-border-l3': 'rgba(255, 255, 255, 0.20)',
+      '--dsw-alias-border-l4': 'rgba(255, 255, 255, 0.24)',
+      '--dsw-alias-interactive-bg-hover': 'rgba(255, 255, 255, 0.10)',
+      '--dsw-alias-scrollbar-bg-l1': 'rgba(255, 255, 255, 0.14)',
+      '--dsw-alias-scrollbar-bg-l2': 'rgba(255, 255, 255, 0.18)',
+      '--dsw-alias-scrollbar-hover-l1': 'rgba(56, 189, 248, 0.42)',
+      '--dsw-alias-scrollbar-hover-l2': 'rgba(56, 189, 248, 0.48)',
+      '--dsw-alias-button-floating-fill': 'rgba(13, 19, 30, 0.92)',
+      '--dsw-alias-button-floating-hover': 'rgba(20, 30, 46, 0.96)',
+      '--dsw-alias-state-business-primary': '#38bdf8',
+      '--dsw-focus-ring-color': 'rgba(56, 189, 248, 0.65)',
+      '--dsw-menu-backdrop-filter': 'blur(20px) saturate(140%)',
+    },
+    light: {
+      '--dsw-alias-bg-base': 'rgba(248, 250, 253, 0.74)',
+      '--dsw-alias-bg-layer-1': 'rgba(255, 255, 255, 0.82)',
+      '--dsw-alias-bg-layer-2': 'rgba(255, 255, 255, 0.88)',
+      '--dsw-alias-bg-layer-3': 'rgba(255, 255, 255, 0.92)',
+      '--dsw-alias-bg-layer-4': 'rgba(255, 255, 255, 0.96)',
+      '--dsw-alias-settings-card-fill': 'rgba(255, 255, 255, 0.90)',
+      '--dsw-specific-sidebar-fill': 'rgba(241, 245, 250, 0.80)',
+      '--dsw-specific-input-major': 'rgba(255, 255, 255, 0.92)',
+      '--dsw-specific-menu': 'rgba(255, 255, 255, 0.98)',
+      '--dsw-alias-label-primary': '#0F172A',
+      '--dsw-alias-label-secondary': '#1E293B',
+      '--dsw-alias-label-tertiary': '#475569',
+      '--dsw-alias-label-quaternary': '#64748B',
+      '--dsw-alias-border-l1': 'rgba(15, 23, 42, 0.08)',
+      '--dsw-alias-border-l2': 'rgba(15, 23, 42, 0.12)',
+      '--dsw-alias-border-l3': 'rgba(15, 23, 42, 0.16)',
+      '--dsw-alias-border-l4': 'rgba(15, 23, 42, 0.20)',
+      '--dsw-alias-interactive-bg-hover': 'rgba(15, 23, 42, 0.06)',
+      '--dsw-alias-scrollbar-bg-l1': 'rgba(15, 23, 42, 0.16)',
+      '--dsw-alias-scrollbar-bg-l2': 'rgba(15, 23, 42, 0.22)',
+      '--dsw-alias-scrollbar-hover-l1': 'rgba(2, 132, 199, 0.45)',
+      '--dsw-alias-scrollbar-hover-l2': 'rgba(2, 132, 199, 0.55)',
+      '--dsw-alias-button-floating-fill': 'rgba(255, 255, 255, 0.96)',
+      '--dsw-alias-button-floating-hover': 'rgba(241, 245, 250, 0.99)',
+      '--dsw-alias-state-business-primary': '#0284C7',
+      '--dsw-focus-ring-color': 'rgba(2, 132, 199, 0.60)',
+      '--dsw-menu-backdrop-filter': 'blur(20px) saturate(120%)',
     },
   };
-</script>
-<script src="./client.js"></script>
-<script>
-  (function () {
-    const h = React.createElement;
-    const mod = window.__sbgModule;
-    const Views = mod && mod.__test__ && mod.__test__.Views;
-    if (!Views) {
-      document.body.insertAdjacentHTML('beforeend', '<div style="color:#c33;padding:24px">client.js 模块加载失败：请用本地服务器打开本页（file:// 可能被 fetch 拦截）。</div>');
-      return;
+}
+
+function applyTheme(pane, scheme) {
+  const root = pane.querySelector('[data-mock]');
+  for (const [k, v] of Object.entries(PALETTE[scheme])) {
+    root.style.setProperty(k, v);
+    pane.style.setProperty(k, v);
+  }
+  root.setAttribute('data-theme', scheme);
+  pane.setAttribute('data-theme', scheme);
+  root.style.color = PALETTE[scheme]['--dsw-alias-label-primary'];
+}
+
+applyTheme(document.getElementById('pane-dark'), 'dark');
+applyTheme(document.getElementById('pane-light'), 'light');
+
+/* ── 画星空（简化版，只为验证半透明层次）── */
+function drawStars(canvas, scheme) {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = w * dpr; canvas.height = h * dpr;
+  const c = canvas.getContext('2d');
+  c.scale(dpr, dpr);
+
+  // 深色 = 深黑星空；浅色 = 浅蓝雾天
+  if (scheme === 'dark') {
+    const g = c.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, '#04060E');
+    g.addColorStop(0.5, '#080D1A');
+    g.addColorStop(1, '#04060E');
+    c.fillStyle = g;
+  } else {
+    const g = c.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, '#DCE7F5');
+    g.addColorStop(0.5, '#EAF1FA');
+    g.addColorStop(1, '#D8E4F2');
+    c.fillStyle = g;
+  }
+  c.fillRect(0, 0, w, h);
+
+  // 银河带
+  const band = c.createLinearGradient(0, h * 0.3, w, h * 0.7);
+  band.addColorStop(0, scheme === 'dark' ? 'rgba(120,150,220,0.06)' : 'rgba(140,170,220,0.10)');
+  band.addColorStop(0.5, scheme === 'dark' ? 'rgba(160,190,240,0.10)' : 'rgba(180,205,240,0.14)');
+  band.addColorStop(1, scheme === 'dark' ? 'rgba(120,150,220,0.05)' : 'rgba(140,170,220,0.08)');
+  c.fillStyle = band;
+  c.fillRect(0, 0, w, h);
+
+  // 星点
+  const n = Math.floor(w * h / 1400);
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * w, y = Math.random() * h;
+    const r = Math.random() * 1.3 + 0.2;
+    const a = Math.random() * 0.75 + 0.15;
+    c.fillStyle = scheme === 'dark'
+      ? `rgba(255,255,255,${a})`
+      : `rgba(90,120,170,${a * 0.55})`;
+    c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fill();
+  }
+}
+
+drawStars(document.getElementById('space-dark'), 'dark');
+drawStars(document.getElementById('space-light'), 'light');
+
+/* ══════════════════════════════════════════════════════════════
+   自动审计：对比度 + 令牌生效 + 无嵌套边框
+   ══════════════════════════════════════════════════════════════ */
+const lum = (rgb) => {
+  const p = rgb.match(/[\d.]+/g).map(Number);
+  const [r, g, b] = p;
+  const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+};
+const contrast = (a, b) => {
+  const L1 = lum(a), L2 = lum(b);
+  return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+};
+/** 把半透明色合成到背景上，得到实际观感色 */
+const composite = (fg, bg) => {
+  const pf = fg.match(/[\d.]+/g).map(Number);
+  const pb = bg.match(/[\d.]+/g).map(Number);
+  const a = pf.length > 3 ? pf[3] : 1;
+  return `rgb(${Math.round(pf[0] * a + pb[0] * (1 - a))}, ${Math.round(pf[1] * a + pb[1] * (1 - a))}, ${Math.round(pf[2] * a + pb[2] * (1 - a))})`;
+};
+
+function audit(paneId, scheme) {
+  const pane = document.getElementById(paneId);
+  const frame = pane.querySelector('[data-mock]');
+  const out = document.getElementById('audit-' + scheme);
+  const lines = [];
+  let bad = 0;
+
+  const canvasBg = scheme === 'dark' ? 'rgb(4, 6, 14)' : 'rgb(226, 236, 246)';
+
+  // 1. 令牌是否真的应用
+  const probe = document.createElement('div');
+  probe.style.cssText = 'position:absolute;visibility:hidden;';
+  pane.appendChild(probe);
+  const baseRaw = getComputedStyle(pane).getPropertyValue('--dsw-alias-bg-base').trim();
+  const primaryRaw = getComputedStyle(pane).getPropertyValue('--dsw-alias-label-primary').trim();
+  probe.remove();
+  lines.push(`bg-base: ${baseRaw || '❌ 未生效'}`);
+  lines.push(`primary: ${primaryRaw || '❌ 未生效'}`);
+  if (!baseRaw || !primaryRaw) bad++;
+
+  // 2. 文字 vs 实际合成背景的对比度
+  const centerEl = frame.querySelector('.center');
+  const centerBgRaw = getComputedStyle(centerEl).backgroundColor;
+  const cardEl = frame.querySelector('.card');
+  const cardBgRaw = getComputedStyle(cardEl).backgroundColor;
+
+  // center 背景叠加在 canvas 之上，card 叠加在 center 之上
+  const centerActual = composite(centerBgRaw, canvasBg);
+  const cardActual = composite(cardBgRaw, centerActual);
+
+  const titleEl = frame.querySelector('.card-title');
+  const descEl = frame.querySelector('.card-desc');
+  const titleColor = getComputedStyle(titleEl).color;
+  const descColor = getComputedStyle(descEl).color;
+
+  const cTitle = contrast(titleColor, cardActual);
+  const cDesc = contrast(descColor, cardActual);
+  lines.push(`card-title 对比度: ${cTitle.toFixed(2)}:1 ${cTitle >= 4.5 ? '✅' : '❌'}`);
+  lines.push(`card-desc  对比度: ${cDesc.toFixed(2)}:1 ${cDesc >= 4.5 ? '✅' : '❌'}`);
+  if (cTitle < 4.5) bad++;
+  if (cDesc < 4.5) bad++;
+
+  // 3. 侧栏文字
+  const navEl = frame.querySelector('.nav-item.on');
+  const sidebarEl = frame.querySelector('.sidebar');
+  const sidebarActual = composite(getComputedStyle(sidebarEl).backgroundColor, canvasBg);
+  const cNav = contrast(getComputedStyle(navEl).color, sidebarActual);
+  lines.push(`sidebar nav 对比度: ${cNav.toFixed(2)}:1 ${cNav >= 4.5 ? '✅' : '❌'}`);
+  if (cNav < 4.5) bad++;
+
+  // 4. 底栏文字
+  const dockEl = frame.querySelector('.dock');
+  const dockActual = composite(getComputedStyle(dockEl).backgroundColor, canvasBg);
+  const dockSpan = dockEl.querySelector('span');
+  const cDock = contrast(getComputedStyle(dockSpan).color, dockActual);
+  lines.push(`dock 对比度: ${cDock.toFixed(2)}:1 ${cDock >= 4.5 ? '✅' : '❌'}`);
+  if (cDock < 4.5) bad++;
+
+  // 5. 菜单项不得有边框（历史 BUG-005 回归检查）
+  // 注意：.menu-badge 是「有意设计的胶囊标签」，它的边框是装饰而非事故，必须排除。
+  const menuItems = pane.querySelectorAll('.menu-item, .menu-item .ic, .menu-item span:not(.menu-badge)');
+  let borderCount = 0;
+  menuItems.forEach((el) => {
+    const s = getComputedStyle(el);
+    const w = parseFloat(s.borderTopWidth) + parseFloat(s.borderRightWidth) +
+              parseFloat(s.borderBottomWidth) + parseFloat(s.borderLeftWidth);
+    if (w > 0 && s.borderTopStyle !== 'none') borderCount++;
+  });
+  lines.push(`菜单嵌套边框: ${borderCount} 处 ${borderCount === 0 ? '✅' : '❌'}`);
+  if (borderCount > 0) bad++;
+
+  // 6. 卡片内部不得有嵌套边框（历史 BUG-005 回归检查）
+  // 注意：.inner 是「有意的层级 2 卡片」、.tag 是「有意的胶囊标签」，均排除。
+  const cardInner = cardEl.querySelectorAll('.card-title, .card-desc, .inner > span:not(.tag):not(.trigger)');
+  let innerBorders = 0;
+  cardInner.forEach((el) => {
+    const s = getComputedStyle(el);
+    if (s.borderTopStyle !== 'none' && parseFloat(s.borderTopWidth) > 0) {
+      innerBorders++;
     }
-    const ZH = { rowTitle: '深空背景', rowDesc: '银河、星座与行星在窗口底层缓缓流动，界面表面保持可读' };
-    const t = (k) => ZH[k] || k;
+  });
+  lines.push(`卡片内嵌边框: ${innerBorders} 处 ${innerBorders === 0 ? '✅' : '❌'}`);
+  if (innerBorders > 0) bad++;
 
-    function App() {
-      // 与真实插件同构的状态：设置行开关直接驱动星空层
-      const [enabled, setEnabled] = React.useState(true);
-      const state = React.useMemo(() => ({ enabled }), [enabled]);
-      const useStore = (sel) => sel(state);
-      const actions = React.useMemo(() => ({ setEnabled }), []);
+  // 7. 星空是否可见（frame 背景不能是纯实色）
+  const frameBg = getComputedStyle(frame).backgroundColor;
+  const frameAlpha = frameBg.match(/[\d.]+/g);
+  const isTransparent = frameAlpha && frameAlpha.length > 3 && Number(frameAlpha[3]) < 0.95;
+  lines.push(`星空可透出: ${isTransparent ? '✅ (alpha=' + Number(frameAlpha[3]).toFixed(2) + ')' : '❌ 被遮挡'}`);
+  if (!isTransparent) bad++;
 
-      return h(React.Fragment, null,
-        // 真实星空层（shell.overlay 组件）：开关开启时挂载底层画布
-        h(Views.SpaceLayer, { useStore, actions, t }),
-        h('div', { className: 'demo_titlebar' }, 'DSH · 模拟壳层（预览） · 深空背景为主题与外观插件'),
-        h('div', { className: 'demo_frame' },
-          h('div', { className: 'demo_sidebar' },
-            h('div', { className: 'demo-side-item on' }, 'ⓘ 通用'),
-            h('div', { className: 'demo-side-item' }, '会话'),
-            h('div', { className: 'demo-side-item' }, '快捷键'),
-            h('div', { className: 'demo-side-item' }, '插件')),
-          h('div', { className: 'demo_center' },
-            h('div', { className: 'demo-settings' },
-              h('h2', null, '通用'),
-              h('div', { className: 'sub' }, '外观、字号与背景偏好（模拟 DSH 设置页，中间一行是真实插件组件）'),
-              h('div', { className: 'demo-row' },
-                h('div', { className: 'demo-row-title' }, '外观'),
-                h('div', { className: 'demo-cubes' },
-                  h('div', { className: 'demo-cube on' }, '☀', '浅色'),
-                  h('div', { className: 'demo-cube' }, '🌙', '深色'),
-                  h('div', { className: 'demo-cube' }, '🖥', '跟随系统'))),
-              // 真实的「深空背景」外观行（客户端组件 + 官方开关样式）
-              h(Views.SettingsRow, { useStore, actions, t }),
-              h('div', { className: 'demo-row', style: { borderBottom: 'none' } },
-                h('div', { className: 'demo-row-title' }, '当前版本'),
-                h('div', { style: { fontSize: 12, color: '#888' } }, 'DSH 0.2.1-rc.3')))),
-          h('div', { className: 'demo_bottom' }, '状态栏 · 天幕每隔十几秒淡入新星域（银河 / 星座 / 星云 / 行星 / 流星）')),
-        h('div', { className: 'demo-note' }, '真实插件行为：开关经官方主题令牌把中栏 / 侧栏 / 底栏半透明化，星空从底层透出'));
-    }
+  // 8. 星空画布必须铺满整个面板（否则会露出脏灰色带 —— 实际踩过的坑）
+  const canvasEl = pane.querySelector('.space');
+  const paneRect = pane.getBoundingClientRect();
+  const cvRect = canvasEl.getBoundingClientRect();
+  const covers = cvRect.width >= paneRect.width - 2 && cvRect.height >= paneRect.height - 2;
+  lines.push(`画布铺满: ${covers ? '✅' : '❌ ' + Math.round(cvRect.width) + '×' + Math.round(cvRect.height) + ' vs ' + Math.round(paneRect.width) + '×' + Math.round(paneRect.height)}`);
+  if (!covers) bad++;
 
-    ReactDOM.createRoot(document.getElementById('app')).render(h(App));
-  })();
+  // 9. 标签颜色必须与主题匹配（浅色主题不能是惨白淡蓝 —— 实际踩过的坑）
+  const tagEl = cardEl.querySelector('.tag');
+  if (tagEl) {
+    const tagColor = getComputedStyle(tagEl).color;
+    const tagL = lum(tagColor);
+    const okTag = scheme === 'dark' ? tagL > 0.55 : tagL < 0.55;
+    lines.push(`标签色适配: ${okTag ? '✅' : '❌'} (${tagColor})`);
+    if (!okTag) bad++;
+  }
+
+  out.innerHTML = `<div>${lines.join('</div><div>')}</div>` +
+    `<div style="margin-top:4px" class="${bad === 0 ? 'good' : 'bad'}">` +
+    `${bad === 0 ? '✅ 全部通过' : '❌ ' + bad + ' 项失败'}</div>`;
+  return bad;
+}
+
+window.__auditResult = {
+  dark: audit('pane-dark', 'dark'),
+  light: audit('pane-light', 'light'),
+};
+window.__ready = true;
 </script>
 </body>
 </html>

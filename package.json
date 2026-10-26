@@ -1,7 +1,7 @@
 {
   "name": "@local/space-background",
-  "version": "1.2.9",
-  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：浅色与深色模式下星空 100% 完整穿透展现（绝不被白底遮挡），全域侧栏、外观卡片与文字全息纯白HUD立体高对比显示，彻底消除菜单与卡片内部嵌套灰色边框，全息微光胶囊微标美化，底部状态栏与Token用量高对比，吸底座席双模平滑渐隐防穿透，聊天输入悬浮舱，悬浮调控面板支持外部点击收起。",
+  "version": "2.0.0",
+  "description": "深空背景 (Deep Space Background) — 主题令牌驱动的沉浸式星空视界。深色=深空半透玻璃+纯白HUD文字；浅色=晨雾磨砂玻璃+深色高对比文字。27 个官方 --dsw-* 令牌接管全部视觉，保留 DSH 原生圆角/层次/阴影，彻底告别通配符暴力覆盖造成的细节错乱。",
   "type": "module",
   "keywords": [
     "dsh-plugin",
@@ -22,8 +22,10 @@
     "url": "https://github.com/milkly909-code/dsh-space-background/issues"
   },
   "scripts": {
-    "check": "node --check client.js && node --check index.js && node test/run.cjs",
-    "test": "node test/run.cjs"
+    "check": "node --check client.js && node --check index.js && node test/run.cjs && node test/engine.cjs",
+    "test": "node test/run.cjs && node test/engine.cjs",
+    "visual": "node test/visual.cjs",
+    "verify": "npm run check && npm run visual"
   },
   "exports": {
     ".": "./index.js",
@@ -56,5 +58,8 @@
         "@deepseek-ai/dsh-client-ui-layout"
       ]
     }
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
   }
 }

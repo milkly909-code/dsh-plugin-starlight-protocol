@@ -147,44 +147,71 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('DOT_STYLES 共 28 档（4 带 + 6 色 × 4 等）', X.DOT_STYLES.length === 28);
   check('色温表 6 档均为 rgb 串', X.TINTS.length === 6 && X.TINTS.every((s) => /^\d+,\d+,\d+$/.test(s)));
 
-  // 主题覆盖层：全透 (0%) 下令牌全部为纯透明 rgba(0, 0, 0, 0)
-  const zeroTokens = X.generateTokenOverrides({ enabled: true });
-  const tokenEntries = Object.entries(zeroTokens);
-  check('全透模式主题覆盖层非空且全部为 dsw 别名令牌', tokenEntries.length >= 5 && tokenEntries.every(([k]) => k.startsWith('--dsw-')));
-  check('全透模式背景令牌被清空为透明 (0, 0, 0, 0)', zeroTokens['--dsw-alias-bg-base'].light === 'rgba(0, 0, 0, 0)' && zeroTokens['--dsw-alias-bg-base'].dark === 'rgba(0, 0, 0, 0)');
-  check('输入框 major 背景令牌被清空为透明', zeroTokens['--dsw-specific-input-major'].light === 'rgba(0, 0, 0, 0)');
+  /* ══════════════════════════════════════════════════════════════
+   * 新架构：主题令牌驱动（不再用通配符清空背景 + 强制白字）
+   * ══════════════════════════════════════════════════════════════ */
 
-  // 动态 CSS 引擎全域穿透检查（无模糊 + 聊天框全透一致性）
-  const fullCss = X.generateDynamicCss({ enabled: true });
-  check('无模糊纯净视界：彻底禁用全局 backdrop-filter 模糊', fullCss.includes('html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }'));
-  check('全域穿透：html/body/#root/#app 彻底全透明', fullCss.includes('html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important;'));
-  check('全域穿透：frame/panel/page/settings/detail 全透明',
-    ['_frame', 'q_frame', '_content', '_panel', '_page', '_settings', 'detail'].every((s) => fullCss.includes(s)));
-  check('聊天框与底栏全透：与其它页面保持一致的全透无模糊',
-    ['_bottomRow', 'q_bottomRow', '_dock', 'q_dock', 'composer', 'Composer'].every((s) => fullCss.includes(s)));
-  check('聊天框卡片线框：无模糊轻量深色透明底 + 细微边框', fullCss.includes('rgba(8, 12, 22, 0.30)'));
-  check('文字 HUD 保护：标题白色且注入抗晕散立体阴影', fullCss.includes('text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)'));
-  check('文字 HUD 保护：代码路径标签样式优化', fullCss.includes('background: rgba(0, 0, 0, 0.4)'));
-  check('视觉工效：视窗微暗角遮罩（中央深邃、四周纯透、0 模糊）', fullCss.includes('radial-gradient(ellipse 80% 70% at 50% 50%'));
-  check('深空专属极简滚动条：5px 超窄且全透明轨道', fullCss.includes('html[data-sbg-on] *::-webkit-scrollbar'));
-  check('聊天输入框 Focus 全息冰蓝呼吸微光', fullCss.includes('focus-within'));
-  check('代码块微光盾：pre 与 code 容器暗色全息护盾', fullCss.includes('background: rgba(8, 12, 22, 0.65)'));
-  check('防文字上滑遮挡：聊天座席高对比防穿透悬浮舱', fullCss.includes('data-composer-seat') && fullCss.includes('GRgSLq_card'));
-  check('底部状态栏与Token用量：纯白文字高对比显示', fullCss.includes('GRgSLq_dock') && fullCss.includes('color: #FFFFFF !important'));
-  check('步数/token/上下文弹窗：深空高对比不透明背景', fullCss.includes('stat-dialog') && fullCss.includes('rgba(13, 17, 28, 0.96)'));
-  check('动态玻璃不透明度：支持按参数动态渲染透明/半透度', X.generateDynamicCss({ enabled: true, surfaceOpacity: 0.35 }).includes('rgba(10, 15, 26, 0.35)'));
-  check('全天候侧栏与通用设置项强制纯白高对比文字与图标', fullCss.includes('[class*="_sidebarCol"] *') && fullCss.includes('fill: #FFFFFF !important'));
-  check('外观选项卡与配置按钮全域纯白与高亮胶囊', fullCss.includes('[class*="cube"]') && fullCss.includes('rgba(56, 189, 248, 0.22)'));
-  check('下拉触发器统一为深空微透晶石与纯白文字', fullCss.includes('[role="combobox"]') && fullCss.includes('rgba(14, 20, 32, 0.85)'));
-  check('右下角控制面板组件导出：SpaceFloatControl', typeof X.Views.SpaceFloatControl === 'function');
+  const tokens = X.generateTokenOverrides({ enabled: true });
+  const tokenEntries = Object.entries(tokens);
+  check('令牌覆盖层非空且全部为 --dsw-* 官方令牌', tokenEntries.length >= 20 && tokenEntries.every(([k]) => k.startsWith('--dsw-')));
+  check('令牌均为 { light, dark } 双值对', tokenEntries.every(([, v]) => v && typeof v.light === 'string' && typeof v.dark === 'string'));
 
-  check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
+  // 深色主题：深空半透玻璃（不是纯透明，也不是死黑）
+  const dk = (name) => tokens[name].dark;
+  const lt = (name) => tokens[name].light;
+  check('深色 bg-base 为深空半透（不透明也不死黑）', /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\.\d+\)$/.test(dk('--dsw-alias-bg-base')) && !dk('--dsw-alias-bg-base').includes('0, 0, 0, 0)'));
+  check('浅色 bg-base 为浅色半透（R 通道 > 200）', /^rgba\(\s*(2\d\d|1\d\d),/.test(lt('--dsw-alias-bg-base')) && parseInt(lt('--dsw-alias-bg-base').split('(')[1].split(',')[0], 10) > 200);
+  check('深浅 bg-base 必须不同（保证主题切换有实际视觉差异）', dk('--dsw-alias-bg-base') !== lt('--dsw-alias-bg-base'));
 
-  // store：默认开启，纯净无模糊全透（surfaceOpacity: 0.0, blur: 0）
+  // 层级递减：layer-1..4 的不透明度应 >= bg-base（卡片比窗口底更实）
+  const alphaOf = (s) => parseFloat((s.match(/,\s*([\d.]+)\)$/) || [0, '1'])[1]);
+  check('层级不透明度单调不减（layer-4 >= bg-base）', alphaOf(dk('--dsw-alias-bg-layer-4')) >= alphaOf(dk('--dsw-alias-bg-base')));
+  check('侧栏 fill 与主区区分（值不同）', dk('--dsw-specific-sidebar-fill') !== dk('--dsw-alias-bg-base'));
+  check('输入框 major 独立于 bg-base（值不同）', dk('--dsw-specific-input-major') !== dk('--dsw-alias-bg-base'));
+
+  // 文字色：深色主题必须亮、浅色主题必须暗（这是"字体不显示"的根治点）
+  const lum = (hex) => {
+    const m = hex.replace('#', '');
+    const r = parseInt(m.slice(0, 2), 16), g = parseInt(m.slice(2, 4), 16), b = parseInt(m.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  };
+  check('深色主题 label-primary 为高亮文字（亮度 > 0.85）', lum(dk('--dsw-alias-label-primary')) > 0.85);
+  check('浅色主题 label-primary 为深色文字（亮度 < 0.20）', lum(lt('--dsw-alias-label-primary')) < 0.20);
+  check('深色 label-secondary / tertiary 均可读（亮度 > 0.6）', lum(dk('--dsw-alias-label-secondary')) > 0.6 && lum(dk('--dsw-alias-label-tertiary')) > 0.6);
+  check('浅色 label-secondary / tertiary 均够深（亮度 < 0.45）', lum(lt('--dsw-alias-label-secondary')) < 0.45 && lum(lt('--dsw-alias-label-tertiary')) < 0.45);
+  check('菜单专属令牌 --dsw-specific-menu 深浅不同', dk('--dsw-specific-menu') !== lt('--dsw-specific-menu'));
+
+  /* ── 补充 CSS：只允许做令牌做不到的三件事 ── */
+
+  const css = X.generateDynamicCss({ enabled: true });
+  check('禁用常规 backdrop-filter 模糊（0px 视界）', css.includes('backdrop-filter: none !important'));
+  check('但菜单/弹窗保留原生磨砂（白名单排除）', css.includes('[role="menu"]') && css.includes('[role="dialog"]'));
+  check('composer 座席深色渐变遮蔽（防历史消息穿透）', css.includes('body[data-ds-dark-theme] [data-composer-seat]') && css.includes('rgba(6,10,20,0.98)'));
+  check('composer 座席浅色渐变遮蔽（浅色主题同样防穿透）', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]') && css.includes('rgba(248,250,253,1)'));
+  check('深空画布暗角（中央压暗提升对比）', css.includes('radial-gradient(ellipse 82% 72%'));
+  check('浅色主题暗角反向（浅白柔光而非压黑）', css.includes('rgba(255, 255, 255, 0.16)'));
+  check('滚动条只改尺寸，颜色交给令牌', css.includes('::-webkit-scrollbar { width: 6px'));
+  check('代码块深色主题给轻底色', css.includes('body[data-ds-dark-theme] pre'));
+  check('代码块浅色主题给极淡底色', css.includes('body:not([data-ds-dark-theme]) pre'));
+
+  /* ── 负向断言：确保旧架构的"通配符暴力清空"已彻底移除 ── */
+  check('已移除 [class*="tag"] 通配符（避免下一个 _item 事故）', !css.includes('[class*="tag"]'));
+  check('已移除 [class*="badge"] 通配符', !css.includes('[class*="badge"]'));
+  check('已移除 [class*="_card"] 通配符大面积覆盖', !css.includes('[class*="_card"]:not('));
+  check('已移除全局强制纯白文字注入', !css.includes('color: #FFFFFF !important'));
+  check('已移除全局 text-shadow 污染', !css.includes('text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)'));
+  check('已移除 _bottomRow 误伤（不再当 composer 处理）', !css.includes('[class*="_bottomRow"]'));
+
+  /* ── store ── */
+
   const storeSpec = X.makeStore().spec;
   const initial = storeSpec.init();
-  check('store 默认开启且通透度推荐为 0.0（纯粹全景）', initial.enabled === true && initial.surfaceOpacity === 0.0);
-  check('store 默认无模糊（blur: 0）且智能对比度默认开启', initial.blur === 0 && initial.autoContrast === true && initial.textShadow === true);
+  check('store 默认开启星空', initial.enabled === true);
+  check('store 已删除 surfaceOpacity（滑块已移除）', !('surfaceOpacity' in initial));
+  check('store 默认无模糊 blur=0', initial.blur === 0);
+  check('store 默认速度 0.4 / 粒子 1000', initial.speed === 0.4 && initial.density === 1000);
+
+  check('store 已无 setSurfaceOpacity action', typeof storeSpec.actions.setSurfaceOpacity === 'undefined');
 
   const draft = { enabled: 'x' };
   storeSpec.actions.normalize(draft);
@@ -194,10 +221,6 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   storeSpec.actions.setEnabled(d2, false);
   check('setEnabled 严格布尔', d2.enabled === false);
 
-  const d3 = {};
-  storeSpec.actions.setSurfaceOpacity(d3, 0.0);
-  check('setSurfaceOpacity 支持 0.0 纯粹全透', d3.surfaceOpacity === 0.0);
-
   const d4 = {};
   storeSpec.actions.setBlur(d4, 0);
   check('setBlur 设置无模糊 (0)', d4.blur === 0);
@@ -206,22 +229,28 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   storeSpec.actions.setDensity(dDensity, 1500);
   check('setDensity 支持调节星空粒子数量', dDensity.density === 1500);
 
-  const d5 = { surfaceOpacity: 0.8, blur: 16, autoContrast: false };
-  storeSpec.actions.resetDefaults(d5);
-  check('resetDefaults 恢复官方推荐无模糊全透状态 (0.0, blur: 0)', d5.surfaceOpacity === 0.0 && d5.blur === 0 && d5.autoContrast === true);
+  const dSpeed = {};
+  storeSpec.actions.setSpeed(dSpeed, 1.2);
+  check('setSpeed 支持调节航行速度', dSpeed.speed === 1.2);
 
-  // ── 旧版持久化文档迁移至 Schema 3 ────────────────────────────────────
+  const d5 = { blur: 16, autoContrast: false };
+  storeSpec.actions.resetDefaults(d5);
+  check('resetDefaults 恢复无模糊默认 (blur=0, speed=0.4, density=1000)', d5.blur === 0 && d5.speed === 0.4 && d5.density === 1000);
+
+  /* ── 关键回归：normalize 绝不能把用户设置归零 ── */
+
+  const keep = { schemaVersion: 3, enabled: false, speed: 1.3, density: 1800 };
+  storeSpec.actions.normalize(keep);
+  check('【回归】normalize 保留用户速度设置', keep.speed === 1.3);
+  check('【回归】normalize 保留用户粒子数设置', keep.density === 1800);
+  check('【回归】normalize 保留用户开关设置', keep.enabled === false);
+
+  // 旧版迁移
   const legacy = { schemaVersion: 1, enabled: false, speed: 0.2, boost: false };
   storeSpec.actions.normalize(legacy);
-  check('旧版文档迁移后 enabled 复位为 true', legacy.enabled === true);
-  check('旧版文档的废弃字段 boost 被清除', !('boost' in legacy));
-  check('旧版文档迁移后默认 surfaceOpacity 为 0.0 且 blur 为 0', legacy.surfaceOpacity === 0.0 && legacy.blur === 0);
-  check('迁移后 schemaVersion 升到当前版本 3', legacy.schemaVersion === 3);
-
-  // 当前版本文档保留用户个性化设置
-  const current = { schemaVersion: 3, enabled: false };
-  storeSpec.actions.normalize(current);
-  check('当前版本文档保留用户显式开关设置（enabled: false）', current.enabled === false);
+  check('旧版迁移后 enabled 复位为 true', legacy.enabled === true);
+  check('旧版迁移清除废弃字段 boost', !('boost' in legacy));
+  check('迁移后 schemaVersion 升到 3', legacy.schemaVersion === 3);
 
   finish();
 

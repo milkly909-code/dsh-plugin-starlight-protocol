@@ -30,7 +30,7 @@ window.__ModuleLoader__.load({
     /**
      * 持久化文档的 schema 版本。
      *
-     * 3：升级为独立控制台页面，支持界面通透度 (surfaceOpacity)、毛玻璃磨砂度 (blur)、
+     * 3：独立控制台页面（毛玻璃磨砂度 blur、
      *    智能文字对比度保护 (autoContrast) 与轮廓微阴影 (textShadow)。
      */
     const STORE_SCHEMA_VERSION = 3;
@@ -47,7 +47,7 @@ window.__ModuleLoader__.load({
           if (parsed && (typeof parsed.schemaVersion !== 'number' || parsed.schemaVersion < STORE_SCHEMA_VERSION)) {
             parsed.schemaVersion = STORE_SCHEMA_VERSION;
             parsed.enabled = true;
-            if (typeof parsed.surfaceOpacity !== 'number') parsed.surfaceOpacity = 0.45;
+            delete parsed.surfaceOpacity;
             if (typeof parsed.blur !== 'number') parsed.blur = 16;
             if (typeof parsed.autoContrast !== 'boolean') parsed.autoContrast = true;
             if (typeof parsed.textShadow !== 'boolean') parsed.textShadow = true;
@@ -238,6 +238,17 @@ window.__ModuleLoader__.load({
         };
       }
       while (stars.length < density) stars.push(newStar(true));
+
+      /** 热更新穿越层恒星数：只增删 stars 数组，绝不销毁重建 canvas / RAF。 */
+      function setDensity(next) {
+        const target = Math.round(clamp(next || 1000, 50, 4000));
+        if (target === stars.length) return;
+        if (target > stars.length) {
+          while (stars.length < target) stars.push(newStar(true));
+        } else {
+          stars.length = target;
+        }
+      }
 
       /* ---------- 天体绘制 ---------- */
 
@@ -947,6 +958,8 @@ window.__ModuleLoader__.load({
       rafId = requestAnimationFrame(frame);
 
       return {
+        /** 热更新恒星数量（不销毁引擎）。 */
+        setDensity,
         dispose() {
           cancelled = true;
           cancelAnimationFrame(rafId);
@@ -1023,439 +1036,132 @@ window.__ModuleLoader__.load({
       },
     };
 
-    /** 动态根据配置生成全局 CSS 规则（无模糊 + 全域穿透全透 + 聊天框全透一致性 + 太空 HUD 保护）。 */
-    function generateDynamicCss(options) {
-      const { enabled = true, surfaceOpacity = 0.0 } = options || {};
-      if (!enabled) return '';
-      const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.95);
-      const surfaceBg = op > 0 ? `rgba(10, 15, 26, ${op.toFixed(2)})` : 'transparent';
-      const sidebarBg = op > 0 ? `rgba(8, 12, 22, ${(op * 0.85).toFixed(2)})` : 'transparent';
-      const cardBg = op > 0 ? `rgba(16, 24, 40, ${(0.20 + op * 0.65).toFixed(2)})` : 'rgba(15, 20, 32, 0.35)';
+    /* ══════════════════════════════════════════════════════════════
+     * 主题令牌驱动的视觉引擎
+     *
+     * 设计原则（重构核心）：
+     *  1) 只改官方主题令牌 --dsw-alias-* / --dsw-specific-*，
+     *     让 DSH 自己渲染圆角、层次、阴影、内边距 → 细节天然协调；
+     *  2) 深浅主题各给一套令牌值，浅色 = 浅色磨砂玻璃 + 深色文字，
+     *     深色 = 深空半透 + 纯白文字，全部由令牌自动切换；
+     *  3) 绝不用 [class*="xxx"] 通配符大面积覆盖背景/边框，
+     *     从根上杜绝误伤 _item / _card / tag / badge 之类元素。
+     * ══════════════════════════════════════════════════════════════ */
 
-      return [
-        // 1. 彻底禁用全局常规背景模糊（纯净无模糊模式）
-        'html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
+    /**
+     * 令牌调色板：深色 = 深空半透玻璃；浅色 = 晨雾磨砂玻璃。
+     * 数值按「层级递减不透明度」排列，保证 DSH 原生层次感可见。
+     */
+    const PALETTE = {
+      dark: {
+        '--dsw-alias-bg-base':                 'rgba(6, 10, 20, 0.58)',
+        '--dsw-alias-bg-layer-1':              'rgba(12, 18, 30, 0.64)',
+        '--dsw-alias-bg-layer-2':              'rgba(16, 24, 38, 0.70)',
+        '--dsw-alias-bg-layer-3':              'rgba(20, 30, 46, 0.76)',
+        '--dsw-alias-bg-layer-4':              'rgba(24, 36, 54, 0.82)',
+        '--dsw-alias-settings-card-fill':      'rgba(16, 24, 38, 0.72)',
+        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.66)',
+        '--dsw-specific-input-major':          'rgba(10, 16, 26, 0.74)',
+        '--dsw-specific-menu':                 'rgba(13, 19, 30, 0.97)',
+        '--dsw-alias-label-primary':           '#FFFFFF',
+        '--dsw-alias-label-secondary':         '#E8F0FF',
+        '--dsw-alias-label-tertiary':          '#C8DCFF',
+        '--dsw-alias-label-quaternary':        'rgba(200, 220, 255, 0.62)',
+        '--dsw-alias-border-l1':               'rgba(255, 255, 255, 0.12)',
+        '--dsw-alias-border-l2':               'rgba(255, 255, 255, 0.16)',
+        '--dsw-alias-border-l3':               'rgba(255, 255, 255, 0.20)',
+        '--dsw-alias-border-l4':               'rgba(255, 255, 255, 0.24)',
+        '--dsw-alias-interactive-bg-hover':    'rgba(255, 255, 255, 0.10)',
+        '--dsw-alias-scrollbar-bg-l1':         'rgba(255, 255, 255, 0.14)',
+        '--dsw-alias-scrollbar-bg-l2':         'rgba(255, 255, 255, 0.18)',
+        '--dsw-alias-scrollbar-hover-l1':      'rgba(56, 189, 248, 0.42)',
+        '--dsw-alias-scrollbar-hover-l2':      'rgba(56, 189, 248, 0.48)',
+        '--dsw-alias-button-floating-fill':    'rgba(13, 19, 30, 0.92)',
+        '--dsw-alias-button-floating-hover':   'rgba(20, 30, 46, 0.96)',
+        '--dsw-alias-state-business-primary':  '#38bdf8',
+        '--dsw-focus-ring-color':              'rgba(56, 189, 248, 0.65)',
+        '--dsw-menu-backdrop-filter':          'blur(20px) saturate(140%)',
+      },
+      light: {
+        '--dsw-alias-bg-base':                 'rgba(248, 250, 253, 0.74)',
+        '--dsw-alias-bg-layer-1':              'rgba(255, 255, 255, 0.82)',
+        '--dsw-alias-bg-layer-2':              'rgba(255, 255, 255, 0.88)',
+        '--dsw-alias-bg-layer-3':              'rgba(255, 255, 255, 0.92)',
+        '--dsw-alias-bg-layer-4':              'rgba(255, 255, 255, 0.96)',
+        '--dsw-alias-settings-card-fill':      'rgba(255, 255, 255, 0.90)',
+        '--dsw-specific-sidebar-fill':         'rgba(241, 245, 250, 0.80)',
+        '--dsw-specific-input-major':          'rgba(255, 255, 255, 0.92)',
+        '--dsw-specific-menu':                 'rgba(255, 255, 255, 0.98)',
+        '--dsw-alias-label-primary':           '#0F172A',
+        '--dsw-alias-label-secondary':         '#1E293B',
+        '--dsw-alias-label-tertiary':          '#475569',
+        '--dsw-alias-label-quaternary':        '#64748B',
+        '--dsw-alias-border-l1':               'rgba(15, 23, 42, 0.08)',
+        '--dsw-alias-border-l2':               'rgba(15, 23, 42, 0.12)',
+        '--dsw-alias-border-l3':               'rgba(15, 23, 42, 0.16)',
+        '--dsw-alias-border-l4':               'rgba(15, 23, 42, 0.20)',
+        '--dsw-alias-interactive-bg-hover':    'rgba(15, 23, 42, 0.06)',
+        '--dsw-alias-scrollbar-bg-l1':         'rgba(15, 23, 42, 0.16)',
+        '--dsw-alias-scrollbar-bg-l2':         'rgba(15, 23, 42, 0.22)',
+        '--dsw-alias-scrollbar-hover-l1':      'rgba(2, 132, 199, 0.45)',
+        '--dsw-alias-scrollbar-hover-l2':      'rgba(2, 132, 199, 0.55)',
+        '--dsw-alias-button-floating-fill':    'rgba(255, 255, 255, 0.96)',
+        '--dsw-alias-button-floating-hover':   'rgba(241, 245, 250, 0.99)',
+        '--dsw-alias-state-business-primary':  '#0284C7',
+        '--dsw-focus-ring-color':              'rgba(2, 132, 199, 0.60)',
+        '--dsw-menu-backdrop-filter':          'blur(20px) saturate(120%)',
+      },
+    };
 
-        // 2. 全窗口容器彻底全透（body, #root, #app, frame, content, panel, page, settings, detail）
-        'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="q_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_page"], html[data-sbg-on] [class*="q_page"], html[data-sbg-on] [class*="_settings"], html[data-sbg-on] [class*="q_settings"] { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="view"], html[data-sbg-on] [class*="View"], html[data-sbg-on] [class*="section"], html[data-sbg-on] [class*="Section"] { background: transparent !important; background-color: transparent !important; }',
-
-        // 3. 聊天主工作区、中栏、侧栏彻底全透
-        `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"], html[data-sbg-on] [class*="ChatView"], html[data-sbg-on] [class*="V4vHZW"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; transition: background-color 0.15s ease; }`,
-        `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${sidebarBg} !important; background-color: ${sidebarBg} !important; transition: background-color 0.15s ease; }`,
-
-        // 4. 解决文字上滑遮挡聊天框与底部穿透：吸底座席定制平滑深空渐隐（顶部自然羽化、底部完全不透，彻底遮蔽划到底部和打字区下方的所有文字）
-        `html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, transparent 0px, rgba(6, 10, 20, ${(op * 0.7).toFixed(2)}) 32px, rgba(6, 10, 20, ${(0.55 + op * 0.35).toFixed(2)}) 70px) !important; box-shadow: none !important; }`,
-        'html[data-sbg-on] [data-composer-dock], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="GRgSLq_root"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="composer"]:not([class*="card"]):not([class*="composerSeat"]), html[data-sbg-on] [class*="Composer"]:not([class*="card"]):not([class*="composerSeat"]) { background: transparent !important; box-shadow: none !important; }',
-
-        // 聊天输入卡片：高对比防穿透悬浮舱（置于座席之上，内部全不透，杜绝历史文字透出）
-        `html[data-sbg-on] [data-composer-card], html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { z-index: 12 !important; position: relative !important; background: rgba(8, 12, 22, ${(0.30 + op * 0.60).toFixed(2)}) !important; border: 1px solid rgba(255, 255, 255, ${(0.10 + op * 0.12).toFixed(2)}) !important; box-shadow: 0 4px 20px rgba(0, 0, 0, ${(0.25 + op * 0.4).toFixed(2)}) !important; }`,
-        'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"], html[data-sbg-on] [class*="input"], html[data-sbg-on] [class*="q_input"] { background: transparent !important; background-color: transparent !important; color: #FFFFFF !important; }',
-
-        // 5. 底部运行状态、Token用量、上下文步数栏：纯白高对比文字与图标，清晰醒目（响应用户明确要求）
-        `html[data-sbg-on] [data-composer-dock],
-        html[data-sbg-on] [data-composer-dock] *,
-        html[data-sbg-on] [data-slot="conversation.composer.dock"],
-        html[data-sbg-on] [data-slot="conversation.composer.dock"] *,
-        html[data-sbg-on] [class*="_dock"],
-        html[data-sbg-on] [class*="q_dock"],
-        html[data-sbg-on] [class*="GRgSLq_dock"],
-        html[data-sbg-on] [class*="TurnUsage"],
-        html[data-sbg-on] [class*="StatsPills"],
-        html[data-sbg-on] [class*="ContextMeter"],
-        html[data-sbg-on] [class*="BI5uFG"],
-        html[data-sbg-on] [class*="hNGZaa"],
-        html[data-sbg-on] [class*="A6Bq1a"],
-        html[data-sbg-on] [class*="_dock"] *,
-        html[data-sbg-on] [class*="q_dock"] *,
-        html[data-sbg-on] [class*="GRgSLq_dock"] *,
-        html[data-sbg-on] [class*="TurnUsage"] *,
-        html[data-sbg-on] [class*="StatsPills"] *,
-        html[data-sbg-on] [class*="ContextMeter"] *,
-        html[data-sbg-on] [class*="BI5uFG"] *,
-        html[data-sbg-on] [class*="hNGZaa"] *,
-        html[data-sbg-on] [class*="A6Bq1a"] * {
-          color: #FFFFFF !important;
-          stroke: #FFFFFF !important;
-          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95) !important;
-          opacity: 1 !important;
-        }
-        html[data-sbg-on] [class*="A6Bq1a_track"] {
-          stroke: rgba(255, 255, 255, 0.28) !important;
-        }
-        html[data-sbg-on] [class*="A6Bq1a_fill"] {
-          stroke: #38bdf8 !important;
-        }
-        html[data-sbg-on] [class*="_dock"] button:hover,
-        html[data-sbg-on] [class*="q_dock"] button:hover,
-        html[data-sbg-on] [class*="BI5uFG_trigger"]:hover,
-        html[data-sbg-on] [class*="hNGZaa_pill"]:hover,
-        html[data-sbg-on] [class*="A6Bq1a_trigger"]:hover {
-          background: rgba(255, 255, 255, 0.15) !important;
-          color: #FFFFFF !important;
-        }`,
-
-        // 6. 页面卡片与消息气泡：仅对最外层卡片应用轻量深空玻璃底与极细微框，彻底消除内部标题行、描述文本、图标容器、操作箭头的多重嵌套边框
-        `html[data-sbg-on] [class*="Card_root"],
-        html[data-sbg-on] [class*="card_root"],
-        html[data-sbg-on] [class*="PluginCard"],
-        html[data-sbg-on] [class*="plugin-card"],
-        html[data-sbg-on] [class*="settings-card"],
-        html[data-sbg-on] [class*="SettingsCard"],
-        html[data-sbg-on] [class*="_card"]:not([class*="Header"]):not([class*="header"]):not([class*="Title"]):not([class*="title"]):not([class*="Desc"]):not([class*="desc"]):not([class*="Body"]):not([class*="body"]):not([class*="Action"]):not([class*="action"]):not([class*="Icon"]):not([class*="icon"]):not([class*="Footer"]):not([class*="footer"]):not([class*="Content"]):not([class*="content"]):not([class*="Row"]):not([class*="row"]):not([class*="Item"]):not([class*="item"]):not([class*="Wrapper"]):not([class*="wrapper"]),
-        html[data-sbg-on] [class*="q_card"]:not([class*="Header"]):not([class*="header"]):not([class*="Title"]):not([class*="title"]):not([class*="Desc"]):not([class*="desc"]):not([class*="Body"]):not([class*="body"]):not([class*="Action"]):not([class*="action"]):not([class*="Icon"]):not([class*="icon"]):not([class*="Footer"]):not([class*="footer"]):not([class*="Content"]):not([class*="content"]):not([class*="Row"]):not([class*="row"]):not([class*="Item"]):not([class*="item"]):not([class*="Wrapper"]):not([class*="wrapper"]),
-        html[data-sbg-on] [class*="bubble"],
-        html[data-sbg-on] [class*="Message"],
-        html[data-sbg-on] [class*="message"] {
-          background: ${cardBg} !important;
-          border: 1px solid rgba(255, 255, 255, ${(0.10 + op * 0.10).toFixed(2)}) !important;
-          border-radius: 10px !important;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
-        }
-        html[data-sbg-on] [class*="_card"]:hover,
-        html[data-sbg-on] [class*="q_card"]:hover,
-        html[data-sbg-on] [class*="PluginCard"]:hover {
-          border-color: rgba(56, 189, 248, 0.35) !important;
-        }
-        /* 彻底消除卡片内部标题行、描述文本、图标容器、操作箭头的内部多重嵌套边框与背景 */
-        html[data-sbg-on] [class*="card"] h1, html[data-sbg-on] [class*="card"] h2, html[data-sbg-on] [class*="card"] h3, html[data-sbg-on] [class*="card"] h4,
-        html[data-sbg-on] [class*="card"] p, html[data-sbg-on] [class*="card"] span, html[data-sbg-on] [class*="card"] label,
-        html[data-sbg-on] [class*="card"] div, html[data-sbg-on] [class*="_card"] div, html[data-sbg-on] [class*="q_card"] div,
-        html[data-sbg-on] [class*="card"] button, html[data-sbg-on] [class*="_card"] button,
-        html[data-sbg-on] [class*="card"] svg, html[data-sbg-on] [class*="_card"] svg {
-          border: none !important;
-          box-shadow: none !important;
-        }`,
-
-        // 7. 弹窗、下拉菜单与选择面板：整体深空半透磨砂，菜单项与内部图标、文字彻底消除方框与多重边框，呈现极简丝滑悬停质感
-        `html[data-sbg-on] [role="dialog"],
-        html[data-sbg-on] [role="menu"],
-        html[data-sbg-on] [role="listbox"],
-        html[data-sbg-on] [class*="dialog"],
-        html[data-sbg-on] [class*="Dialog"],
-        html[data-sbg-on] [class*="popover"],
-        html[data-sbg-on] [class*="Popover"],
-        html[data-sbg-on] [class*="dropdown"],
-        html[data-sbg-on] [class*="Dropdown"],
-        html[data-sbg-on] [class*="menu"],
-        html[data-sbg-on] [class*="Menu"],
-        html[data-sbg-on] [class*="stat-dialog"],
-        html[data-sbg-on] [class*="TurnUsagePanel"],
-        html[data-sbg-on] [class*="xXe6ja_panel"],
-        html[data-sbg-on] [class*="panel"][role="dialog"],
-        html[data-sbg-on] [class*="_panel"][role="dialog"],
-        html[data-sbg-on] [class*="q_panel"][role="dialog"] {
-          background: rgba(13, 17, 28, 0.96) !important;
-          background-color: rgba(13, 17, 28, 0.96) !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
-          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
-          backdrop-filter: blur(16px) !important;
-          -webkit-backdrop-filter: blur(16px) !important;
-          border-radius: 8px !important;
-          padding: 4px !important;
-        }
-        /* 彻底消除菜单项本身以及内部图标、文字、快捷键标签的所有丑陋线框 */
-        html[data-sbg-on] [role="menuitem"],
-        html[data-sbg-on] [role="option"],
-        html[data-sbg-on] [role="menuitemcheckbox"],
-        html[data-sbg-on] [role="menuitemradio"],
-        html[data-sbg-on] [class*="BI5uFG_item"],
-        html[data-sbg-on] [class*="MenuItem"],
-        html[data-sbg-on] [class*="menuItem"],
-        html[data-sbg-on] [class*="DropdownItem"],
-        html[data-sbg-on] [class*="dropdownItem"],
-        html[data-sbg-on] [role="menu"] [class*="item"],
-        html[data-sbg-on] [role="listbox"] [class*="item"],
-        html[data-sbg-on] [class*="Menu"] [class*="item"],
-        html[data-sbg-on] [class*="menu"] [class*="item"] {
-          border: none !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          border-radius: 6px !important;
-          cursor: pointer !important;
-          transition: background 0.15s ease, color 0.15s ease !important;
-        }
-        html[data-sbg-on] [role="menuitem"]:hover,
-        html[data-sbg-on] [role="option"]:hover,
-        html[data-sbg-on] [role="menuitem"][data-highlighted],
-        html[data-sbg-on] [role="option"][data-highlighted],
-        html[data-sbg-on] [class*="BI5uFG_item"]:hover,
-        html[data-sbg-on] [class*="MenuItem"]:hover,
-        html[data-sbg-on] [class*="menuItem"]:hover,
-        html[data-sbg-on] [class*="DropdownItem"]:hover,
-        html[data-sbg-on] [class*="dropdownItem"]:hover,
-        html[data-sbg-on] [role="menu"] [class*="item"]:hover,
-        html[data-sbg-on] [role="listbox"] [class*="item"]:hover {
-          background: rgba(255, 255, 255, 0.10) !important;
-          border: none !important;
-          box-shadow: none !important;
-        }
-        html[data-sbg-on] [role="menu"] *,
-        html[data-sbg-on] [role="listbox"] *,
-        html[data-sbg-on] [role="menuitem"] *,
-        html[data-sbg-on] [role="option"] *,
-        html[data-sbg-on] [class*="BI5uFG_item"] *,
-        html[data-sbg-on] [class*="MenuItem"] *,
-        html[data-sbg-on] [class*="DropdownItem"] *,
-        html[data-sbg-on] [class*="stat-dialog"] *,
-        html[data-sbg-on] [class*="TurnUsagePanel"] * {
-          border: none !important;
-          background: transparent !important;
-          box-shadow: none !important;
-          text-shadow: none !important;
-        }
-        /* 模式与下拉选择框按钮极简质感 */
-        html[data-sbg-on] [role="combobox"],
-        html[data-sbg-on] button[class*="trigger"],
-        html[data-sbg-on] button[class*="Trigger"],
-        html[data-sbg-on] [class*="select-trigger"],
-        html[data-sbg-on] [class*="SelectTrigger"] {
-          background: rgba(255, 255, 255, 0.08) !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
-          border-radius: 6px !important;
-          color: #FFFFFF !important;
-          box-shadow: none !important;
-          transition: all 0.15s ease !important;
-        }
-        html[data-sbg-on] [role="combobox"]:hover,
-        html[data-sbg-on] button[class*="trigger"]:hover,
-        html[data-sbg-on] button[class*="Trigger"]:hover {
-          background: rgba(255, 255, 255, 0.14) !important;
-          border-color: rgba(56, 189, 248, 0.4) !important;
-        }`,
-
-        // 8. 全景视窗微暗角（Cockpit Vignette）：中央阅读区柔和压暗，四周边缘纯透星光璀璨，0 模糊且极大提升阅读对比度
-        '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(6, 9, 18, 0.28) 0%, rgba(6, 9, 18, 0.10) 60%, transparent 100%); z-index: 1; }',
-
-        // 9. 深空专属极简滚动条：5px 超窄全透明轨道，消除原生滚动条切割星空的突兀感
-        'html[data-sbg-on] *::-webkit-scrollbar { width: 5px; height: 5px; }',
-        'html[data-sbg-on] *::-webkit-scrollbar-track { background: transparent !important; }',
-        'html[data-sbg-on] *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.16) !important; border-radius: 999px; transition: background 0.2s ease; }',
-        'html[data-sbg-on] *::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.45) !important; box-shadow: 0 0 6px rgba(56, 189, 248, 0.35); }',
-
-        // 10. 聊天输入框 Focus 全息冰蓝呼吸微光：聚焦时激活流光微框，强化交互响应
-        'html[data-sbg-on] [class*="composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="card"], html[data-sbg-on] [class*="composer"]:focus-within [class*="_card"], html[data-sbg-on] [class*="Composer"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"]:focus-within, html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="card"], html[data-sbg-on] [class*="_bottomRow"]:focus-within [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"]:focus-within [class*="q_card"], html[data-sbg-on] [class*="composer-wrapper"]:focus-within { border-color: rgba(56, 189, 248, 0.5) !important; box-shadow: 0 0 16px rgba(56, 189, 248, 0.25) !important; background: rgba(14, 20, 32, 0.96) !important; }',
-
-        // 11. 代码块与引用块微光盾：保证密集语法高亮清晰可辨，防止密集星群干扰
-        'html[data-sbg-on] pre, html[data-sbg-on] code[class*="language-"], html[data-sbg-on] [class*="codeblock"], html[data-sbg-on] [class*="code-block"] { background: rgba(8, 12, 22, 0.65) !important; border: 1px solid rgba(255, 255, 255, 0.14) !important; border-radius: 8px !important; }',
-        'html[data-sbg-on] blockquote { background: rgba(15, 23, 42, 0.35) !important; border-left: 3px solid #38bdf8 !important; padding: 6px 12px !important; }',
-
-        // 12. 太空全息 HUD 文字防晕散与高对比度保护（确保全透明下所有内容绝对看得见）
-        `html[data-sbg-on] {
-          --dsw-alias-label-primary: #FFFFFF !important;
-          --dsw-alias-label-secondary: rgba(235, 242, 255, 0.88) !important;
-          --dsw-alias-label-tertiary: #FFFFFF !important;
-          --dsw-alias-label-quaternary: rgba(200, 220, 255, 0.65) !important;
-          --dsw-alias-border-l1: rgba(255, 255, 255, 0.14) !important;
-          --dsw-alias-border-l2: rgba(255, 255, 255, 0.22) !important;
-          --dsw-alias-interactive-bg-hover: rgba(255, 255, 255, 0.12) !important;
-          --dsw-specific-input-major: rgba(10, 15, 26, 0.45) !important;
-        }
-        html[data-sbg-on] h1, html[data-sbg-on] h2, html[data-sbg-on] h3, html[data-sbg-on] h4,
-        html[data-sbg-on] [class*="title"], html[data-sbg-on] [class*="Title"],
-        html[data-sbg-on] [class*="heading"], html[data-sbg-on] strong, html[data-sbg-on] b {
-          color: #FFFFFF !important;
-          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95) !important;
-        }
-        html[data-sbg-on] p, html[data-sbg-on] span, html[data-sbg-on] label, html[data-sbg-on] li,
-        html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] button, html[data-sbg-on] a {
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-        html[data-sbg-on] [class*="desc"], html[data-sbg-on] [class*="Desc"],
-        html[data-sbg-on] [class*="secondary"], html[data-sbg-on] [class*="subtitle"],
-        html[data-sbg-on] [class*="Subtitle"], html[data-sbg-on] [class*="caption"] {
-          color: rgba(235, 242, 255, 0.88) !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-        /* 代码片段与路径微标签 */
-        html[data-sbg-on] code:not([class*="language-"]),
-        html[data-sbg-on] [class*="path"] {
-          background: rgba(0, 0, 0, 0.4) !important;
-          color: #7dd3fc !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
-          border-radius: 4px !important;
-          padding: 1px 5px !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-        /* 卡片内插件标签（persona, agent-instructions, time-context, tool-* 等）与徽标：高颜值全息微光胶囊 */
-        html[data-sbg-on] [class*="tag"],
-        html[data-sbg-on] [class*="Tag"],
-        html[data-sbg-on] [class*="badge"],
-        html[data-sbg-on] [class*="Badge"] {
-          display: inline-flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          font-size: 11px !important;
-          font-weight: 500 !important;
-          line-height: 1.4 !important;
-          padding: 2px 7px !important;
-          border-radius: 4px !important;
-          background: rgba(56, 189, 248, 0.12) !important;
-          border: 1px solid rgba(56, 189, 248, 0.28) !important;
-          color: #7dd3fc !important;
-          text-shadow: none !important;
-          box-shadow: none !important;
-          transition: background 0.15s ease, border-color 0.15s ease !important;
-        }
-        html[data-sbg-on] [class*="tag"]:hover,
-        html[data-sbg-on] [class*="Tag"]:hover,
-        html[data-sbg-on] [class*="badge"]:hover,
-        html[data-sbg-on] [class*="Badge"]:hover {
-          background: rgba(56, 189, 248, 0.22) !important;
-          border-color: rgba(56, 189, 248, 0.5) !important;
-          color: #bae6fd !important;
-        }
-        /* 菜单内部微标（如 EXP 试验性功能标识）专属极简胶囊 */
-        html[data-sbg-on] [role="menu"] [class*="badge"],
-        html[data-sbg-on] [role="menu"] [class*="tag"],
-        html[data-sbg-on] [role="menuitem"] [class*="badge"],
-        html[data-sbg-on] [role="menuitem"] [class*="tag"],
-        html[data-sbg-on] [class*="BI5uFG_item"] [class*="badge"],
-        html[data-sbg-on] [class*="BI5uFG_item"] [class*="tag"] {
-          border-radius: 3px !important;
-          padding: 1px 5px !important;
-          font-size: 10px !important;
-          font-weight: 600 !important;
-          letter-spacing: 0.5px !important;
-          background: rgba(56, 189, 248, 0.18) !important;
-          border: 1px solid rgba(56, 189, 248, 0.35) !important;
-          color: #38bdf8 !important;
-          margin-left: 6px !important;
-        }
-        /* 状态微标（如“已停用”）：温润磨砂胶囊 */
-        html[data-sbg-on] [class*="disabled"],
-        html[data-sbg-on] [class*="Disabled"],
-        html[data-sbg-on] [class*="status-pill"] {
-          border-radius: 999px !important;
-          background: rgba(255, 255, 255, 0.08) !important;
-          border: 1px solid rgba(255, 255, 255, 0.18) !important;
-          color: #94a3b8 !important;
-          font-size: 11px !important;
-          padding: 2px 8px !important;
-        }`,
-
-        // 13. 全域通透与全天候高对比 HUD 文字系统：确保浅色与深色模式下星空效果 100% 完整可见，杜绝任何图层遮挡，杜绝任何黑底黑字或白底白字隐形
-        `/* 【全域穿透保障】：无论系统处于浅色还是深色外观，全窗口各级容器保持彻底透明，星空画布完整展现实时流动 */
-        html[data-sbg-on] [class*="_frame"],
-        html[data-sbg-on] [class*="q_frame"],
-        html[data-sbg-on] [class*="_main"],
-        html[data-sbg-on] [class*="q_main"],
-        html[data-sbg-on] [class*="_centerCol"],
-        html[data-sbg-on] [class*="q_centerCol"],
-        html[data-sbg-on] [class*="_sidebarCol"],
-        html[data-sbg-on] [class*="q_sidebarCol"],
-        html[data-sbg-on] [class*="_settings"],
-        html[data-sbg-on] [class*="q_settings"],
-        html[data-sbg-on] [class*="_page"],
-        html[data-sbg-on] [class*="q_page"],
-        html[data-sbg-on] [class*="detail"] {
-          background: transparent !important;
-          background-color: transparent !important;
-        }
-
-        /* 【左侧侧边栏导航与列表项全域纯白】：消除浅色模式下系统将侧栏置为深黑文字导致的黑底隐形缺陷 */
-        html[data-sbg-on] [class*="_sidebarCol"] *,
-        html[data-sbg-on] [class*="q_sidebarCol"] *,
-        html[data-sbg-on] [class*="sidebar"] *,
-        html[data-sbg-on] [class*="Sidebar"] *,
-        html[data-sbg-on] [class*="nav"] *,
-        html[data-sbg-on] [class*="Nav"] * {
-          color: #FFFFFF !important;
-          fill: #FFFFFF !important;
-          stroke: #FFFFFF !important;
-          text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.95) !important;
-        }
-
-        /* 【通用设置外观选项卡（浅色/深色/跟随系统）全域纯白与高亮胶囊】：未选纯白透光，激活项流光冰蓝，杜绝深灰黑字 */
-        html[data-sbg-on] [class*="cube"],
-        html[data-sbg-on] [class*="Cube"],
-        html[data-sbg-on] [class*="setting"] [class*="card"] {
-          background: rgba(255, 255, 255, 0.08) !important;
-          border: 1px solid rgba(255, 255, 255, 0.16) !important;
-          border-radius: 8px !important;
-          color: #FFFFFF !important;
-        }
-        html[data-sbg-on] [class*="cube"] *,
-        html[data-sbg-on] [class*="Cube"] * {
-          color: #FFFFFF !important;
-          fill: #FFFFFF !important;
-          stroke: #FFFFFF !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-        html[data-sbg-on] [class*="cube"].on,
-        html[data-sbg-on] [class*="Cube"][class*="active"],
-        html[data-sbg-on] [class*="cube"][class*="active"],
-        html[data-sbg-on] [class*="cube"][aria-selected="true"] {
-          background: rgba(56, 189, 248, 0.22) !important;
-          border: 1px solid #38bdf8 !important;
-          box-shadow: 0 0 12px rgba(56, 189, 248, 0.35) !important;
-        }
-
-        /* 【右上角与通用设置操作按钮（如“打开配置文件”等）】：纯白立体文字，告别浅色黑字隐形 */
-        html[data-sbg-on] [class*="_settings"] button,
-        html[data-sbg-on] [class*="settings"] button,
-        html[data-sbg-on] [class*="config"] {
-          color: #FFFFFF !important;
-          background: rgba(255, 255, 255, 0.08) !important;
-          border: 1px solid rgba(255, 255, 255, 0.18) !important;
-          border-radius: 6px !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-
-        /* 【下拉选择框与触发器（完全权限/语言/字号/工作步骤/标准模式等）】：统一为深空微透晶石，彻底解决浅色白块割裂与白底白字 */
-        html[data-sbg-on] [role="combobox"],
-        html[data-sbg-on] button[class*="trigger"],
-        html[data-sbg-on] button[class*="Trigger"],
-        html[data-sbg-on] [class*="select-trigger"],
-        html[data-sbg-on] [class*="SelectTrigger"] {
-          background: rgba(14, 20, 32, 0.85) !important;
-          border: 1px solid rgba(255, 255, 255, 0.18) !important;
-          border-radius: 6px !important;
-          color: #FFFFFF !important;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
-        }
-        html[data-sbg-on] [role="combobox"] *,
-        html[data-sbg-on] button[class*="trigger"] *,
-        html[data-sbg-on] button[class*="Trigger"] * {
-          color: #FFFFFF !important;
-          stroke: #FFFFFF !important;
-          fill: #FFFFFF !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }
-
-        /* 【聊天消息与正文段落全域高对比纯白】：涵盖 p, li, span, 确保会话内容在任何外观下均清晰醒目，绝不漏显 */
-        html[data-sbg-on] p,
-        html[data-sbg-on] li,
-        html[data-sbg-on] [class*="bubble"] *,
-        html[data-sbg-on] [class*="Message"] *,
-        html[data-sbg-on] [class*="message"] * {
-          color: #FFFFFF !important;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
-        }`
-      ].join('\n');
+    /**
+     * 生成官方主题令牌覆盖（light / dark 双值）。
+     * DSH 的 ThemeRuntime.composeActive() 会按当前 colorScheme 自动择一。
+     */
+    function generateTokenOverrides(options) {
+      const { enabled = true } = options || {};
+      if (!enabled) return {};
+      const out = {};
+      for (const name of Object.keys(PALETTE.dark)) {
+        out[name] = { light: PALETTE.light[name], dark: PALETTE.dark[name] };
+      }
+      return out;
     }
 
-    /** 动态根据配置生成官方主题令牌覆盖。 */
-    function generateTokenOverrides(options) {
-      const { enabled = true, surfaceOpacity = 0.0 } = options || {};
-      if (!enabled) return {};
-      const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.95);
-      const zeroColor = op > 0 ? `rgba(10, 15, 26, ${op.toFixed(2)})` : 'rgba(0, 0, 0, 0)';
+    /**
+     * 生成少量必要的 CSS 补充规则。
+     *
+     * 只做令牌做不到的三件事：
+     *  1) 禁用常规 blur（用户明确要求 0px 模糊视界）；
+     *  2) composer 座席的渐隐遮蔽（防止历史消息穿透到输入框下方）；
+     *  3) 深空画布的暗角（提升文字对比度）。
+     *
+     * 其余一切（背景/边框/圆角/文字色/内边距）全部交给令牌 + DSH 原生样式。
+     */
+    function generateDynamicCss(options) {
+      const { enabled = true } = options || {};
+      if (!enabled) return '';
 
-      return {
-        '--dsw-alias-bg-base': { light: zeroColor, dark: zeroColor },
-        '--dsw-alias-bg-layer-1': { light: zeroColor, dark: zeroColor },
-        '--dsw-alias-bg-layer-2': { light: zeroColor, dark: zeroColor },
-        '--dsw-alias-bg-layer-3': { light: zeroColor, dark: zeroColor },
-        '--dsw-alias-bg-layer-4': { light: zeroColor, dark: zeroColor },
-        '--dsw-alias-settings-card-fill': { light: zeroColor, dark: zeroColor },
-        '--dsw-specific-sidebar-fill': { light: zeroColor, dark: zeroColor },
-        '--dsw-specific-input-major': { light: 'rgba(0, 0, 0, 0)', dark: 'rgba(0, 0, 0, 0)' },
-      };
+      return [
+        // ── 1. 全局 0px 模糊（用户核心诉求），但菜单弹窗保留原生磨砂 ──
+        'html[data-sbg-on] *:not([role="menu"]):not([role="dialog"]):not([role="listbox"]):not([class*="stat-dialog"]):not([class*="TurnUsagePanel"]) { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
+
+        // ── 2. composer 座席渐隐遮蔽：深色 / 浅色各一套，避免历史消息穿透 ──
+        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; }',
+        'html[data-sbg-on] body[data-ds-dark-theme] [data-composer-seat], html[data-sbg-on] body[data-ds-dark-theme] [class*="composerSeat"] { background: linear-gradient(180deg, rgba(6,10,20,0) 0px, rgba(6,10,20,0.72) 28px, rgba(6,10,20,0.94) 64px, rgba(6,10,20,0.98) 100%) !important; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-seat], html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="composerSeat"] { background: linear-gradient(180deg, rgba(248,250,253,0) 0px, rgba(248,250,253,0.78) 28px, rgba(248,250,253,0.96) 64px, rgba(248,250,253,1) 100%) !important; }',
+
+        // ── 3. 深空画布暗角：中央阅读区柔和压暗，四周纯透（0 模糊）──
+        '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(4, 8, 16, 0.30) 0%, rgba(4, 8, 16, 0.10) 62%, transparent 100%); z-index: 1; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::after { background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 62%, transparent 100%); }',
+
+        // ── 4. 极窄滚动条：只调尺寸，颜色走令牌 ──
+        'html[data-sbg-on] *::-webkit-scrollbar { width: 6px; height: 6px; }',
+        'html[data-sbg-on] *::-webkit-scrollbar-track { background: transparent; }',
+
+        // ── 5. 代码块：给一层轻微底色保证语法高亮可辨（跟随主题）──
+        'html[data-sbg-on] body[data-ds-dark-theme] pre, html[data-sbg-on] body[data-ds-dark-theme] code[class*="language-"] { background: rgba(8, 12, 22, 0.55) !important; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) pre, html[data-sbg-on] body:not([data-ds-dark-theme]) code[class*="language-"] { background: rgba(15, 23, 42, 0.045) !important; }',
+      ].join('\n');
     }
 
     /** 静态兜底兼容导出（供旧单测与外部引用）。 */
@@ -1487,37 +1193,37 @@ window.__ModuleLoader__.load({
       el.textContent = [
         '.sbg-cv{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;}',
         '.sbg-page{display:flex;flex-direction:column;width:100%;box-sizing:border-box;background:transparent;margin-top:16px;}',
-        '.sbg-card{background:rgba(15,20,32,0.35);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}',
+        '.sbg-card{background:var(--dsw-alias-bg-layer-1,rgba(15,20,32,0.35));border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,0.14));border-radius:var(--dsw-radius-lg,12px);padding:18px 22px;display:flex;flex-direction:column;gap:14px;}',
         '.sbg-card-header{display:flex;align-items:center;justify-content:space-between;gap:16px;}',
-        '.sbg-card-title{font-size:15px;font-weight:600;color:#FFFFFF;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
-        '.sbg-card-desc{font-size:13px;color:rgba(235,242,255,0.88);line-height:1.5;margin-top:4px;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
-        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.15);position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
-        '.sbg-switch[aria-checked="true"]{background:#0284c7;border-color:#38bdf8;}',
+        '.sbg-card-title{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary,#FFFFFF);}',
+        '.sbg-card-desc{font-size:13px;color:var(--dsw-alias-label-secondary,rgba(235,242,255,0.88));line-height:1.5;margin-top:4px;}',
+        '.sbg-switch{appearance:none;-webkit-appearance:none;flex:0 0 auto;width:42px;height:24px;border-radius:999px;border:1px solid var(--dsw-alias-border-l3,rgba(255,255,255,0.2));background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.15));position:relative;cursor:pointer;transition:background .15s ease;padding:0;}',
+        '.sbg-switch[aria-checked="true"]{background:var(--dsw-alias-state-business-primary,#0284c7);border-color:var(--dsw-alias-state-business-primary,#38bdf8);}',
         '.sbg-switch-thumb{position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s ease;box-shadow:0 1px 3px rgba(0,0,0,.35);}',
         '.sbg-switch[aria-checked="true"] .sbg-switch-thumb{left:20px;}',
-        '.sbg-status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:rgba(255,255,255,0.1);color:#FFFFFF;border:1px solid rgba(255,255,255,0.15);}',
+        '.sbg-status-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:4px 10px;border-radius:20px;background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.1));color:var(--dsw-alias-label-primary,#FFFFFF);border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,0.15));}',
         '.sbg-status-dot{width:8px;height:8px;border-radius:50%;}',
         '.sbg-status-dot.on{background:#10B981;box-shadow:0 0 8px #10B981;}',
         '.sbg-status-dot.off{background:#9CA3AF;}',
         // 项目全景说明专属栅格
         '.sbg-doc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:6px;}',
-        '.sbg-doc-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;}',
-        '.sbg-doc-card-title{font-size:13.5px;font-weight:600;color:#7dd3fc;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
-        '.sbg-doc-card-body{font-size:12px;color:rgba(235,242,255,0.88);line-height:1.6;white-space:pre-line;text-shadow:0 1px 2px rgba(0,0,0,0.8);}',
+        '.sbg-doc-card{background:var(--dsw-alias-bg-layer-2,rgba(255,255,255,0.04));border:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,0.12));border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;}',
+        '.sbg-doc-card-title{font-size:13.5px;font-weight:600;color:var(--dsw-alias-state-business-primary,#7dd3fc);}',
+        '.sbg-doc-card-body{font-size:12px;color:var(--dsw-alias-label-secondary,rgba(235,242,255,0.88));line-height:1.6;white-space:pre-line;}',
         '@media (max-width:768px){.sbg-doc-grid{grid-template-columns:1fr;}}',
         // 右下角悬浮控制面板样式
-        '.sbg-fab-btn{position:fixed;bottom:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(13,18,30,0.88);border:1px solid rgba(56,189,248,0.4);color:#38bdf8;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.6);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;padding:0;outline:none;}',
+        '.sbg-fab-btn{position:fixed;bottom:20px;right:20px;width:36px;height:36px;border-radius:50%;background:var(--dsw-alias-button-floating-fill,rgba(13,18,30,0.88));border:1px solid var(--dsw-alias-state-business-primary,#38bdf8);color:var(--dsw-alias-state-business-primary,#38bdf8);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1200;box-shadow:0 4px 16px rgba(0,0,0,0.35);transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;padding:0;outline:none;}',
         '.sbg-fab-btn:hover{transform:scale(1.1);border-color:#38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);}',
-        '.sbg-fab-panel{position:fixed;bottom:64px;right:20px;width:280px;background:rgba(13,18,30,0.96);border:1px solid rgba(56,189,248,0.35);border-radius:12px;padding:16px;box-shadow:0 16px 36px rgba(0,0,0,0.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:10000;display:flex;flex-direction:column;gap:13px;color:#f1f5f9;font-size:13px;}',
-        '.sbg-fab-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;}',
+        '.sbg-fab-panel{position:fixed;bottom:64px;right:20px;width:280px;background:var(--dsw-specific-menu,rgba(13,18,30,0.96));border:1px solid var(--dsw-alias-border-l3,rgba(255,255,255,0.2));border-radius:var(--dsw-radius-lg,12px);padding:16px;box-shadow:0 16px 36px rgba(0,0,0,0.5);backdrop-filter:var(--dsw-menu-backdrop-filter,blur(16px));-webkit-backdrop-filter:var(--dsw-menu-backdrop-filter,blur(16px));z-index:1200;display:flex;flex-direction:column;gap:13px;color:var(--dsw-alias-label-primary,#f1f5f9);font-size:13px;}',
+        '.sbg-fab-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,0.1));padding-bottom:8px;}',
         '.sbg-fab-title{font-weight:600;color:#38bdf8;display:flex;align-items:center;gap:6px;}',
         '.sbg-fab-close{background:transparent;border:none;color:rgba(255,255,255,0.6);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;}',
         '.sbg-fab-close:hover{color:#fff;background:rgba(255,255,255,0.1);}',
         '.sbg-ctrl-row{display:flex;flex-direction:column;gap:5px;}',
-        '.sbg-ctrl-label{display:flex;justify-content:space-between;color:rgba(235,242,255,0.9);font-size:12px;}',
+        '.sbg-ctrl-label{display:flex;justify-content:space-between;color:var(--dsw-alias-label-secondary,rgba(235,242,255,0.9));font-size:12px;}',
         '.sbg-ctrl-slider{width:100%;accent-color:#38bdf8;cursor:pointer;}',
-        '.sbg-fab-footer{display:flex;justify-content:flex-end;padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);}',
-        '.sbg-btn-reset{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:rgba(235,242,255,0.85);padding:4px 10px;font-size:11.5px;cursor:pointer;}',
+        '.sbg-fab-footer{display:flex;justify-content:flex-end;padding-top:4px;border-top:1px solid var(--dsw-alias-border-l1,rgba(255,255,255,0.08));}',
+        '.sbg-btn-reset{background:var(--dsw-alias-interactive-bg-hover,rgba(255,255,255,0.08));border:1px solid var(--dsw-alias-border-l2,rgba(255,255,255,0.15));border-radius:6px;color:var(--dsw-alias-label-secondary,rgba(235,242,255,0.85));padding:4px 10px;font-size:11.5px;cursor:pointer;}',
         '.sbg-btn-reset:hover{background:rgba(255,255,255,0.15);color:#fff;}',
       ].join('\n');
       document.head.appendChild(el);
@@ -1593,10 +1299,6 @@ window.__ModuleLoader__.load({
       const [localSpeed, setLocalSpeed] = React.useState(speed);
       const [localDensity, setLocalDensity] = React.useState(density);
 
-      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
-      const [localOpacity, setLocalOpacity] = React.useState(surfaceOpacity);
-      React.useEffect(() => { setLocalOpacity(surfaceOpacity); }, [surfaceOpacity]);
-
       React.useEffect(() => { setLocalSpeed(speed); }, [speed]);
       React.useEffect(() => { setLocalDensity(density); }, [density]);
 
@@ -1626,17 +1328,12 @@ window.__ModuleLoader__.load({
         if (actions && actions.setDensity) actions.setDensity(val);
       };
 
-      const onOpacityChange = (val) => {
-        setLocalOpacity(val);
-        if (actions && actions.setSurfaceOpacity) actions.setSurfaceOpacity(val);
-      };
-
       return h('div', { className: 'sbg-fab-root' },
         h('button', {
           ref: btnRef,
           type: 'button',
           className: 'sbg-fab-btn',
-          title: '深空背景调节（航行速度 / 星空粒子）',
+          title: '深空背景调节（航行速度 / 星空粒子数量）',
           onClick: () => setOpen(!open),
         },
           h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
@@ -1702,22 +1399,6 @@ window.__ModuleLoader__.load({
               onInput: (e) => onDensityChange(Number(e.target.value)),
             })
           ),
-          h('div', { className: 'sbg-ctrl-row' },
-            h('div', { className: 'sbg-ctrl-label' },
-              h('span', null, '玻璃不透明度'),
-              h('span', { style: { color: '#38bdf8' } }, `${Math.round(localOpacity * 100)}%`)
-            ),
-            h('input', {
-              type: 'range',
-              className: 'sbg-ctrl-slider',
-              min: '0',
-              max: '0.85',
-              step: '0.05',
-              value: String(localOpacity),
-              onChange: (e) => onOpacityChange(Number(e.target.value)),
-              onInput: (e) => onOpacityChange(Number(e.target.value)),
-            })
-          ),
           h('div', { className: 'sbg-fab-footer' },
             h('button', {
               type: 'button',
@@ -1726,7 +1407,6 @@ window.__ModuleLoader__.load({
                 if (actions && actions.resetDefaults) actions.resetDefaults();
                 setLocalSpeed(0.4);
                 setLocalDensity(1000);
-                setLocalOpacity(0.0);
               },
             }, '恢复默认')
           )
@@ -1783,28 +1463,34 @@ window.__ModuleLoader__.load({
       const enabled = doc.enabled !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
       const density = typeof doc.density === 'number' ? doc.density : 1000;
-      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
+      /** 当前引擎实例句柄（供密度热更新复用，避免销毁重建）。 */
+      const engineRef = React.useRef(null);
 
       React.useEffect(() => {
         boundDoc = doc;
-        if (actions && typeof actions.normalize === 'function') actions.normalize();
         if (actions) boundActions = actions;
       }, [doc, actions]);
+
+      // normalize 只在挂载时跑一次，绝不能跟随 doc 每次变化重跑，
+      // 否则会把用户刚拖动的 surfaceOpacity 瞬间重置（历史 Bug）。
+      React.useEffect(() => {
+        if (actions && typeof actions.normalize === 'function') actions.normalize();
+      }, [actions]);
 
       React.useEffect(ensureStyles, []);
 
       // 1. 样式与主题动态响应副作用（独立于 Canvas 引擎，滑块调节时毫秒级无感知响应，绝不销毁重建物件）
       React.useEffect(() => {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-        diag.steps.push(`SpaceLayer:styles:start: enabled=${enabled} op=${surfaceOpacity}`);
+        diag.steps.push(`SpaceLayer:styles:start: enabled=${enabled}`);
 
-        updateDynamicStyles({ enabled, surfaceOpacity });
+        updateDynamicStyles({ enabled });
 
         let disposeThemeOverride = null;
         if (themeApi && typeof themeApi.overrideTokens === 'function') {
           try {
             if (enabled) {
-              const tokens = generateTokenOverrides({ enabled, surfaceOpacity });
+              const tokens = generateTokenOverrides({ enabled });
               disposeThemeOverride = themeApi.overrideTokens(PANEL_ID, tokens);
             }
           } catch (e) {
@@ -1815,14 +1501,13 @@ window.__ModuleLoader__.load({
         return () => {
           if (disposeThemeOverride) disposeThemeOverride();
         };
-      }, [enabled, surfaceOpacity]);
+      }, [enabled]);
 
-      // 2. 星空 Canvas 引擎生命周期（只在开关和粒子密度变更时响应，滑动不透明度或速度绝不重建）
+      // 2. 星空 Canvas 引擎生命周期（只在开关变更时重建；密度/速度/不透明度全部热更新）
       React.useEffect(() => {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
         if (!enabled) {
           diag.steps.push('SpaceLayer:engine:disabled');
-          updateDynamicStyles({ enabled: false });
           return;
         }
 
@@ -1848,13 +1533,25 @@ window.__ModuleLoader__.load({
           diag.errors.push(`createSpaceEngine:${e.message}`);
         }
 
+        // 把引擎句柄挂到闭包变量，供密度热更新 effect 使用
+        engineRef.current = engine;
+
         return () => {
-          updateDynamicStyles({ enabled: false });
+          // 注意：这里绝不清空动态样式（历史 Bug：会造成一帧无样式闪白），
+          // 样式的启用/停用完全由「样式副作用」负责。
+          engineRef.current = null;
           if (engine) engine.dispose();
           if (root && root.parentNode) root.parentNode.removeChild(root);
           diag.steps.push('SpaceLayer:engine:cleanup');
         };
-      }, [enabled, density]);
+      }, [enabled]);
+
+      // 2.1 粒子数量热更新：只增删星点数组，绝不销毁重建 canvas / RAF
+      React.useEffect(() => {
+        const engine = engineRef.current;
+        if (!engine || typeof engine.setDensity !== 'function') return;
+        engine.setDensity(density);
+      }, [density, enabled]);
 
       // 渲染右下角悬浮调控球与面板
       return h(SpaceFloatControl, { useStore, actions });
@@ -1865,7 +1562,6 @@ window.__ModuleLoader__.load({
         init: () => ({
           schemaVersion: STORE_SCHEMA_VERSION,
           enabled: true,
-          surfaceOpacity: 0.0,
           blur: 0,
           autoContrast: true,
           textShadow: true,
@@ -1882,7 +1578,7 @@ window.__ModuleLoader__.load({
             delete draft.hue;
             if (isLegacy) {
               draft.enabled = true;
-              draft.surfaceOpacity = 0.0;
+              delete draft.surfaceOpacity;
               draft.blur = 0;
               if (typeof draft.autoContrast !== 'boolean') draft.autoContrast = true;
               if (typeof draft.textShadow !== 'boolean') draft.textShadow = true;
@@ -1890,7 +1586,8 @@ window.__ModuleLoader__.load({
               if (typeof draft.density !== 'number') draft.density = 1000;
             } else {
               draft.enabled = draft.enabled !== false;
-              draft.surfaceOpacity = 0.0;
+              // 玻璃不透明度滑块已移除，清掉历史持久化字段
+              delete draft.surfaceOpacity;
               draft.blur = 0;
               draft.autoContrast = draft.autoContrast !== false;
               draft.textShadow = draft.textShadow !== false;
@@ -1900,7 +1597,6 @@ window.__ModuleLoader__.load({
             draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
           setEnabled(draft, on) { draft.enabled = on === true; },
-          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0, 0.0, 0.95); },
           setDensity(draft, val) { draft.density = clamp(Math.round(Number(val) || 1000), 300, 2500); },
           setBlur(draft) { draft.blur = 0; },
           setAutoContrast(draft, on) { draft.autoContrast = on === true; },
@@ -1908,7 +1604,7 @@ window.__ModuleLoader__.load({
           setSpeed(draft, val) { draft.speed = clamp(Number(val) || 0.4, 0.1, 1.5); },
           resetDefaults(draft) {
             draft.enabled = true;
-            draft.surfaceOpacity = 0.0;
+            delete draft.surfaceOpacity;
             draft.blur = 0;
             draft.autoContrast = true;
             draft.textShadow = true;
