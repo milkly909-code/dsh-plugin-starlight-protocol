@@ -1023,6 +1023,38 @@ window.__ModuleLoader__.load({
         return () => clearInterval(timer);
       }, [enabled]);
 
+      // ── 从设置行上报一次（诊断期专用）────────────────────────────────
+      // SpaceLayer 的副作用若因 enabled=false 提前返回，就永远不会上报；
+      // 而设置行总是会被渲染，所以从这里发一份，保证一定能看到真实状态。
+      React.useEffect(() => {
+        const timer = setTimeout(() => {
+          const p = probe();
+          const payload = {
+            from: 'SettingsRow',
+            at: Date.now(),
+            url: location.href,
+            enabled,
+            hasUseStore: typeof useStore === 'function',
+            hasActions: !!actions,
+            hasSetEnabled: typeof setEnabled === 'function',
+            probe: p,
+            persistRaw: (() => { try { return localStorage.getItem(PERSIST_KEY); } catch (e) { return 'unreadable'; } })(),
+            sbgDebugGlobal: (() => { try { return window.__sbgDebug || null; } catch (e) { return null; } })(),
+            sbgApply: (() => { try { const a = window.__sbgApply; return a ? { steps: (a.steps || []).length, errors: (a.errors || []).slice(-5), mount: a.mount || null } : null; } catch (e) { return null; } })(),
+          };
+          try {
+            fetch('/plugins/space-background/diag', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            }).catch(() => {});
+          } catch (e) { /* ignore */ }
+          try { localStorage.setItem('space-background/diag', JSON.stringify(payload)); } catch (e) { /* ignore */ }
+          try { window.__sbgDiag = payload; } catch (e) { /* ignore */ }
+        }, 900);
+        return () => clearTimeout(timer);
+      }, [enabled]);
+
       const ok = state.overlay && state.canvas > 0;
       const rowStyle = { fontSize: '12px', lineHeight: '18px', opacity: 0.85, marginTop: '6px' };
       const lines = [
