@@ -1054,14 +1054,17 @@ window.__ModuleLoader__.load({
      */
     const PALETTE = {
       dark: {
-        '--dsw-alias-bg-base':                 'rgba(6, 10, 20, 0.58)',
-        '--dsw-alias-bg-layer-1':              'rgba(12, 18, 30, 0.64)',
-        '--dsw-alias-bg-layer-2':              'rgba(16, 24, 38, 0.70)',
-        '--dsw-alias-bg-layer-3':              'rgba(20, 30, 46, 0.76)',
-        '--dsw-alias-bg-layer-4':              'rgba(24, 36, 54, 0.82)',
-        '--dsw-alias-settings-card-fill':      'rgba(16, 24, 38, 0.72)',
-        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.66)',
-        '--dsw-specific-input-major':          'rgba(10, 16, 26, 0.74)',
+        // ⚠️ bg-base 必须全透明！它被 DSH 嵌套使用 3 次
+        // (frame → centerCol → ConversationRoot)，任何不透明度都会累加。
+        // 界面整体色调由 #sbg-canvas-root::before 的单层 tint 负责。
+        '--dsw-alias-bg-base':                 'rgba(0, 0, 0, 0)',
+        '--dsw-alias-bg-layer-1':              'rgba(14, 21, 34, 0.34)',
+        '--dsw-alias-bg-layer-2':              'rgba(18, 27, 42, 0.40)',
+        '--dsw-alias-bg-layer-3':              'rgba(22, 33, 50, 0.46)',
+        '--dsw-alias-bg-layer-4':              'rgba(26, 39, 58, 0.52)',
+        '--dsw-alias-settings-card-fill':      'rgba(18, 27, 42, 0.42)',
+        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.30)',
+        '--dsw-specific-input-major':          'rgba(10, 16, 26, 0.62)',
         '--dsw-specific-menu':                 'rgba(13, 19, 30, 0.97)',
         '--dsw-alias-label-primary':           '#FFFFFF',
         '--dsw-alias-label-secondary':         '#E8F0FF',
@@ -1083,14 +1086,15 @@ window.__ModuleLoader__.load({
         '--dsw-menu-backdrop-filter':          'blur(20px) saturate(140%)',
       },
       light: {
-        '--dsw-alias-bg-base':                 'rgba(248, 250, 253, 0.74)',
-        '--dsw-alias-bg-layer-1':              'rgba(255, 255, 255, 0.82)',
-        '--dsw-alias-bg-layer-2':              'rgba(255, 255, 255, 0.88)',
-        '--dsw-alias-bg-layer-3':              'rgba(255, 255, 255, 0.92)',
-        '--dsw-alias-bg-layer-4':              'rgba(255, 255, 255, 0.96)',
-        '--dsw-alias-settings-card-fill':      'rgba(255, 255, 255, 0.90)',
-        '--dsw-specific-sidebar-fill':         'rgba(241, 245, 250, 0.80)',
-        '--dsw-specific-input-major':          'rgba(255, 255, 255, 0.92)',
+        // 同上：bg-base 必须全透明，浅色雾感由单层 tint 提供
+        '--dsw-alias-bg-base':                 'rgba(0, 0, 0, 0)',
+        '--dsw-alias-bg-layer-1':              'rgba(255, 255, 255, 0.46)',
+        '--dsw-alias-bg-layer-2':              'rgba(255, 255, 255, 0.54)',
+        '--dsw-alias-bg-layer-3':              'rgba(255, 255, 255, 0.62)',
+        '--dsw-alias-bg-layer-4':              'rgba(255, 255, 255, 0.70)',
+        '--dsw-alias-settings-card-fill':      'rgba(255, 255, 255, 0.56)',
+        '--dsw-specific-sidebar-fill':         'rgba(241, 245, 250, 0.34)',
+        '--dsw-specific-input-major':          'rgba(255, 255, 255, 0.78)',
         '--dsw-specific-menu':                 'rgba(255, 255, 255, 0.98)',
         '--dsw-alias-label-primary':           '#0F172A',
         '--dsw-alias-label-secondary':         '#1E293B',
@@ -1147,19 +1151,26 @@ window.__ModuleLoader__.load({
 
         // ── 2. composer 座席渐隐遮蔽：深色 / 浅色各一套，避免历史消息穿透 ──
         'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; }',
-        'html[data-sbg-on] body[data-ds-dark-theme] [data-composer-seat], html[data-sbg-on] body[data-ds-dark-theme] [class*="composerSeat"] { background: linear-gradient(180deg, rgba(6,10,20,0) 0px, rgba(6,10,20,0.72) 28px, rgba(6,10,20,0.94) 64px, rgba(6,10,20,0.98) 100%) !important; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-seat], html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="composerSeat"] { background: linear-gradient(180deg, rgba(248,250,253,0) 0px, rgba(248,250,253,0.78) 28px, rgba(248,250,253,0.96) 64px, rgba(248,250,253,1) 100%) !important; }',
+        'html[data-sbg-on] body[data-ds-dark-theme] [data-composer-seat], html[data-sbg-on] body[data-ds-dark-theme] [class*="composerSeat"] { background: linear-gradient(180deg, rgba(6,10,20,0) 0px, rgba(6,10,20,0.62) 26px, rgba(6,10,20,0.88) 58px, rgba(6,10,20,0.96) 100%) !important; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-seat], html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="composerSeat"] { background: linear-gradient(180deg, rgba(247,250,254,0) 0px, rgba(247,250,254,0.70) 26px, rgba(247,250,254,0.92) 58px, rgba(247,250,254,0.98) 100%) !important; }',
 
-        // ── 3. 深空画布暗角：中央阅读区柔和压暗，四周纯透（0 模糊）──
-        '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(4, 8, 16, 0.30) 0%, rgba(4, 8, 16, 0.10) 62%, transparent 100%); z-index: 1; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::after { background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.05) 62%, transparent 100%); }',
+        // ── 3. 界面整体色调层（单层，绝不叠加）──
+        // 这是星空与 UI 之间唯一的一层着色。因为 #sbg-canvas-root 是
+        // position:fixed 的独立单层（body 的第一个子节点），不会像
+        // bg-base 那样被嵌套容器重复叠加。
+        '#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(5, 9, 18, 0.52) !important; z-index: 2; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::before { background: rgba(247, 250, 254, 0.58) !important; }',
+
+        // ── 4. 深空画布暗角：中央阅读区柔和压暗，四周纯透（0 模糊）──
+        '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(4, 8, 16, 0.26) 0%, rgba(4, 8, 16, 0.08) 62%, transparent 100%); z-index: 3; }',
+        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::after { background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 62%, transparent 100%); }',
 
         // ── 4. 极窄滚动条：只调尺寸，颜色走令牌 ──
         'html[data-sbg-on] *::-webkit-scrollbar { width: 6px; height: 6px; }',
         'html[data-sbg-on] *::-webkit-scrollbar-track { background: transparent; }',
 
         // ── 5. 代码块：给一层轻微底色保证语法高亮可辨（跟随主题）──
-        'html[data-sbg-on] body[data-ds-dark-theme] pre, html[data-sbg-on] body[data-ds-dark-theme] code[class*="language-"] { background: rgba(8, 12, 22, 0.55) !important; }',
+        'html[data-sbg-on] body[data-ds-dark-theme] pre, html[data-sbg-on] body[data-ds-dark-theme] code[class*="language-"] { background: rgba(8, 12, 22, 0.62) !important; }',
         'html[data-sbg-on] body:not([data-ds-dark-theme]) pre, html[data-sbg-on] body:not([data-ds-dark-theme]) code[class*="language-"] { background: rgba(15, 23, 42, 0.045) !important; }',
       ].join('\n');
     }

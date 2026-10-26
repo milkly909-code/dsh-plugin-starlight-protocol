@@ -21,6 +21,11 @@
      只盖住面板一部分，下方会露出 .frame 半透背景叠在 body 上的脏灰色。 */
   .space { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
 
+  /* ── 单层 tint（对应 #sbg-canvas-root::before）──
+     真实 DSH 里 bg-base 被嵌套用 3 次，任何不透明度都会累加。
+     所以界面着色只能靠这一层，绝不能写在 bg-base 上。 */
+  .tint { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
   /* ── DSH 壳层：全部用令牌驱动 ── */
   .frame {
     position: absolute; inset: 0; z-index: 1;
@@ -158,6 +163,7 @@
 <div class="pane" id="pane-dark">
   <span class="pane-label">DARK · 深空半透玻璃</span>
   <canvas class="space" id="space-dark"></canvas>
+  <div class="tint"></div>
   <div class="frame" data-mock>
     <aside class="sidebar">
       <div class="nav-item">✦ 插件</div>
@@ -211,6 +217,7 @@
 <div class="pane" id="pane-light">
   <span class="pane-label">LIGHT · 晨雾磨砂玻璃</span>
   <canvas class="space" id="space-light"></canvas>
+  <div class="tint"></div>
   <div class="frame" data-mock>
     <aside class="sidebar">
       <div class="nav-item">✦ 插件</div>
@@ -271,14 +278,15 @@ let PALETTE;
 {
   PALETTE = {
     dark: {
-      '--dsw-alias-bg-base': 'rgba(6, 10, 20, 0.58)',
-      '--dsw-alias-bg-layer-1': 'rgba(12, 18, 30, 0.64)',
-      '--dsw-alias-bg-layer-2': 'rgba(16, 24, 38, 0.70)',
-      '--dsw-alias-bg-layer-3': 'rgba(20, 30, 46, 0.76)',
-      '--dsw-alias-bg-layer-4': 'rgba(24, 36, 54, 0.82)',
-      '--dsw-alias-settings-card-fill': 'rgba(16, 24, 38, 0.72)',
-      '--dsw-specific-sidebar-fill': 'rgba(8, 12, 22, 0.66)',
-      '--dsw-specific-input-major': 'rgba(10, 16, 26, 0.74)',
+      // bg-base 必须全透明：DSH 把它嵌套用在 frame → centerCol → ConversationRoot
+      '--dsw-alias-bg-base': 'rgba(0, 0, 0, 0)',
+      '--dsw-alias-bg-layer-1': 'rgba(14, 21, 34, 0.34)',
+      '--dsw-alias-bg-layer-2': 'rgba(18, 27, 42, 0.40)',
+      '--dsw-alias-bg-layer-3': 'rgba(22, 33, 50, 0.46)',
+      '--dsw-alias-bg-layer-4': 'rgba(26, 39, 58, 0.52)',
+      '--dsw-alias-settings-card-fill': 'rgba(18, 27, 42, 0.42)',
+      '--dsw-specific-sidebar-fill': 'rgba(8, 12, 22, 0.30)',
+      '--dsw-specific-input-major': 'rgba(10, 16, 26, 0.62)',
       '--dsw-specific-menu': 'rgba(13, 19, 30, 0.97)',
       '--dsw-alias-label-primary': '#FFFFFF',
       '--dsw-alias-label-secondary': '#E8F0FF',
@@ -300,14 +308,14 @@ let PALETTE;
       '--dsw-menu-backdrop-filter': 'blur(20px) saturate(140%)',
     },
     light: {
-      '--dsw-alias-bg-base': 'rgba(248, 250, 253, 0.74)',
-      '--dsw-alias-bg-layer-1': 'rgba(255, 255, 255, 0.82)',
-      '--dsw-alias-bg-layer-2': 'rgba(255, 255, 255, 0.88)',
-      '--dsw-alias-bg-layer-3': 'rgba(255, 255, 255, 0.92)',
-      '--dsw-alias-bg-layer-4': 'rgba(255, 255, 255, 0.96)',
-      '--dsw-alias-settings-card-fill': 'rgba(255, 255, 255, 0.90)',
-      '--dsw-specific-sidebar-fill': 'rgba(241, 245, 250, 0.80)',
-      '--dsw-specific-input-major': 'rgba(255, 255, 255, 0.92)',
+      '--dsw-alias-bg-base': 'rgba(0, 0, 0, 0)',
+      '--dsw-alias-bg-layer-1': 'rgba(255, 255, 255, 0.46)',
+      '--dsw-alias-bg-layer-2': 'rgba(255, 255, 255, 0.54)',
+      '--dsw-alias-bg-layer-3': 'rgba(255, 255, 255, 0.62)',
+      '--dsw-alias-bg-layer-4': 'rgba(255, 255, 255, 0.70)',
+      '--dsw-alias-settings-card-fill': 'rgba(255, 255, 255, 0.56)',
+      '--dsw-specific-sidebar-fill': 'rgba(241, 245, 250, 0.34)',
+      '--dsw-specific-input-major': 'rgba(255, 255, 255, 0.78)',
       '--dsw-specific-menu': 'rgba(255, 255, 255, 0.98)',
       '--dsw-alias-label-primary': '#0F172A',
       '--dsw-alias-label-secondary': '#1E293B',
@@ -331,6 +339,12 @@ let PALETTE;
   };
 }
 
+/** 单层 tint（对应 client.js 的 #sbg-canvas-root::before） */
+const TINT = {
+  dark: 'rgba(5, 9, 18, 0.52)',
+  light: 'rgba(247, 250, 254, 0.58)',
+};
+
 function applyTheme(pane, scheme) {
   const root = pane.querySelector('[data-mock]');
   for (const [k, v] of Object.entries(PALETTE[scheme])) {
@@ -340,6 +354,10 @@ function applyTheme(pane, scheme) {
   root.setAttribute('data-theme', scheme);
   pane.setAttribute('data-theme', scheme);
   root.style.color = PALETTE[scheme]['--dsw-alias-label-primary'];
+
+  // 单层 tint（对应 #sbg-canvas-root::before）——界面唯一着色来源
+  const tint = pane.querySelector('.tint');
+  if (tint) tint.style.background = TINT[scheme];
 }
 
 applyTheme(document.getElementById('pane-dark'), 'dark');

@@ -113,7 +113,56 @@ check('深色 secondary 文字亮（>0.75）', lum(tok['--dsw-alias-label-second
 check('浅色 secondary 文字暗（<0.30）', lum(tok['--dsw-alias-label-secondary'].light) < 0.30);
 check('深色 tertiary 文字亮（>0.70）', lum(tok['--dsw-alias-label-tertiary'].dark) > 0.70);
 check('浅色 tertiary 文字暗（<0.45）', lum(tok['--dsw-alias-label-tertiary'].light) < 0.45);
-check('深色 bg 比浅色 bg 暗得多', lum(tok['--dsw-alias-bg-base'].dark) < 0.20 && lum(tok['--dsw-alias-bg-base'].light) > 0.85);
+
+/* ══════════════════════════════════════════════════════════════
+ * 【BUG-010 回归】星空必须可见
+ *
+ * --dsw-alias-bg-base 被 DSH 嵌套使用 3 次：
+ *   .mP3x-q_frame → .mP3x-q_centerCol → .an3WzG_root
+ * 任何非零不透明度都会累加（0.58 三层 = 92.6% → 星空消失）。
+ * 所以 bg-base 必须完全透明，界面色调由独立的单层 tint 负责。
+ * ══════════════════════════════════════════════════════════════ */
+
+console.log('\n=== 星空可见性（BUG-010 回归）===');
+
+const alphaOf = (s) => {
+  const m = s.match(/rgba?\(([^)]+)\)/);
+  if (!m) return 1;
+  const p = m[1].split(',').map(Number);
+  return p.length > 3 ? p[3] : 1;
+};
+
+check('深色 bg-base 必须完全透明（否则嵌套 3 层会盖住星空）', alphaOf(tok['--dsw-alias-bg-base'].dark) === 0);
+check('浅色 bg-base 必须完全透明', alphaOf(tok['--dsw-alias-bg-base'].light) === 0);
+
+// 模拟 3 层嵌套后的实际不透明度，必须 < 0.5 才算星空可辨
+const CASCADE_DEPTH = 3;
+const cascadedAlpha = (a) => 1 - Math.pow(1 - a, CASCADE_DEPTH);
+check('深色 bg-base 三层叠加后仍透明（=0）', cascadedAlpha(alphaOf(tok['--dsw-alias-bg-base'].dark)) === 0);
+check('浅色 bg-base 三层叠加后仍透明（=0）', cascadedAlpha(alphaOf(tok['--dsw-alias-bg-base'].light)) === 0);
+
+// layer-1..4 也会嵌套（卡片套卡片），不透明度必须足够低
+const maxLayerAlpha = Math.max(
+  ...['--dsw-alias-bg-layer-1', '--dsw-alias-bg-layer-2', '--dsw-alias-bg-layer-3', '--dsw-alias-bg-layer-4']
+    .map((k) => alphaOf(tok[k].dark))
+);
+check('深色 layer 最大不透明度 <= 0.55（两层叠加后仍可控）', maxLayerAlpha <= 0.55);
+const maxLayerAlphaL = Math.max(
+  ...['--dsw-alias-bg-layer-1', '--dsw-alias-bg-layer-2', '--dsw-alias-bg-layer-3', '--dsw-alias-bg-layer-4']
+    .map((k) => alphaOf(tok[k].light))
+);
+check('浅色 layer 最大不透明度 <= 0.75', maxLayerAlphaL <= 0.75);
+
+// 单层 tint 必须存在（这是唯一的界面着色来源）
+const cssForTint = T.generateDynamicCss({ enabled: true });
+const tintMatch = cssForTint.match(/#sbg-canvas-root::before\s*\{[^}]*background:\s*rgba\(([^)]+)\)/);
+check('存在单层 tint（#sbg-canvas-root::before）作为界面唯一着色', !!tintMatch);
+if (tintMatch) {
+  const p = tintMatch[1].split(',').map(Number);
+  const tintAlpha = p.length > 3 ? p[3] : 1;
+  check(`单层 tint 不透明度合理（0.3~0.7，实测 ${tintAlpha}）`, tintAlpha >= 0.3 && tintAlpha <= 0.7);
+}
+check('深浅主题各有独立 tint 值', cssForTint.includes('body:not([data-ds-dark-theme]) #sbg-canvas-root::before'));
 
 console.log('\n=== 无障碍对比度（WCAG AA >= 4.5:1）===');
 function contrast(fg, bg) {
@@ -158,8 +207,8 @@ check('0px 模糊规则存在', css.includes('backdrop-filter: none !important')
 check('菜单磨砂白名单存在', css.includes('[role="menu"]'));
 check('深色 composer 遮蔽存在', css.includes('body[data-ds-dark-theme] [data-composer-seat]'));
 check('浅色 composer 遮蔽存在', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]'));
-check('深色暗角存在', css.includes('rgba(4, 8, 16, 0.30)'));
-check('浅色暗角存在', css.includes('rgba(255, 255, 255, 0.16)'));
+check('深色暗角存在', css.includes('rgba(4, 8, 16, 0.26)'));
+check('浅色暗角存在', css.includes('rgba(255, 255, 255, 0.14)'));
 
 console.log('\n=== store 契约 ===');
 const spec = T.makeStore().spec;

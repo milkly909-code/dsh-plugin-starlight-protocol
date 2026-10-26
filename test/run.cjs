@@ -156,12 +156,26 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('令牌覆盖层非空且全部为 --dsw-* 官方令牌', tokenEntries.length >= 20 && tokenEntries.every(([k]) => k.startsWith('--dsw-')));
   check('令牌均为 { light, dark } 双值对', tokenEntries.every(([, v]) => v && typeof v.light === 'string' && typeof v.dark === 'string'));
 
-  // 深色主题：深空半透玻璃（不是纯透明，也不是死黑）
+  // 深色主题
   const dk = (name) => tokens[name].dark;
   const lt = (name) => tokens[name].light;
-  check('深色 bg-base 为深空半透（不透明也不死黑）', /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\.\d+\)$/.test(dk('--dsw-alias-bg-base')) && !dk('--dsw-alias-bg-base').includes('0, 0, 0, 0)'));
-  check('浅色 bg-base 为浅色半透（R 通道 > 200）', /^rgba\(\s*(2\d\d|1\d\d),/.test(lt('--dsw-alias-bg-base')) && parseInt(lt('--dsw-alias-bg-base').split('(')[1].split(',')[0], 10) > 200);
-  check('深浅 bg-base 必须不同（保证主题切换有实际视觉差异）', dk('--dsw-alias-bg-base') !== lt('--dsw-alias-bg-base'));
+
+  /** 提取 rgba 的 alpha 分量（缺省视作 1）。 */
+  const alphaOfHard = (s) => {
+    const m = String(s).match(/rgba?\(([^)]+)\)/);
+    if (!m) return 1;
+    const p = m[1].split(',').map(Number);
+    return p.length > 3 ? p[3] : 1;
+  };
+
+  // 【BUG-010 关键回归】bg-base 必须全透明！
+  // DSH 把它嵌套用在 frame → centerCol → ConversationRoot 三层，
+  // 任何非零 alpha 都会累加（0.58 三层 = 92.6% → 星空完全消失）。
+  // 界面色调改由 #sbg-canvas-root::before 单层 tint 负责。
+  check('深色 bg-base 必须全透明（防三层叠加盖住星空）', alphaOfHard(dk('--dsw-alias-bg-base')) === 0);
+  check('浅色 bg-base 必须全透明（同上）', alphaOfHard(lt('--dsw-alias-bg-base')) === 0);
+  check('侧栏 fill 提供独立色调（非全透，与主区区分）', dk('--dsw-specific-sidebar-fill') !== 'rgba(0, 0, 0, 0)');
+  check('输入框 major 独立于 bg-base', dk('--dsw-specific-input-major') !== 'rgba(0, 0, 0, 0)');
 
   // 层级递减：layer-1..4 的不透明度应 >= bg-base（卡片比窗口底更实）
   const alphaOf = (s) => parseFloat((s.match(/,\s*([\d.]+)\)$/) || [0, '1'])[1]);
@@ -186,10 +200,10 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   const css = X.generateDynamicCss({ enabled: true });
   check('禁用常规 backdrop-filter 模糊（0px 视界）', css.includes('backdrop-filter: none !important'));
   check('但菜单/弹窗保留原生磨砂（白名单排除）', css.includes('[role="menu"]') && css.includes('[role="dialog"]'));
-  check('composer 座席深色渐变遮蔽（防历史消息穿透）', css.includes('body[data-ds-dark-theme] [data-composer-seat]') && css.includes('rgba(6,10,20,0.98)'));
-  check('composer 座席浅色渐变遮蔽（浅色主题同样防穿透）', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]') && css.includes('rgba(248,250,253,1)'));
+  check('composer 座席深色渐变遮蔽（防历史消息穿透）', css.includes('body[data-ds-dark-theme] [data-composer-seat]') && css.includes('rgba(6,10,20,0.96)'));
+  check('composer 座席浅色渐变遮蔽（浅色主题同样防穿透）', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]') && css.includes('rgba(247,250,254,0.98)'));
   check('深空画布暗角（中央压暗提升对比）', css.includes('radial-gradient(ellipse 82% 72%'));
-  check('浅色主题暗角反向（浅白柔光而非压黑）', css.includes('rgba(255, 255, 255, 0.16)'));
+  check('浅色主题暗角反向（浅白柔光而非压黑）', css.includes('rgba(255, 255, 255, 0.14)'));
   check('滚动条只改尺寸，颜色交给令牌', css.includes('::-webkit-scrollbar { width: 6px'));
   check('代码块深色主题给轻底色', css.includes('body[data-ds-dark-theme] pre'));
   check('代码块浅色主题给极淡底色', css.includes('body:not([data-ds-dark-theme]) pre'));
