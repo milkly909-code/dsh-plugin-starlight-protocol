@@ -27,6 +27,13 @@ window.__ModuleLoader__.load({
     const PANEL_ID = 'space-background';
     const NS = 'space-background';
     const PERSIST_KEY = 'space-background/v1';
+    /**
+     * 持久化文档的 schema 版本。
+     *
+     * 2：丢弃 speed / boost / hue 等已移除字段，并把旧文档的 enabled 复位成
+     *    true（旧版本没有可靠的开关写入通道，留下的 false 不可信）。
+     */
+    const STORE_SCHEMA_VERSION = 2;
 
     /* ======================================================================
      * 共享常量与纯函数
@@ -1318,12 +1325,37 @@ window.__ModuleLoader__.load({
 
     function makeStore() {
       return defineStore({
-        init: () => ({ schemaVersion: 1, enabled: true }),
+        init: () => ({ schemaVersion: STORE_SCHEMA_VERSION, enabled: true }),
         persist: PERSIST_KEY,
         actions: {
+          /**
+           * 把持久化文档归一成当前 schema。
+           *
+           * 这里必须做**真正的迁移**，而不只是「补默认值」：
+           * 早期版本写过 `speed` / `boost` 两个字段，它们后来被移除，
+           * 但旧文档会一直留在 localStorage 里。实测到的一份是
+           *   {"schemaVersion":1,"enabled":false,"speed":0.2,"boost":false}
+           * —— 带着 `enabled:false`，于是插件装好后开关是关的、星空永不出现，
+           * 而代码、包名、槽位注册全都正常，排查方向被彻底带偏。
+           *
+           * 规则：schemaVersion 低于当前值的文档视为旧版，**保留用户显式
+           * 关闭的意图没有意义**（旧版本根本没提供可用的开关交互），因此
+           * 迁移时把 enabled 复位成默认的 true，并丢弃已废弃字段。
+           */
           normalize(draft) {
-            draft.schemaVersion = 1;
-            draft.enabled = draft.enabled !== false;
+            const previous = typeof draft.schemaVersion === 'number' ? draft.schemaVersion : 0;
+            const isLegacy = previous < STORE_SCHEMA_VERSION;
+            // 丢弃已废弃字段（旧版本遗留）
+            delete draft.speed;
+            delete draft.boost;
+            delete draft.hue;
+            if (isLegacy) {
+              // 旧文档不可信：开关曾因没有可靠写入通道而被写成 false
+              draft.enabled = true;
+            } else {
+              draft.enabled = draft.enabled !== false;
+            }
+            draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
           setEnabled(draft, on) { draft.enabled = on === true; },
         },

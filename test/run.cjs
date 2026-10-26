@@ -170,6 +170,24 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   storeSpec.actions.setEnabled(d2, false);
   check('setEnabled 严格布尔', d2.enabled === false);
 
+  // ── 旧版持久化文档的迁移 ────────────────────────────────────────────
+  // 实测到过这样一份 localStorage 文档：
+  //   {"schemaVersion":1,"enabled":false,"speed":0.2,"boost":false}
+  // 它让插件装好后开关是关的、星空永不出现，而代码与注册全都正常。
+  // 迁移必须把 enabled 复位为 true 并丢掉已废弃字段，否则这个 bug 会
+  // 一直粘在用户机器上，重装也带不走。
+  const legacy = { schemaVersion: 1, enabled: false, speed: 0.2, boost: false };
+  storeSpec.actions.normalize(legacy);
+  check('旧版文档（schemaVersion 1）迁移后 enabled 复位为 true', legacy.enabled === true);
+  check('旧版文档的废弃字段 speed/boost 被清除',
+    !('speed' in legacy) && !('boost' in legacy));
+  check('迁移后 schemaVersion 升到当前版本', legacy.schemaVersion === 2);
+
+  // 当前版本文档里用户显式关闭的意图必须保留（迁移只管旧版）
+  const current = { schemaVersion: 2, enabled: false };
+  storeSpec.actions.normalize(current);
+  check('当前版本文档保留用户显式关闭', current.enabled === false);
+
   finish();
 
   function finish() {
