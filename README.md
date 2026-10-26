@@ -1,18 +1,15 @@
 # 深空背景 · Deep Space Background
 
-DSH 的**主题与外观**插件：在设置「通用」分区提供「深空背景」开关。开启后，银河、
-随机星座、星云、行星与流星在窗口底层缓缓流动，界面表面（中栏 / 侧栏 / 底栏）经
-**官方主题服务令牌**（`ctx.theme.overrideTokens`）半透明化，星空从底层透出而文字
-保持可读；关闭即撤销全部效果、立即恢复原样。没有侧边栏面板、没有中栏占用——
-它是外观偏好，不是又一块面板。
+DSH 的**全域通透沉浸式宇宙视界**插件：直接将界面各层背景置为 100% 全透以完整展现深空星空，界面彻底**无模糊（0px blur）**，银河、随机星座、星云、行星与流星在窗口底层缓缓流动。
 
-- **接入点**：`settings.general.item`（通用分区外观行，排在内置「外观」10 /
-  「字号」11 之后，order 12）+ `shell.overlay`（全窗覆盖层挂底层画布）。
-- **主题集成**：表面半透明走 ui-theme 官方覆盖层机制（`--dsw-alias-bg-base`、
-  `--dsw-alias-bg-layer-1`、`--dsw-specific-sidebar-fill` 的 light/dark 值），
-  随当前主题（浅色/深色/跟随系统）自动取对应值，不写死、不用 CSS 选择器硬改。
-- **性能**：背景引擎 30fps 上限、天幕 0.6 倍分辨率绘制、1.2 万颗星点分帧填充、
-  支持 prefers-reduced-motion；开关关闭即销毁引擎，零后台开销。
+聊天框与全界面保持高度统一的全透无模糊一致性，经**太空全息 HUD 文字防晕散立体微阴影**保护，星空从底层透出而所有文字清晰可读；关闭即撤销全部效果、立即恢复原样。不占用侧边栏面板、不侵入通用设置——直接嵌入插件详情页展现项目技术架构与总开关。
+
+- **接入点**：`plugins.detail.section`（直接嵌入插件详情页，提供专属项目全景技术架构与总开关）+ `shell.overlay`（全窗覆盖层挂底层星空画布）。
+- **零模糊与全域穿透**：禁用一切 `backdrop-filter` 模糊，界面各层容器（中栏/侧栏/设置/插件详情/底栏/聊天框）彻底全透。
+- **聊天框无缝穿透**：底部会话框消除厚重深灰实体色块与模糊灰斑，采用轻透微线框标定输入区域，与整体页面保持一致的全透无模糊体验。
+- **太空 HUD 文字保护**：智能微阴影（Text Shadow）防晕散，在全透星空掠过恒星与星云时文字依旧锐利分明。
+- **天体动力学引擎**：360° 正弦无缝流动银河、3D 相机正交投影星座、光环行星与高光流星。
+- **超低能耗节能架构**：30fps 上限、天幕 0.6 倍离屏双缓冲降采样绘制、1.2 万颗星点分帧填充、Page Visibility 页面隐藏自动休眠挂起；关闭即销毁引擎，零后台开销。
 - 状态本地持久化，默认开启；不联网、不上报。
 
 ---
@@ -71,24 +68,11 @@ cmd /c rmdir "<profile>\node_modules\@local\space-background"
 
 | 操作 | 效果 |
 |---|---|
-| 设置 → 通用 → 深空背景 | 开关：开启即全窗星空背景；关闭立即恢复 |
+| 插件管理 →「深空背景」详情页 | 控制面板：查看项目全景技术说明，提供一键启停总开关 |
+| 全界面全透浏览 | 聊天工作区、设置、插件管理全部全透无模糊，底层星空锐利直透 |
+| 聊天对话 | 聊天底栏与输入框全透无模糊穿透，文字受太空 HUD 阴影保护 |
 | 等待十几秒 | 天幕交叉淡入一片新星域（不同银河弯曲 / 星座 / 星云 / 行星组合） |
 | 期间偶尔 | 流星划过、大行星（含光环）从近处掠过 |
-
-### 开关写不动的排查
-
-槽位组件的 props 由宿主组装：
-
-```js
-// app.asar: 槽位渲染时
-return { kit, standard, actions: store?.actions };
-```
-
-`actions` 来自**注册时传入的 `store.actions`**，不是来自 `inject`。所以：
-
-- 必须给 `ctx.slots.register({ ..., store })` 传 `store`，组件才有 `props.actions`；
-- 本插件额外经 `inject` 提供一个确定的 `setEnabled`，并在 `window.__sbgToggle`
-  暴露兜底句柄，避免宿主实现变化时开关静默失效。
 
 ### 加载诊断
 
@@ -102,7 +86,7 @@ JSON.stringify(window.__sbgApply, null, 1)
 
 ```
 apply:enter → locale:register:ok → locale:bind:ok → store:created
-→ toggle:ready → shell.overlay:registered → settings.general.item:registered
+→ toggle:ready → shell.overlay:registered → plugins.detail.section:registered
 → apply:done
 ```
 
@@ -155,11 +139,11 @@ python -m http.server 8765 --bind 127.0.0.1 --directory .
 package.json        DSH 清单（manifestVersion / bundle.patch / client.platform / engines.dsh）
 cordis.patch.yml    插件图插入点
 index.js            Host 半（纯客户端插件，空 apply）
-client.js           全部逻辑：星空引擎 + 设置外观行 + 底层星空层 + 主题令牌覆盖
+client.js           全部逻辑：天体动力学引擎 + 详情页专属项目技术架构 + 底层星空层 + 全域全透与无模糊
 locale/{zh,en}.json 插件管理页元信息
 icon.svg            图标底稿
 preview.html        浏览器演示页（真实组件）
-test/run.cjs        零依赖契约测试（33 项）
+test/run.cjs        零依赖契约测试（52 项）
 ```
 
 ## License

@@ -1,7 +1,7 @@
 {
   "name": "@local/space-background",
-  "version": "1.0.2",
-  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：直接将界面各层背景置为全透以完整展现深空星空，集成 360° 无缝流动银河、3D 相机正交投影星座、光环巨行星与穿梭流星，具备太空 HUD 全息文字防晕散保护与节能架构。",
+  "version": "1.1.0",
+  "description": "深空背景 (Deep Space Background) — DSH 全域通透沉浸式宇宙视界：界面彻底无模糊(0px blur)全透展现，统一聊天框与全界面无模糊一致性，嵌入插件详情页专属项目技术全景说明，集成 360° 无缝流动银河、3D 相机正交投影星座、光环巨行星与穿梭流星，具备太空 HUD 全息文字防晕散保护与节能架构。",
   "type": "module",
   "keywords": [
     "dsh-plugin",
