@@ -1032,13 +1032,21 @@ window.__ModuleLoader__.load({
       const sidebarBg = op > 0 ? `rgba(8, 12, 22, ${(op * 0.85).toFixed(2)})` : 'transparent';
       const cardBg = op > 0 ? `rgba(16, 24, 40, ${(0.20 + op * 0.65).toFixed(2)})` : 'rgba(15, 20, 32, 0.35)';
 
+      const rootBgCss = op > 0
+        ? `html[data-sbg-on], html[data-sbg-on] body { background: transparent !important; background-color: transparent !important; }\nhtml[data-sbg-on] #root, html[data-sbg-on] #app, html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; transition: background-color 0.15s ease; }`
+        : 'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }';
+
+      const frameBgCss = op > 0
+        ? 'html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }'
+        : 'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }';
+
       return [
         // 1. 彻底禁用全局常规背景模糊（纯净无模糊模式）
         'html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
 
         // 2. 全窗口容器彻底全透（body, #root, #app, frame, content, panel, page, settings, detail）
-        'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }',
-        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }',
+        rootBgCss,
+        frameBgCss,
         'html[data-sbg-on] [class*="_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="q_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_page"], html[data-sbg-on] [class*="q_page"], html[data-sbg-on] [class*="_settings"], html[data-sbg-on] [class*="q_settings"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
@@ -1049,7 +1057,7 @@ window.__ModuleLoader__.load({
         `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${sidebarBg} !important; background-color: ${sidebarBg} !important; transition: background-color 0.15s ease; }`,
 
         // 3.1 玻璃不透明度全局视窗遮罩层：用户拖动玻璃不透明度滑块时，在星空之上施加轻柔深空微膜，全屏即时生效
-        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(8, 12, 22, ${(op * 0.75).toFixed(2)}) !important; z-index: 2; transition: background-color 0.15s ease; }`,
+        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: #04060e !important; opacity: ${(op * 0.75).toFixed(2)} !important; z-index: 2; transition: opacity 0.15s ease; }`,
 
         // 4. 解决文字上滑遮挡聊天框与底部穿透：吸底座席定制平滑深空渐隐（顶部自然羽化、底部完全不透，彻底遮蔽划到底部和打字区下方的所有文字）
         'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0px, rgba(8, 12, 22, 0.65) 28px, rgba(8, 12, 22, 0.96) 60px, rgba(8, 12, 22, 1) 90px, rgba(8, 12, 22, 1) 100%) !important; box-shadow: none !important; }',
@@ -1433,6 +1441,7 @@ window.__ModuleLoader__.load({
               step: '0.05',
               value: String(localSpeed),
               onChange: (e) => onSpeedChange(Number(e.target.value)),
+              onInput: (e) => onSpeedChange(Number(e.target.value)),
             })
           ),
           h('div', { className: 'sbg-ctrl-row' },
@@ -1448,6 +1457,7 @@ window.__ModuleLoader__.load({
               step: '100',
               value: String(localDensity),
               onChange: (e) => onDensityChange(Number(e.target.value)),
+              onInput: (e) => onDensityChange(Number(e.target.value)),
             })
           ),
           h('div', { className: 'sbg-ctrl-row' },
@@ -1463,6 +1473,7 @@ window.__ModuleLoader__.load({
               step: '0.05',
               value: String(localOpacity),
               onChange: (e) => onOpacityChange(Number(e.target.value)),
+              onInput: (e) => onOpacityChange(Number(e.target.value)),
             })
           ),
           h('div', { className: 'sbg-fab-footer' },
