@@ -1032,32 +1032,21 @@ window.__ModuleLoader__.load({
       const sidebarBg = op > 0 ? `rgba(8, 12, 22, ${(op * 0.85).toFixed(2)})` : 'transparent';
       const cardBg = op > 0 ? `rgba(16, 24, 40, ${(0.20 + op * 0.65).toFixed(2)})` : 'rgba(15, 20, 32, 0.35)';
 
-      const rootBgCss = op > 0
-        ? `html[data-sbg-on], html[data-sbg-on] body { background: transparent !important; background-color: transparent !important; }\nhtml[data-sbg-on] #root, html[data-sbg-on] #app, html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; transition: background-color 0.15s ease; }`
-        : 'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }';
-
-      const frameBgCss = op > 0
-        ? 'html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }'
-        : 'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }';
-
       return [
         // 1. 彻底禁用全局常规背景模糊（纯净无模糊模式）
         'html[data-sbg-on] * { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
 
         // 2. 全窗口容器彻底全透（body, #root, #app, frame, content, panel, page, settings, detail）
-        rootBgCss,
-        frameBgCss,
+        'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app { background: transparent !important; background-color: transparent !important; }',
+        'html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"], html[data-sbg-on] [class*="_content"], html[data-sbg-on] [class*="q_content"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="q_panel"]:not([role="dialog"]), html[data-sbg-on] [class*="_container"], html[data-sbg-on] [class*="q_container"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_page"], html[data-sbg-on] [class*="q_page"], html[data-sbg-on] [class*="_settings"], html[data-sbg-on] [class*="q_settings"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="_main"], html[data-sbg-on] [class*="q_main"], html[data-sbg-on] [class*="detail"], html[data-sbg-on] [class*="Detail"] { background: transparent !important; background-color: transparent !important; }',
         'html[data-sbg-on] [class*="view"], html[data-sbg-on] [class*="View"], html[data-sbg-on] [class*="section"], html[data-sbg-on] [class*="Section"] { background: transparent !important; background-color: transparent !important; }',
 
-        // 3. 聊天主工作区、中栏、侧栏（动态响应用户调节的玻璃不透明度，实时平滑变幻）
+        // 3. 聊天主工作区、中栏、侧栏彻底全透
         `html[data-sbg-on] [class*="_centerCol"], html[data-sbg-on] [class*="q_centerCol"], html[data-sbg-on] [class*="_rightbarCol"], html[data-sbg-on] [class*="q_rightbarCol"], html[data-sbg-on] [class*="ChatView"], html[data-sbg-on] [class*="V4vHZW"] { background: ${surfaceBg} !important; background-color: ${surfaceBg} !important; transition: background-color 0.15s ease; }`,
         `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${sidebarBg} !important; background-color: ${sidebarBg} !important; transition: background-color 0.15s ease; }`,
-
-        // 3.1 玻璃不透明度全局视窗遮罩层：用户拖动玻璃不透明度滑块时，在星空之上施加轻柔深空微膜，全屏即时生效
-        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: #04060e !important; opacity: ${(op * 0.75).toFixed(2)} !important; z-index: 2; transition: opacity 0.15s ease; }`,
 
         // 4. 解决文字上滑遮挡聊天框与底部穿透：吸底座席定制平滑深空渐隐（顶部自然羽化、底部完全不透，彻底遮蔽划到底部和打字区下方的所有文字）
         'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0px, rgba(8, 12, 22, 0.65) 28px, rgba(8, 12, 22, 0.96) 60px, rgba(8, 12, 22, 1) 90px, rgba(8, 12, 22, 1) 100%) !important; box-shadow: none !important; }',
@@ -1338,7 +1327,7 @@ window.__ModuleLoader__.load({
       );
     }
 
-    /** 右下角快捷悬浮调控球与调控面板（支持航速、粒子数、玻璃不透明度实时调节）。 */
+    /** 右下角快捷悬浮调控球与调控面板（支持航速、粒子数实时调节）。 */
     function SpaceFloatControl({ useStore, actions }) {
       const [open, setOpen] = React.useState(false);
       const panelRef = React.useRef(null);
@@ -1348,15 +1337,12 @@ window.__ModuleLoader__.load({
       const enabled = doc.enabled !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
       const density = typeof doc.density === 'number' ? doc.density : 1000;
-      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
 
       const [localSpeed, setLocalSpeed] = React.useState(speed);
       const [localDensity, setLocalDensity] = React.useState(density);
-      const [localOpacity, setLocalOpacity] = React.useState(surfaceOpacity);
 
       React.useEffect(() => { setLocalSpeed(speed); }, [speed]);
       React.useEffect(() => { setLocalDensity(density); }, [density]);
-      React.useEffect(() => { setLocalOpacity(surfaceOpacity); }, [surfaceOpacity]);
 
       // 点击外部任意区域自动关闭浮层面板
       React.useEffect(() => {
@@ -1383,18 +1369,12 @@ window.__ModuleLoader__.load({
         if (actions && actions.setDensity) actions.setDensity(val);
       };
 
-      const onOpacityChange = (val) => {
-        setLocalOpacity(val);
-        updateDynamicStyles({ enabled, surfaceOpacity: val });
-        if (actions && actions.setSurfaceOpacity) actions.setSurfaceOpacity(val);
-      };
-
       return h('div', { className: 'sbg-fab-root' },
         h('button', {
           ref: btnRef,
           type: 'button',
           className: 'sbg-fab-btn',
-          title: '深空背景调节（速度 / 粒子 / 不透明度）',
+          title: '深空背景调节（航行速度 / 星空粒子）',
           onClick: () => setOpen(!open),
         },
           h('svg', { width: 18, height: 18, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
@@ -1460,22 +1440,6 @@ window.__ModuleLoader__.load({
               onInput: (e) => onDensityChange(Number(e.target.value)),
             })
           ),
-          h('div', { className: 'sbg-ctrl-row' },
-            h('div', { className: 'sbg-ctrl-label' },
-              h('span', null, '玻璃不透明度'),
-              h('span', { style: { color: '#38bdf8' } }, `${Math.round(localOpacity * 100)}%`)
-            ),
-            h('input', {
-              type: 'range',
-              className: 'sbg-ctrl-slider',
-              min: '0',
-              max: '0.7',
-              step: '0.05',
-              value: String(localOpacity),
-              onChange: (e) => onOpacityChange(Number(e.target.value)),
-              onInput: (e) => onOpacityChange(Number(e.target.value)),
-            })
-          ),
           h('div', { className: 'sbg-fab-footer' },
             h('button', {
               type: 'button',
@@ -1484,8 +1448,6 @@ window.__ModuleLoader__.load({
                 if (actions && actions.resetDefaults) actions.resetDefaults();
                 setLocalSpeed(0.4);
                 setLocalDensity(1000);
-                setLocalOpacity(0.0);
-                updateDynamicStyles({ enabled, surfaceOpacity: 0.0 });
               },
             }, '恢复默认')
           )
