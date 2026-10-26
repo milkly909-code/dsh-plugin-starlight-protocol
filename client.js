@@ -1049,11 +1049,11 @@ window.__ModuleLoader__.load({
         `html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: ${sidebarBg} !important; background-color: ${sidebarBg} !important; transition: background-color 0.15s ease; }`,
 
         // 4. 解决文字上滑遮挡聊天框与底部穿透：吸底座席定制平滑深空渐隐（顶部自然羽化、底部完全不透，彻底遮蔽划到底部和打字区下方的所有文字）
-        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, rgba(8, 12, 22, 0) 0px, rgba(8, 12, 22, 0.65) 28px, rgba(8, 12, 22, 0.96) 60px, rgba(8, 12, 22, 1) 90px, rgba(8, 12, 22, 1) 100%) !important; box-shadow: none !important; }',
+        `html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, transparent 0px, rgba(6, 10, 20, ${(op * 0.7).toFixed(2)}) 32px, rgba(6, 10, 20, ${(0.55 + op * 0.35).toFixed(2)}) 70px) !important; box-shadow: none !important; }`,
         'html[data-sbg-on] [data-composer-dock], html[data-sbg-on] [class*="_dock"], html[data-sbg-on] [class*="q_dock"], html[data-sbg-on] [class*="GRgSLq_root"], html[data-sbg-on] [class*="_bottomRow"], html[data-sbg-on] [class*="q_bottomRow"], html[data-sbg-on] [class*="composer"]:not([class*="card"]):not([class*="composerSeat"]), html[data-sbg-on] [class*="Composer"]:not([class*="card"]):not([class*="composerSeat"]) { background: transparent !important; box-shadow: none !important; }',
 
         // 聊天输入卡片：高对比防穿透悬浮舱（置于座席之上，内部全不透，杜绝历史文字透出）
-        'html[data-sbg-on] [data-composer-card], html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { z-index: 12 !important; position: relative !important; background: rgba(13, 18, 30, 0.96) !important; border: 1px solid rgba(255, 255, 255, 0.18) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65) !important; }',
+        `html[data-sbg-on] [data-composer-card], html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"], html[data-sbg-on] [class*="composer"] [class*="_card"], html[data-sbg-on] [class*="Composer"] [class*="q_card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="_bottomRow"] [class*="card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="card"], html[data-sbg-on] [class*="_bottomRow"] [class*="_card"], html[data-sbg-on] [class*="q_bottomRow"] [class*="q_card"] { z-index: 12 !important; position: relative !important; background: rgba(8, 12, 22, ${(0.30 + op * 0.60).toFixed(2)}) !important; border: 1px solid rgba(255, 255, 255, ${(0.10 + op * 0.12).toFixed(2)}) !important; box-shadow: 0 4px 20px rgba(0, 0, 0, ${(0.25 + op * 0.4).toFixed(2)}) !important; }`,
         'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"], html[data-sbg-on] [class*="input"], html[data-sbg-on] [class*="q_input"] { background: transparent !important; background-color: transparent !important; color: #FFFFFF !important; }',
 
         // 5. 底部运行状态、Token用量、上下文步数栏：纯白高对比文字与图标，清晰醒目（响应用户明确要求）
@@ -1593,23 +1593,28 @@ window.__ModuleLoader__.load({
       const [localSpeed, setLocalSpeed] = React.useState(speed);
       const [localDensity, setLocalDensity] = React.useState(density);
 
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
+      const [localOpacity, setLocalOpacity] = React.useState(surfaceOpacity);
+      React.useEffect(() => { setLocalOpacity(surfaceOpacity); }, [surfaceOpacity]);
+
       React.useEffect(() => { setLocalSpeed(speed); }, [speed]);
       React.useEffect(() => { setLocalDensity(density); }, [density]);
 
-      // 点击外部任意区域自动关闭浮层面板
+      // 点击外部任意区域自动关闭浮层面板（mousedown capture 阶段，避免闭包陈旧）
+      const openRef = React.useRef(open);
+      React.useEffect(() => { openRef.current = open; }, [open]);
       React.useEffect(() => {
-        if (!open) return;
-        function onPointerDown(e) {
-          if (panelRef.current && !panelRef.current.contains(e.target) &&
-              btnRef.current && !btnRef.current.contains(e.target)) {
-            setOpen(false);
-          }
+        function onMouseDown(e) {
+          if (!openRef.current) return;
+          if (panelRef.current && panelRef.current.contains(e.target)) return;
+          if (btnRef.current && btnRef.current.contains(e.target)) return;
+          setOpen(false);
         }
-        document.addEventListener('pointerdown', onPointerDown);
+        document.addEventListener('mousedown', onMouseDown, true);
         return () => {
-          document.removeEventListener('pointerdown', onPointerDown);
+          document.removeEventListener('mousedown', onMouseDown, true);
         };
-      }, [open]);
+      }, []);
 
       const onSpeedChange = (val) => {
         setLocalSpeed(val);
@@ -1619,6 +1624,11 @@ window.__ModuleLoader__.load({
       const onDensityChange = (val) => {
         setLocalDensity(val);
         if (actions && actions.setDensity) actions.setDensity(val);
+      };
+
+      const onOpacityChange = (val) => {
+        setLocalOpacity(val);
+        if (actions && actions.setSurfaceOpacity) actions.setSurfaceOpacity(val);
       };
 
       return h('div', { className: 'sbg-fab-root' },
@@ -1692,6 +1702,22 @@ window.__ModuleLoader__.load({
               onInput: (e) => onDensityChange(Number(e.target.value)),
             })
           ),
+          h('div', { className: 'sbg-ctrl-row' },
+            h('div', { className: 'sbg-ctrl-label' },
+              h('span', null, '玻璃不透明度'),
+              h('span', { style: { color: '#38bdf8' } }, `${Math.round(localOpacity * 100)}%`)
+            ),
+            h('input', {
+              type: 'range',
+              className: 'sbg-ctrl-slider',
+              min: '0',
+              max: '0.85',
+              step: '0.05',
+              value: String(localOpacity),
+              onChange: (e) => onOpacityChange(Number(e.target.value)),
+              onInput: (e) => onOpacityChange(Number(e.target.value)),
+            })
+          ),
           h('div', { className: 'sbg-fab-footer' },
             h('button', {
               type: 'button',
@@ -1700,6 +1726,7 @@ window.__ModuleLoader__.load({
                 if (actions && actions.resetDefaults) actions.resetDefaults();
                 setLocalSpeed(0.4);
                 setLocalDensity(1000);
+                setLocalOpacity(0.0);
               },
             }, '恢复默认')
           )

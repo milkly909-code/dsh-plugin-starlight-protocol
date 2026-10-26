@@ -162,7 +162,7 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
     ['_frame', 'q_frame', '_content', '_panel', '_page', '_settings', 'detail'].every((s) => fullCss.includes(s)));
   check('聊天框与底栏全透：与其它页面保持一致的全透无模糊',
     ['_bottomRow', 'q_bottomRow', '_dock', 'q_dock', 'composer', 'Composer'].every((s) => fullCss.includes(s)));
-  check('聊天框卡片线框：无模糊轻量深色透明底 + 细微边框', fullCss.includes('rgba(10, 15, 26, 0.45)'));
+  check('聊天框卡片线框：无模糊轻量深色透明底 + 细微边框', fullCss.includes('rgba(8, 12, 22, 0.30)'));
   check('文字 HUD 保护：标题白色且注入抗晕散立体阴影', fullCss.includes('text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)'));
   check('文字 HUD 保护：代码路径标签样式优化', fullCss.includes('background: rgba(0, 0, 0, 0.4)'));
   check('视觉工效：视窗微暗角遮罩（中央深邃、四周纯透、0 模糊）', fullCss.includes('radial-gradient(ellipse 80% 70% at 50% 50%'));
