@@ -1336,6 +1336,153 @@ window.__ModuleLoader__.load({
           color: #94a3b8 !important;
           font-size: 11px !important;
           padding: 2px 8px !important;
+        }`,
+
+        // 13. 深色模式 vs 浅色模式全局外观自适应系统：文字与表面动态随系统外观切换，杜绝任何页面字体丢失或隐形
+        `/* 【深色模式 Dark Mode 强化】：全域深邃星空，所有字体与图标纯白高对比立体显示，消除任何视觉死角 */
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="sidebar"] *,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="nav"] *,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="Sidebar"] *,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="_settings"] button,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="settings"] button,
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="cube"],
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="Cube"],
+        html[data-sbg-on] body[data-ds-dark-theme] [class*="config"] {
+          color: #FFFFFF !important;
+          fill: #FFFFFF !important;
+          stroke: #FFFFFF !important;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+        }
+
+        /* 【浅色模式 Light Mode 自适应】：晨曦星海，界面容器采用淡雅晨曦雾质感，所有字体、图标与指示器自适应为深色高对比文字 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]),
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_frame"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_frame"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_main"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_main"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_centerCol"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_centerCol"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_settings"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_settings"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_page"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_page"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="detail"] {
+          background: rgba(246, 248, 252, 0.88) !important;
+          background-color: rgba(246, 248, 252, 0.88) !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_sidebarCol"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_sidebarCol"] {
+          background: rgba(238, 242, 248, 0.92) !important;
+          background-color: rgba(238, 242, 248, 0.92) !important;
+        }
+
+        /* 浅色模式全局文字自适应：标题、正文、说明文字全部自动切为深色高对比排版，消除白字看不见或黑字溶于黑底 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) h1,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) h2,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) h3,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) h4,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="title"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Title"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="heading"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) strong,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) b {
+          color: #0f172a !important;
+          text-shadow: none !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) p,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) span,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) label,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) li,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) textarea,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) input,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) button,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) a {
+          color: #1e293b !important;
+          text-shadow: none !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="desc"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Desc"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="secondary"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="subtitle"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Subtitle"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="caption"] {
+          color: #475569 !important;
+          text-shadow: none !important;
+        }
+
+        /* 浅色模式侧栏导航项、通用设置项、外观卡片、配置按钮文字与图标自适应 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="sidebar"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="nav"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Sidebar"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_settings"] button,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="settings"] button,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="cube"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Cube"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="config"] {
+          color: #1e293b !important;
+          fill: #1e293b !important;
+          stroke: #1e293b !important;
+          text-shadow: none !important;
+        }
+
+        /* 浅色模式底栏与Token用量自适应 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-dock] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_dock"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="q_dock"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="GRgSLq_dock"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="TurnUsage"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="StatsPills"] *,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="ContextMeter"] * {
+          color: #1e293b !important;
+          stroke: #1e293b !important;
+          text-shadow: none !important;
+        }
+
+        /* 浅色模式输入区域与吸底座席自适应 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-seat],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="composerSeat"] {
+          background: linear-gradient(180deg, rgba(246, 248, 252, 0) 0px, rgba(246, 248, 252, 0.75) 28px, rgba(246, 248, 252, 0.98) 60px, rgba(246, 248, 252, 1) 90px, rgba(246, 248, 252, 1) 100%) !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-card],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="GRgSLq_card"] {
+          background: rgba(255, 255, 255, 0.98) !important;
+          border: 1px solid rgba(0, 0, 0, 0.12) !important;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) textarea,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) input {
+          color: #0f172a !important;
+        }
+
+        /* 浅色模式弹窗与下拉面板自适应 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [role="dialog"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [role="menu"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [role="listbox"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="dialog"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="dropdown"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="menu"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="stat-dialog"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="TurnUsagePanel"] {
+          background: rgba(255, 255, 255, 0.98) !important;
+          background-color: rgba(255, 255, 255, 0.98) !important;
+          border: 1px solid rgba(0, 0, 0, 0.12) !important;
+          box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15) !important;
+        }
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [role="menuitem"]:hover,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [role="option"]:hover,
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="BI5uFG_item"]:hover {
+          background: rgba(0, 0, 0, 0.06) !important;
+          color: #0f172a !important;
+        }
+
+        /* 浅色模式普通卡片自适应 */
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="Card_root"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="PluginCard"],
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="_card"]:not([class*="Header"]):not([class*="header"]):not([class*="Title"]):not([class*="title"]):not([class*="Desc"]):not([class*="desc"]):not([class*="Body"]):not([class*="body"]):not([class*="Action"]):not([class*="action"]):not([class*="Icon"]):not([class*="icon"]):not([class*="Footer"]):not([class*="footer"]):not([class*="Content"]):not([class*="content"]):not([class*="Row"]):not([class*="row"]):not([class*="Item"]):not([class*="item"]):not([class*="Wrapper"]):not([class*="wrapper"]),
+        html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="bubble"] {
+          background: rgba(255, 255, 255, 0.92) !important;
+          border: 1px solid rgba(0, 0, 0, 0.08) !important;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
         }`
       ].join('\n');
     }

@@ -173,6 +173,9 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('底部状态栏与Token用量：纯白文字高对比显示', fullCss.includes('GRgSLq_dock') && fullCss.includes('color: #FFFFFF !important'));
   check('步数/token/上下文弹窗：深空高对比不透明背景', fullCss.includes('stat-dialog') && fullCss.includes('rgba(13, 17, 28, 0.96)'));
   check('动态玻璃不透明度：支持按参数动态渲染透明/半透度', X.generateDynamicCss({ enabled: true, surfaceOpacity: 0.35 }).includes('rgba(10, 15, 26, 0.35)'));
+  check('深色模式全息强化：侧栏与通用设置项强制纯白文字与图标', fullCss.includes('body[data-ds-dark-theme]') && fullCss.includes('fill: #FFFFFF !important'));
+  check('浅色模式自适应：界面表面自动切换为晨曦雾质感 (rgba(246, 248, 252, 0.88))', fullCss.includes('body:not([data-ds-dark-theme])') && fullCss.includes('rgba(246, 248, 252, 0.88)'));
+  check('浅色模式字体自适应：标题与正文切换为深色高对比排版 (#0f172a / #1e293b)', fullCss.includes('body:not([data-ds-dark-theme])') && fullCss.includes('color: #0f172a !important'));
   check('右下角控制面板组件导出：SpaceFloatControl', typeof X.Views.SpaceFloatControl === 'function');
 
   check('引擎工厂导出（createSpaceEngine 返回 dispose 契约在运行时验证）', typeof X.createSpaceEngine === 'function');
