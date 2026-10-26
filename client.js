@@ -1099,10 +1099,39 @@ window.__ModuleLoader__.load({
           color: #FFFFFF !important;
         }`,
 
-        // 6. 消息气泡与其它页面卡片项：动态响应玻璃不透明度
-        `html[data-sbg-on] [class*="_card"], html[data-sbg-on] [class*="q_card"], html[data-sbg-on] [class*="_item"], html[data-sbg-on] [class*="q_item"], html[data-sbg-on] [class*="bubble"], html[data-sbg-on] [class*="Message"] { background: ${cardBg} !important; border: 1px solid rgba(255, 255, 255, ${(0.12 + op * 0.12).toFixed(2)}) !important; }`,
+        // 6. 页面卡片与消息气泡：仅对最外层卡片应用轻量深空玻璃底与极细微框，彻底消除内部标题行、描述文本、图标容器、操作箭头的多重嵌套边框
+        `html[data-sbg-on] [class*="Card_root"],
+        html[data-sbg-on] [class*="card_root"],
+        html[data-sbg-on] [class*="PluginCard"],
+        html[data-sbg-on] [class*="plugin-card"],
+        html[data-sbg-on] [class*="settings-card"],
+        html[data-sbg-on] [class*="SettingsCard"],
+        html[data-sbg-on] [class*="_card"]:not([class*="Header"]):not([class*="header"]):not([class*="Title"]):not([class*="title"]):not([class*="Desc"]):not([class*="desc"]):not([class*="Body"]):not([class*="body"]):not([class*="Action"]):not([class*="action"]):not([class*="Icon"]):not([class*="icon"]):not([class*="Footer"]):not([class*="footer"]):not([class*="Content"]):not([class*="content"]):not([class*="Row"]):not([class*="row"]):not([class*="Item"]):not([class*="item"]):not([class*="Wrapper"]):not([class*="wrapper"]),
+        html[data-sbg-on] [class*="q_card"]:not([class*="Header"]):not([class*="header"]):not([class*="Title"]):not([class*="title"]):not([class*="Desc"]):not([class*="desc"]):not([class*="Body"]):not([class*="body"]):not([class*="Action"]):not([class*="action"]):not([class*="Icon"]):not([class*="icon"]):not([class*="Footer"]):not([class*="footer"]):not([class*="Content"]):not([class*="content"]):not([class*="Row"]):not([class*="row"]):not([class*="Item"]):not([class*="item"]):not([class*="Wrapper"]):not([class*="wrapper"]),
+        html[data-sbg-on] [class*="bubble"],
+        html[data-sbg-on] [class*="Message"],
+        html[data-sbg-on] [class*="message"] {
+          background: ${cardBg} !important;
+          border: 1px solid rgba(255, 255, 255, ${(0.10 + op * 0.10).toFixed(2)}) !important;
+          border-radius: 10px !important;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        html[data-sbg-on] [class*="_card"]:hover,
+        html[data-sbg-on] [class*="q_card"]:hover,
+        html[data-sbg-on] [class*="PluginCard"]:hover {
+          border-color: rgba(56, 189, 248, 0.35) !important;
+        }
+        /* 彻底消除卡片内部标题行、描述文本、图标容器、操作箭头的内部多重嵌套边框与背景 */
+        html[data-sbg-on] [class*="card"] h1, html[data-sbg-on] [class*="card"] h2, html[data-sbg-on] [class*="card"] h3, html[data-sbg-on] [class*="card"] h4,
+        html[data-sbg-on] [class*="card"] p, html[data-sbg-on] [class*="card"] span, html[data-sbg-on] [class*="card"] label,
+        html[data-sbg-on] [class*="card"] div, html[data-sbg-on] [class*="_card"] div, html[data-sbg-on] [class*="q_card"] div,
+        html[data-sbg-on] [class*="card"] button, html[data-sbg-on] [class*="_card"] button,
+        html[data-sbg-on] [class*="card"] svg, html[data-sbg-on] [class*="_card"] svg {
+          border: none !important;
+          box-shadow: none !important;
+        }`,
 
-        // 7. 底部步数、token用量、上下文弹窗与菜单：绝不透明，提供高对比深空暗色卡片背景，保证数据一目了然
+        // 7. 弹窗、下拉菜单与选择面板：整体深空半透磨砂，菜单项与内部图标、文字彻底消除方框与多重边框，呈现极简丝滑悬停质感
         `html[data-sbg-on] [role="dialog"],
         html[data-sbg-on] [role="menu"],
         html[data-sbg-on] [role="listbox"],
@@ -1122,16 +1151,81 @@ window.__ModuleLoader__.load({
         html[data-sbg-on] [class*="q_panel"][role="dialog"] {
           background: rgba(13, 17, 28, 0.96) !important;
           background-color: rgba(13, 17, 28, 0.96) !important;
-          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          border: 1px solid rgba(255, 255, 255, 0.16) !important;
           box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
           backdrop-filter: blur(16px) !important;
           -webkit-backdrop-filter: blur(16px) !important;
+          border-radius: 8px !important;
+          padding: 4px !important;
         }
-        html[data-sbg-on] [role="dialog"] *,
+        /* 彻底消除菜单项本身以及内部图标、文字、快捷键标签的所有丑陋线框 */
+        html[data-sbg-on] [role="menuitem"],
+        html[data-sbg-on] [role="option"],
+        html[data-sbg-on] [role="menuitemcheckbox"],
+        html[data-sbg-on] [role="menuitemradio"],
+        html[data-sbg-on] [class*="BI5uFG_item"],
+        html[data-sbg-on] [class*="MenuItem"],
+        html[data-sbg-on] [class*="menuItem"],
+        html[data-sbg-on] [class*="DropdownItem"],
+        html[data-sbg-on] [class*="dropdownItem"],
+        html[data-sbg-on] [role="menu"] [class*="item"],
+        html[data-sbg-on] [role="listbox"] [class*="item"],
+        html[data-sbg-on] [class*="Menu"] [class*="item"],
+        html[data-sbg-on] [class*="menu"] [class*="item"] {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
+          border-radius: 6px !important;
+          cursor: pointer !important;
+          transition: background 0.15s ease, color 0.15s ease !important;
+        }
+        html[data-sbg-on] [role="menuitem"]:hover,
+        html[data-sbg-on] [role="option"]:hover,
+        html[data-sbg-on] [role="menuitem"][data-highlighted],
+        html[data-sbg-on] [role="option"][data-highlighted],
+        html[data-sbg-on] [class*="BI5uFG_item"]:hover,
+        html[data-sbg-on] [class*="MenuItem"]:hover,
+        html[data-sbg-on] [class*="menuItem"]:hover,
+        html[data-sbg-on] [class*="DropdownItem"]:hover,
+        html[data-sbg-on] [class*="dropdownItem"]:hover,
+        html[data-sbg-on] [role="menu"] [class*="item"]:hover,
+        html[data-sbg-on] [role="listbox"] [class*="item"]:hover {
+          background: rgba(255, 255, 255, 0.10) !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
         html[data-sbg-on] [role="menu"] *,
+        html[data-sbg-on] [role="listbox"] *,
+        html[data-sbg-on] [role="menuitem"] *,
+        html[data-sbg-on] [role="option"] *,
+        html[data-sbg-on] [class*="BI5uFG_item"] *,
+        html[data-sbg-on] [class*="MenuItem"] *,
+        html[data-sbg-on] [class*="DropdownItem"] *,
         html[data-sbg-on] [class*="stat-dialog"] *,
         html[data-sbg-on] [class*="TurnUsagePanel"] * {
+          border: none !important;
+          background: transparent !important;
+          box-shadow: none !important;
           text-shadow: none !important;
+        }
+        /* 模式与下拉选择框按钮极简质感 */
+        html[data-sbg-on] [role="combobox"],
+        html[data-sbg-on] button[class*="trigger"],
+        html[data-sbg-on] button[class*="Trigger"],
+        html[data-sbg-on] [class*="select-trigger"],
+        html[data-sbg-on] [class*="SelectTrigger"] {
+          background: rgba(255, 255, 255, 0.08) !important;
+          border: 1px solid rgba(255, 255, 255, 0.16) !important;
+          border-radius: 6px !important;
+          color: #FFFFFF !important;
+          box-shadow: none !important;
+          transition: all 0.15s ease !important;
+        }
+        html[data-sbg-on] [role="combobox"]:hover,
+        html[data-sbg-on] button[class*="trigger"]:hover,
+        html[data-sbg-on] button[class*="Trigger"]:hover {
+          background: rgba(255, 255, 255, 0.14) !important;
+          border-color: rgba(56, 189, 248, 0.4) !important;
         }`,
 
         // 8. 全景视窗微暗角（Cockpit Vignette）：中央阅读区柔和压暗，四周边缘纯透星光璀璨，0 模糊且极大提升阅读对比度
@@ -1177,12 +1271,71 @@ window.__ModuleLoader__.load({
           color: rgba(235, 242, 255, 0.88) !important;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
         }
-        html[data-sbg-on] code, html[data-sbg-on] pre, html[data-sbg-on] [class*="tag"],
-        html[data-sbg-on] [class*="badge"], html[data-sbg-on] [class*="path"] {
+        /* 代码片段与路径微标签 */
+        html[data-sbg-on] code:not([class*="language-"]),
+        html[data-sbg-on] [class*="path"] {
           background: rgba(0, 0, 0, 0.4) !important;
           color: #7dd3fc !important;
           border: 1px solid rgba(255, 255, 255, 0.16) !important;
+          border-radius: 4px !important;
+          padding: 1px 5px !important;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9) !important;
+        }
+        /* 卡片内插件标签（persona, agent-instructions, time-context, tool-* 等）与徽标：高颜值全息微光胶囊 */
+        html[data-sbg-on] [class*="tag"],
+        html[data-sbg-on] [class*="Tag"],
+        html[data-sbg-on] [class*="badge"],
+        html[data-sbg-on] [class*="Badge"] {
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          font-size: 11px !important;
+          font-weight: 500 !important;
+          line-height: 1.4 !important;
+          padding: 2px 7px !important;
+          border-radius: 4px !important;
+          background: rgba(56, 189, 248, 0.12) !important;
+          border: 1px solid rgba(56, 189, 248, 0.28) !important;
+          color: #7dd3fc !important;
+          text-shadow: none !important;
+          box-shadow: none !important;
+          transition: background 0.15s ease, border-color 0.15s ease !important;
+        }
+        html[data-sbg-on] [class*="tag"]:hover,
+        html[data-sbg-on] [class*="Tag"]:hover,
+        html[data-sbg-on] [class*="badge"]:hover,
+        html[data-sbg-on] [class*="Badge"]:hover {
+          background: rgba(56, 189, 248, 0.22) !important;
+          border-color: rgba(56, 189, 248, 0.5) !important;
+          color: #bae6fd !important;
+        }
+        /* 菜单内部微标（如 EXP 试验性功能标识）专属极简胶囊 */
+        html[data-sbg-on] [role="menu"] [class*="badge"],
+        html[data-sbg-on] [role="menu"] [class*="tag"],
+        html[data-sbg-on] [role="menuitem"] [class*="badge"],
+        html[data-sbg-on] [role="menuitem"] [class*="tag"],
+        html[data-sbg-on] [class*="BI5uFG_item"] [class*="badge"],
+        html[data-sbg-on] [class*="BI5uFG_item"] [class*="tag"] {
+          border-radius: 3px !important;
+          padding: 1px 5px !important;
+          font-size: 10px !important;
+          font-weight: 600 !important;
+          letter-spacing: 0.5px !important;
+          background: rgba(56, 189, 248, 0.18) !important;
+          border: 1px solid rgba(56, 189, 248, 0.35) !important;
+          color: #38bdf8 !important;
+          margin-left: 6px !important;
+        }
+        /* 状态微标（如“已停用”）：温润磨砂胶囊 */
+        html[data-sbg-on] [class*="disabled"],
+        html[data-sbg-on] [class*="Disabled"],
+        html[data-sbg-on] [class*="status-pill"] {
+          border-radius: 999px !important;
+          background: rgba(255, 255, 255, 0.08) !important;
+          border: 1px solid rgba(255, 255, 255, 0.18) !important;
+          color: #94a3b8 !important;
+          font-size: 11px !important;
+          padding: 2px 8px !important;
         }`
       ].join('\n');
     }
