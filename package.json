@@ -1,6 +1,6 @@
 {
   "name": "@local/space-background",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "深空背景 (Deep Space Background) — 主题令牌驱动的沉浸式星空视界。深色=深空半透玻璃+纯白HUD文字；浅色=晨雾磨砂玻璃+深色高对比文字。27 个官方 --dsw-* 令牌接管全部视觉，保留 DSH 原生圆角/层次/阴影，彻底告别通配符暴力覆盖造成的细节错乱。",
   "type": "module",
   "keywords": [
