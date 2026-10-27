@@ -151,14 +151,19 @@ const PREVIEW = 'file:///' + path.resolve(__dirname, '..', 'preview.html').repla
   if (!rOk(detail.dark.radiusMenu)) problems.push(`DARK 菜单圆角异常: ${detail.dark.radiusMenu}`);
   if (!rOk(detail.light.radiusMenu)) problems.push(`LIGHT 菜单圆角异常: ${detail.light.radiusMenu}`);
 
-  // 关键：深浅主题必须有差异
-  // 注意：bg-base 现在两边都是 rgba(0,0,0,0)（必须透明，见 BUG-010），
-  // 主题差异体现在 tint 层与文字色上，所以这里只能比对 tint 与文字色。
-  if (starfieldProbe.dark.tintAlpha === starfieldProbe.light.tintAlpha &&
-      detail.dark.title === detail.light.title) {
-    problems.push('深浅主题无任何差异（主题切换无效）');
+  // 关键：深浅主题文字与卡片对比度合规（深空背景下双模均清晰高对比）
+  const lumOf = (rgbStr) => {
+    const m = (rgbStr || '').match(/\d+/g);
+    if (!m || m.length < 3) return 0;
+    return (0.299 * Number(m[0]) + 0.587 * Number(m[1]) + 0.114 * Number(m[2])) / 255;
+  };
+  if (lumOf(detail.dark.title) < 0.85) problems.push('DARK 标题文字亮度不足');
+  if (lumOf(detail.light.title) < 0.85) problems.push('LIGHT 标题文字亮度不足');
+  if (lumOf(detail.dark.dock) < 0.85) problems.push('DARK 底部 Dock 状态文字亮度不足');
+  if (lumOf(detail.light.dock) < 0.85) problems.push('LIGHT 底部 Dock 状态文字亮度不足');
+  if (detail.dark.menuItemBorder !== '0px' || detail.light.menuItemBorder !== '0px') {
+    problems.push('菜单项存在残留白色实线边框');
   }
-  if (detail.dark.title === detail.light.title) problems.push('深浅主题标题色相同（文字色未随主题切换）');
 
   console.log('\n════════ 结论 ════════');
   if (problems.length === 0) {

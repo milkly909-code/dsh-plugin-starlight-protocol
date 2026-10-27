@@ -1054,31 +1054,28 @@ window.__ModuleLoader__.load({
      */
     const PALETTE = {
       dark: {
-        // ⚠️ bg-base 必须全透明！它被 DSH 嵌套使用 3 次
-        // (frame → centerCol → ConversationRoot)，任何不透明度都会累加。
-        // 界面整体色调由 #sbg-canvas-root::before 的单层 tint 负责。
         '--dsw-alias-bg-base':                 'rgba(0, 0, 0, 0)',
-        '--dsw-alias-bg-layer-1':              'rgba(14, 21, 34, 0.34)',
-        '--dsw-alias-bg-layer-2':              'rgba(18, 27, 42, 0.40)',
-        '--dsw-alias-bg-layer-3':              'rgba(22, 33, 50, 0.46)',
-        '--dsw-alias-bg-layer-4':              'rgba(26, 39, 58, 0.52)',
+        '--dsw-alias-bg-layer-1':              'rgba(14, 21, 34, 0.35)',
+        '--dsw-alias-bg-layer-2':              'rgba(18, 27, 42, 0.42)',
+        '--dsw-alias-bg-layer-3':              'rgba(22, 33, 50, 0.48)',
+        '--dsw-alias-bg-layer-4':              'rgba(26, 39, 58, 0.55)',
         '--dsw-alias-settings-card-fill':      'rgba(18, 27, 42, 0.42)',
-        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.30)',
-        '--dsw-specific-input-major':          'rgba(10, 16, 26, 0.62)',
+        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.35)',
+        '--dsw-specific-input-major':          'rgba(12, 17, 28, 0.96)',
         '--dsw-specific-menu':                 'rgba(13, 19, 30, 0.97)',
         '--dsw-alias-label-primary':           '#FFFFFF',
         '--dsw-alias-label-secondary':         '#E8F0FF',
         '--dsw-alias-label-tertiary':          '#FFFFFF',
-        '--dsw-alias-label-quaternary':        'rgba(200, 220, 255, 0.62)',
+        '--dsw-alias-label-quaternary':        'rgba(200, 220, 255, 0.65)',
         '--dsw-alias-border-l1':               'rgba(255, 255, 255, 0.12)',
-        '--dsw-alias-border-l2':               'rgba(255, 255, 255, 0.16)',
-        '--dsw-alias-border-l3':               'rgba(255, 255, 255, 0.20)',
-        '--dsw-alias-border-l4':               'rgba(255, 255, 255, 0.24)',
+        '--dsw-alias-border-l2':               'rgba(255, 255, 255, 0.18)',
+        '--dsw-alias-border-l3':               'rgba(255, 255, 255, 0.22)',
+        '--dsw-alias-border-l4':               'rgba(255, 255, 255, 0.28)',
         '--dsw-alias-interactive-bg-hover':    'rgba(255, 255, 255, 0.10)',
         '--dsw-alias-scrollbar-bg-l1':         'rgba(255, 255, 255, 0.14)',
         '--dsw-alias-scrollbar-bg-l2':         'rgba(255, 255, 255, 0.18)',
-        '--dsw-alias-scrollbar-hover-l1':      'rgba(56, 189, 248, 0.42)',
-        '--dsw-alias-scrollbar-hover-l2':      'rgba(56, 189, 248, 0.48)',
+        '--dsw-alias-scrollbar-hover-l1':      'rgba(56, 189, 248, 0.45)',
+        '--dsw-alias-scrollbar-hover-l2':      'rgba(56, 189, 248, 0.55)',
         '--dsw-alias-button-floating-fill':    'rgba(13, 19, 30, 0.92)',
         '--dsw-alias-button-floating-hover':   'rgba(20, 30, 46, 0.96)',
         '--dsw-alias-state-business-primary':  '#38bdf8',
@@ -1086,34 +1083,33 @@ window.__ModuleLoader__.load({
         '--dsw-menu-backdrop-filter':          'blur(20px) saturate(140%)',
       },
       light: {
-        // 同上：bg-base 必须全透明，浅色雾感由单层 tint 提供
         '--dsw-alias-bg-base':                 'rgba(0, 0, 0, 0)',
-        '--dsw-alias-bg-layer-1':              'rgba(255, 255, 255, 0.46)',
-        '--dsw-alias-bg-layer-2':              'rgba(255, 255, 255, 0.54)',
-        '--dsw-alias-bg-layer-3':              'rgba(255, 255, 255, 0.62)',
-        '--dsw-alias-bg-layer-4':              'rgba(255, 255, 255, 0.70)',
-        '--dsw-alias-settings-card-fill':      'rgba(255, 255, 255, 0.56)',
-        '--dsw-specific-sidebar-fill':         'rgba(241, 245, 250, 0.34)',
-        '--dsw-specific-input-major':          'rgba(255, 255, 255, 0.78)',
-        '--dsw-specific-menu':                 'rgba(255, 255, 255, 0.98)',
-        '--dsw-alias-label-primary':           '#0F172A',
-        '--dsw-alias-label-secondary':         '#1E293B',
-        '--dsw-alias-label-tertiary':          '#475569',
-        '--dsw-alias-label-quaternary':        '#64748B',
-        '--dsw-alias-border-l1':               'rgba(15, 23, 42, 0.08)',
-        '--dsw-alias-border-l2':               'rgba(15, 23, 42, 0.12)',
-        '--dsw-alias-border-l3':               'rgba(15, 23, 42, 0.16)',
-        '--dsw-alias-border-l4':               'rgba(15, 23, 42, 0.20)',
-        '--dsw-alias-interactive-bg-hover':    'rgba(15, 23, 42, 0.06)',
-        '--dsw-alias-scrollbar-bg-l1':         'rgba(15, 23, 42, 0.16)',
-        '--dsw-alias-scrollbar-bg-l2':         'rgba(15, 23, 42, 0.22)',
-        '--dsw-alias-scrollbar-hover-l1':      'rgba(2, 132, 199, 0.45)',
-        '--dsw-alias-scrollbar-hover-l2':      'rgba(2, 132, 199, 0.55)',
-        '--dsw-alias-button-floating-fill':    'rgba(255, 255, 255, 0.96)',
-        '--dsw-alias-button-floating-hover':   'rgba(241, 245, 250, 0.99)',
-        '--dsw-alias-state-business-primary':  '#0284C7',
-        '--dsw-focus-ring-color':              'rgba(2, 132, 199, 0.60)',
-        '--dsw-menu-backdrop-filter':          'blur(20px) saturate(120%)',
+        '--dsw-alias-bg-layer-1':              'rgba(14, 21, 34, 0.35)',
+        '--dsw-alias-bg-layer-2':              'rgba(18, 27, 42, 0.42)',
+        '--dsw-alias-bg-layer-3':              'rgba(22, 33, 50, 0.48)',
+        '--dsw-alias-bg-layer-4':              'rgba(26, 39, 58, 0.55)',
+        '--dsw-alias-settings-card-fill':      'rgba(18, 27, 42, 0.42)',
+        '--dsw-specific-sidebar-fill':         'rgba(8, 12, 22, 0.35)',
+        '--dsw-specific-input-major':          'rgba(12, 17, 28, 0.96)',
+        '--dsw-specific-menu':                 'rgba(13, 19, 30, 0.97)',
+        '--dsw-alias-label-primary':           '#FFFFFF',
+        '--dsw-alias-label-secondary':         '#E8F0FF',
+        '--dsw-alias-label-tertiary':          '#FFFFFF',
+        '--dsw-alias-label-quaternary':        'rgba(200, 220, 255, 0.65)',
+        '--dsw-alias-border-l1':               'rgba(255, 255, 255, 0.12)',
+        '--dsw-alias-border-l2':               'rgba(255, 255, 255, 0.18)',
+        '--dsw-alias-border-l3':               'rgba(255, 255, 255, 0.22)',
+        '--dsw-alias-border-l4':               'rgba(255, 255, 255, 0.28)',
+        '--dsw-alias-interactive-bg-hover':    'rgba(255, 255, 255, 0.10)',
+        '--dsw-alias-scrollbar-bg-l1':         'rgba(255, 255, 255, 0.14)',
+        '--dsw-alias-scrollbar-bg-l2':         'rgba(255, 255, 255, 0.18)',
+        '--dsw-alias-scrollbar-hover-l1':      'rgba(56, 189, 248, 0.45)',
+        '--dsw-alias-scrollbar-hover-l2':      'rgba(56, 189, 248, 0.55)',
+        '--dsw-alias-button-floating-fill':    'rgba(13, 19, 30, 0.92)',
+        '--dsw-alias-button-floating-hover':   'rgba(20, 30, 46, 0.96)',
+        '--dsw-alias-state-business-primary':  '#38bdf8',
+        '--dsw-focus-ring-color':              'rgba(56, 189, 248, 0.65)',
+        '--dsw-menu-backdrop-filter':          'blur(20px) saturate(140%)',
       },
     };
 
@@ -1142,36 +1138,47 @@ window.__ModuleLoader__.load({
      * 其余一切（背景/边框/圆角/文字色/内边距）全部交给令牌 + DSH 原生样式。
      */
     function generateDynamicCss(options) {
-      const { enabled = true } = options || {};
+      const { enabled = true, surfaceOpacity = 0.0 } = options || {};
       if (!enabled) return '';
+      const op = clamp(Number(surfaceOpacity) || 0, 0.0, 0.70);
 
       return [
         // ── 1. 全局 0px 模糊（用户核心诉求），但菜单弹窗保留原生磨砂 ──
         'html[data-sbg-on] *:not([role="menu"]):not([role="dialog"]):not([role="listbox"]):not([class*="stat-dialog"]):not([class*="TurnUsagePanel"]) { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
 
-        // ── 2. composer 座席渐隐遮蔽：深色 / 浅色各一套，避免历史消息穿透 ──
-        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-sbg-on] [data-conversation-region="composer"] { z-index: 10 !important; }',
-        'html[data-sbg-on] body[data-ds-dark-theme] [data-composer-seat], html[data-sbg-on] body[data-ds-dark-theme] [class*="composerSeat"] { background: linear-gradient(180deg, rgba(6,10,20,0) 0px, rgba(6,10,20,0.62) 26px, rgba(6,10,20,0.88) 58px, rgba(6,10,20,0.96) 100%) !important; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) [data-composer-seat], html[data-sbg-on] body:not([data-ds-dark-theme]) [class*="composerSeat"] { background: linear-gradient(180deg, rgba(247,250,254,0) 0px, rgba(247,250,254,0.70) 26px, rgba(247,250,254,0.92) 58px, rgba(247,250,254,0.98) 100%) !important; }',
+        // ── 2. 全域纯净穿透：各级顶层容器全透，保证星空画布 100% 满屏无缝展现 ──
+        'html[data-sbg-on], html[data-sbg-on] body, html[data-sbg-on] #root, html[data-sbg-on] #app, html[data-sbg-on] [class*="_frame"], html[data-sbg-on] [class*="q_frame"] { background: transparent !important; background-color: transparent !important; }',
 
-        // ── 3. 界面整体色调层（单层，绝不叠加）──
-        // 这是星空与 UI 之间唯一的一层着色。因为 #sbg-canvas-root 是
-        // position:fixed 的独立单层（body 的第一个子节点），不会像
-        // bg-base 那样被嵌套容器重复叠加。
-        '#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(5, 9, 18, 0.52) !important; z-index: 2; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::before { background: rgba(247, 250, 254, 0.58) !important; }',
+        // ── 3. 左侧边栏穿透：深空微透磨砂，星河在侧栏后连续流动，消除界面割裂 ──
+        'html[data-sbg-on] [class*="_sidebarCol"], html[data-sbg-on] [class*="q_sidebarCol"] { background: rgba(8, 12, 22, 0.35) !important; background-color: rgba(8, 12, 22, 0.35) !important; border-right: 1px solid rgba(255, 255, 255, 0.12) !important; }',
+        'html[data-sbg-on] [class*="_sidebarCol"] * { color: #FFFFFF !important; }',
+        'html[data-sbg-on] [class*="_sidebarCol"] [class*="desc"], html[data-sbg-on] [class*="_sidebarCol"] [class*="secondary"], html[data-sbg-on] [class*="_sidebarCol"] time, html[data-sbg-on] [class*="_sidebarCol"] [class*="time"] { color: rgba(220, 235, 255, 0.70) !important; }',
 
-        // ── 4. 深空画布暗角：中央阅读区柔和压暗，四周纯透（0 模糊）──
+        // ── 4. composer 座席渐隐防穿透 + 输入卡片实体护盾：彻底根治文字上滑重叠 Bug ──
+        'html[data-sbg-on] [data-composer-seat], html[data-sbg-on] [class*="composerSeat"], html[data-conversation-region="composer"] { z-index: 10 !important; background: linear-gradient(180deg, rgba(6,10,20,0) 0px, rgba(6,10,20,0.72) 24px, rgba(6,10,20,0.94) 52px, rgba(6,10,20,0.98) 100%) !important; }',
+        'html[data-sbg-on] [data-composer-seat] [class*="card"], html[data-sbg-on] [class*="composerSeat"] [class*="card"], html[data-sbg-on] [class*="GRgSLq_card"], html[data-sbg-on] [class*="composer"] [class*="card"], html[data-sbg-on] [class*="Composer"] [class*="card"] { background: rgba(12, 17, 28, 0.96) !important; border: 1px solid rgba(56, 189, 248, 0.28) !important; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.65), 0 0 1px rgba(255, 255, 255, 0.15) !important; }',
+        'html[data-sbg-on] textarea, html[data-sbg-on] input, html[data-sbg-on] [contenteditable="true"] { color: #FFFFFF !important; background: transparent !important; }',
+
+        // ── 5. 底部状态栏（步数 / Token / 上下文 / 模型）纯白高亮高对比度 ──
+        'html[data-sbg-on] [data-composer-dock] button, html[data-sbg-on] [data-composer-dock] span, html[data-sbg-on] [data-composer-dock] [role="button"] { color: #FFFFFF !important; text-shadow: 0 1px 2px rgba(0,0,0,0.85); }',
+        'html[data-sbg-on] [data-composer-dock] svg:not([class*="track"]) { color: #38bdf8 !important; }',
+        'html[data-sbg-on] [data-composer-dock] [class*="fill"] { stroke: #38bdf8 !important; }',
+
+        // ── 6. 界面整体色调层与玻璃不透明度联动（根据用户滑块动态调整，0% 全透 ~ 70% 磨砂） ──
+        `#sbg-canvas-root::before { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: rgba(5, 9, 18, ${(0.25 + op * 0.45).toFixed(2)}) !important; z-index: 2; transition: background-color 0.15s ease; }`,
+
+        // ── 7. 深空画布暗角：中央阅读区柔和压暗，四周纯透（0 模糊） ──
         '#sbg-canvas-root::after { content: ""; position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(4, 8, 16, 0.26) 0%, rgba(4, 8, 16, 0.08) 62%, transparent 100%); z-index: 3; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) #sbg-canvas-root::after { background: radial-gradient(ellipse 82% 72% at 50% 50%, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.04) 62%, transparent 100%); }',
 
-        // ── 4. 极窄滚动条：只调尺寸，颜色走令牌 ──
+        // ── 8. 极窄滚动条 ──
         'html[data-sbg-on] *::-webkit-scrollbar { width: 6px; height: 6px; }',
         'html[data-sbg-on] *::-webkit-scrollbar-track { background: transparent; }',
+        'html[data-sbg-on] *::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.18); border-radius: 999px; }',
+        'html[data-sbg-on] *::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.50); }',
 
-        // ── 5. 代码块：给一层轻微底色保证语法高亮可辨（跟随主题）──
-        'html[data-sbg-on] body[data-ds-dark-theme] pre, html[data-sbg-on] body[data-ds-dark-theme] code[class*="language-"] { background: rgba(8, 12, 22, 0.62) !important; }',
-        'html[data-sbg-on] body:not([data-ds-dark-theme]) pre, html[data-sbg-on] body:not([data-ds-dark-theme]) code[class*="language-"] { background: rgba(15, 23, 42, 0.045) !important; }',
+        // ── 9. Markdown 代码块、引用块与表格深空全息美化 ──
+        'html[data-sbg-on] pre, html[data-sbg-on] code[class*="language-"], html[data-sbg-on] [class*="codeblock"], html[data-sbg-on] [class*="code-block"] { background: rgba(10, 15, 26, 0.88) !important; border: 1px solid rgba(56, 189, 248, 0.25) !important; border-radius: 8px !important; color: #E2E8F0 !important; }',
+        'html[data-sbg-on] blockquote { background: rgba(15, 23, 42, 0.45) !important; border-left: 3px solid #38bdf8 !important; color: #E2E8F0 !important; }',
       ].join('\n');
     }
 
@@ -1306,12 +1313,15 @@ window.__ModuleLoader__.load({
       const enabled = doc.enabled !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
       const density = typeof doc.density === 'number' ? doc.density : 1000;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
 
       const [localSpeed, setLocalSpeed] = React.useState(speed);
       const [localDensity, setLocalDensity] = React.useState(density);
+      const [localOpacity, setLocalOpacity] = React.useState(surfaceOpacity);
 
       React.useEffect(() => { setLocalSpeed(speed); }, [speed]);
       React.useEffect(() => { setLocalDensity(density); }, [density]);
+      React.useEffect(() => { setLocalOpacity(surfaceOpacity); }, [surfaceOpacity]);
 
       // 点击外部任意区域自动关闭浮层面板（mousedown capture 阶段，避免闭包陈旧）
       const openRef = React.useRef(open);
@@ -1337,6 +1347,12 @@ window.__ModuleLoader__.load({
       const onDensityChange = (val) => {
         setLocalDensity(val);
         if (actions && actions.setDensity) actions.setDensity(val);
+      };
+
+      const onOpacityChange = (val) => {
+        setLocalOpacity(val);
+        updateDynamicStyles({ enabled, surfaceOpacity: val });
+        if (actions && actions.setSurfaceOpacity) actions.setSurfaceOpacity(val);
       };
 
       return h('div', { className: 'sbg-fab-root' },
@@ -1410,6 +1426,22 @@ window.__ModuleLoader__.load({
               onInput: (e) => onDensityChange(Number(e.target.value)),
             })
           ),
+          h('div', { className: 'sbg-ctrl-row' },
+            h('div', { className: 'sbg-ctrl-label' },
+              h('span', null, '玻璃遮罩度'),
+              h('span', { style: { color: '#38bdf8' } }, `${Math.round(localOpacity * 100)}%`)
+            ),
+            h('input', {
+              type: 'range',
+              className: 'sbg-ctrl-slider',
+              min: '0',
+              max: '0.70',
+              step: '0.05',
+              value: String(localOpacity),
+              onChange: (e) => onOpacityChange(Number(e.target.value)),
+              onInput: (e) => onOpacityChange(Number(e.target.value)),
+            })
+          ),
           h('div', { className: 'sbg-fab-footer' },
             h('button', {
               type: 'button',
@@ -1418,6 +1450,8 @@ window.__ModuleLoader__.load({
                 if (actions && actions.resetDefaults) actions.resetDefaults();
                 setLocalSpeed(0.4);
                 setLocalDensity(1000);
+                setLocalOpacity(0.0);
+                updateDynamicStyles({ enabled, surfaceOpacity: 0.0 });
               },
             }, '恢复默认')
           )
@@ -1474,6 +1508,7 @@ window.__ModuleLoader__.load({
       const enabled = doc.enabled !== false;
       const speed = typeof doc.speed === 'number' ? doc.speed : 0.4;
       const density = typeof doc.density === 'number' ? doc.density : 1000;
+      const surfaceOpacity = typeof doc.surfaceOpacity === 'number' ? doc.surfaceOpacity : 0.0;
       /** 当前引擎实例句柄（供密度热更新复用，避免销毁重建）。 */
       const engineRef = React.useRef(null);
 
@@ -1482,20 +1517,19 @@ window.__ModuleLoader__.load({
         if (actions) boundActions = actions;
       }, [doc, actions]);
 
-      // normalize 只在挂载时跑一次，绝不能跟随 doc 每次变化重跑，
-      // 否则会把用户刚拖动的 surfaceOpacity 瞬间重置（历史 Bug）。
+      // normalize 只在组件初始挂载时跑一次，绝不跟随 doc 变化重复执行
       React.useEffect(() => {
         if (actions && typeof actions.normalize === 'function') actions.normalize();
-      }, [actions]);
+      }, []);
 
       React.useEffect(ensureStyles, []);
 
       // 1. 样式与主题动态响应副作用（独立于 Canvas 引擎，滑块调节时毫秒级无感知响应，绝不销毁重建物件）
       React.useEffect(() => {
         const diag = (window.__sbgApply = window.__sbgApply || { steps: [], errors: [], ok: false });
-        diag.steps.push(`SpaceLayer:styles:start: enabled=${enabled}`);
+        diag.steps.push(`SpaceLayer:styles:start: enabled=${enabled} op=${surfaceOpacity}`);
 
-        updateDynamicStyles({ enabled });
+        updateDynamicStyles({ enabled, surfaceOpacity });
 
         let disposeThemeOverride = null;
         if (themeApi && typeof themeApi.overrideTokens === 'function') {
@@ -1512,7 +1546,7 @@ window.__ModuleLoader__.load({
         return () => {
           if (disposeThemeOverride) disposeThemeOverride();
         };
-      }, [enabled]);
+      }, [enabled, surfaceOpacity]);
 
       // 2. 星空 Canvas 引擎生命周期（只在开关变更时重建；密度/速度/不透明度全部热更新）
       React.useEffect(() => {
@@ -1578,6 +1612,7 @@ window.__ModuleLoader__.load({
           textShadow: true,
           speed: 0.4,
           density: 1000,
+          surfaceOpacity: 0.0,
         }),
         persist: PERSIST_KEY,
         actions: {
@@ -1589,7 +1624,7 @@ window.__ModuleLoader__.load({
             delete draft.hue;
             if (isLegacy) {
               draft.enabled = true;
-              delete draft.surfaceOpacity;
+              draft.surfaceOpacity = 0.0;
               draft.blur = 0;
               if (typeof draft.autoContrast !== 'boolean') draft.autoContrast = true;
               if (typeof draft.textShadow !== 'boolean') draft.textShadow = true;
@@ -1597,13 +1632,12 @@ window.__ModuleLoader__.load({
               if (typeof draft.density !== 'number') draft.density = 1000;
             } else {
               draft.enabled = draft.enabled !== false;
-              // 玻璃不透明度滑块已移除，清掉历史持久化字段
-              delete draft.surfaceOpacity;
               draft.blur = 0;
               draft.autoContrast = draft.autoContrast !== false;
               draft.textShadow = draft.textShadow !== false;
               draft.speed = clamp(typeof draft.speed === 'number' ? draft.speed : 0.4, 0.1, 1.5);
               draft.density = clamp(typeof draft.density === 'number' ? draft.density : 1000, 300, 2000);
+              draft.surfaceOpacity = clamp(typeof draft.surfaceOpacity === 'number' ? draft.surfaceOpacity : 0.0, 0.0, 0.70);
             }
             draft.schemaVersion = STORE_SCHEMA_VERSION;
           },
@@ -1613,9 +1647,10 @@ window.__ModuleLoader__.load({
           setAutoContrast(draft, on) { draft.autoContrast = on === true; },
           setTextShadow(draft, on) { draft.textShadow = on === true; },
           setSpeed(draft, val) { draft.speed = clamp(Number(val) || 0.4, 0.1, 1.5); },
+          setSurfaceOpacity(draft, val) { draft.surfaceOpacity = clamp(Number(val) || 0.0, 0.0, 0.70); },
           resetDefaults(draft) {
             draft.enabled = true;
-            delete draft.surfaceOpacity;
+            draft.surfaceOpacity = 0.0;
             draft.blur = 0;
             draft.autoContrast = true;
             draft.textShadow = true;

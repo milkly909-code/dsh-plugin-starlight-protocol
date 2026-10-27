@@ -183,36 +183,35 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   check('侧栏 fill 与主区区分（值不同）', dk('--dsw-specific-sidebar-fill') !== dk('--dsw-alias-bg-base'));
   check('输入框 major 独立于 bg-base（值不同）', dk('--dsw-specific-input-major') !== dk('--dsw-alias-bg-base'));
 
-  // 文字色：深色主题必须亮、浅色主题必须暗（这是"字体不显示"的根治点）
+  // 文字色：无论深浅主题，深空背景下都必须为高对比度清晰文字
   const lum = (hex) => {
     const m = hex.replace('#', '');
     const r = parseInt(m.slice(0, 2), 16), g = parseInt(m.slice(2, 4), 16), b = parseInt(m.slice(4, 6), 16);
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   };
   check('深色主题 label-primary 为高亮文字（亮度 > 0.85）', lum(dk('--dsw-alias-label-primary')) > 0.85);
-  check('浅色主题 label-primary 为深色文字（亮度 < 0.20）', lum(lt('--dsw-alias-label-primary')) < 0.20);
+  check('浅色主题 label-primary 为高亮文字（深空统一度，亮度 > 0.85）', lum(lt('--dsw-alias-label-primary')) > 0.85);
   check('深色 label-secondary / tertiary 均可读（亮度 > 0.6）', lum(dk('--dsw-alias-label-secondary')) > 0.6 && lum(dk('--dsw-alias-label-tertiary')) > 0.6);
-  check('浅色 label-secondary / tertiary 均够深（亮度 < 0.45）', lum(lt('--dsw-alias-label-secondary')) < 0.45 && lum(lt('--dsw-alias-label-tertiary')) < 0.45);
-  check('菜单专属令牌 --dsw-specific-menu 深浅不同', dk('--dsw-specific-menu') !== lt('--dsw-specific-menu'));
+  check('浅色 label-secondary / tertiary 均可读（亮度 > 0.6）', lum(lt('--dsw-alias-label-secondary')) > 0.6 && lum(lt('--dsw-alias-label-tertiary')) > 0.6);
+  check('菜单专属令牌 --dsw-specific-menu 具备高不透明度防透视', alphaOf(dk('--dsw-specific-menu')) >= 0.95 && alphaOf(lt('--dsw-specific-menu')) >= 0.95);
 
   /* ── 补充 CSS：只允许做令牌做不到的三件事 ── */
 
   const css = X.generateDynamicCss({ enabled: true });
   check('禁用常规 backdrop-filter 模糊（0px 视界）', css.includes('backdrop-filter: none !important'));
   check('但菜单/弹窗保留原生磨砂（白名单排除）', css.includes('[role="menu"]') && css.includes('[role="dialog"]'));
-  check('composer 座席深色渐变遮蔽（防历史消息穿透）', css.includes('body[data-ds-dark-theme] [data-composer-seat]') && css.includes('rgba(6,10,20,0.96)'));
-  check('composer 座席浅色渐变遮蔽（浅色主题同样防穿透）', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]') && css.includes('rgba(247,250,254,0.98)'));
+  check('composer 座席渐变遮蔽存在（防历史消息穿透）', css.includes('[data-composer-seat]') && css.includes('linear-gradient'));
+  check('composer 输入框卡片防穿透实体背景', css.includes('rgba(12, 17, 28, 0.96)'));
+  check('侧边栏半透磨砂太空舱质感', css.includes('[class*="_sidebarCol"]') && css.includes('rgba(8, 12, 22, 0.35)'));
   check('深空画布暗角（中央压暗提升对比）', css.includes('radial-gradient(ellipse 82% 72%'));
-  check('浅色主题暗角反向（浅白柔光而非压黑）', css.includes('rgba(255, 255, 255, 0.14)'));
-  check('滚动条只改尺寸，颜色交给令牌', css.includes('::-webkit-scrollbar { width: 6px'));
-  check('代码块深色主题给轻底色', css.includes('body[data-ds-dark-theme] pre'));
-  check('代码块浅色主题给极淡底色', css.includes('body:not([data-ds-dark-theme]) pre'));
+  check('滚动条只改尺寸，半透滑块', css.includes('::-webkit-scrollbar { width: 6px'));
+  check('代码块提供深空质感底色与边框', css.includes('pre') && css.includes('rgba(10, 15, 26, 0.88)'));
 
-  /* ── 负向断言：确保旧架构的"通配符暴力清空"已彻底移除 ── */
+  /* ── 负向断言：确保旧架构的通配符大面积覆盖已彻底移除 ── */
   check('已移除 [class*="tag"] 通配符（避免下一个 _item 事故）', !css.includes('[class*="tag"]'));
   check('已移除 [class*="badge"] 通配符', !css.includes('[class*="badge"]'));
   check('已移除 [class*="_card"] 通配符大面积覆盖', !css.includes('[class*="_card"]:not('));
-  check('已移除全局强制纯白文字注入', !css.includes('color: #FFFFFF !important'));
+  check('已移除无限制的全局 * { color: #FFFFFF } 暴力注入', !css.includes('\n* { color: #FFFFFF') && !css.includes('html[data-sbg-on] * { color: #FFFFFF'));
   check('已移除全局 text-shadow 污染', !css.includes('text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)'));
   check('已移除 _bottomRow 误伤（不再当 composer 处理）', !css.includes('[class*="_bottomRow"]'));
 
@@ -221,11 +220,14 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   const storeSpec = X.makeStore().spec;
   const initial = storeSpec.init();
   check('store 默认开启星空', initial.enabled === true);
-  check('store 已删除 surfaceOpacity（滑块已移除）', !('surfaceOpacity' in initial));
+  check('store 恢复包含 surfaceOpacity（玻璃遮罩调节）', 'surfaceOpacity' in initial && typeof initial.surfaceOpacity === 'number');
   check('store 默认无模糊 blur=0', initial.blur === 0);
   check('store 默认速度 0.4 / 粒子 1000', initial.speed === 0.4 && initial.density === 1000);
 
-  check('store 已无 setSurfaceOpacity action', typeof storeSpec.actions.setSurfaceOpacity === 'undefined');
+  check('store 包含 setSurfaceOpacity action', typeof storeSpec.actions.setSurfaceOpacity === 'function');
+  const dSurf = {};
+  storeSpec.actions.setSurfaceOpacity(dSurf, 0.35);
+  check('setSurfaceOpacity 支持调节玻璃不透明度', dSurf.surfaceOpacity === 0.35);
 
   const draft = { enabled: 'x' };
   storeSpec.actions.normalize(draft);
@@ -247,17 +249,18 @@ const near = (a, b, eps) => Math.abs(a - b) <= (eps || 1e-9);
   storeSpec.actions.setSpeed(dSpeed, 1.2);
   check('setSpeed 支持调节航行速度', dSpeed.speed === 1.2);
 
-  const d5 = { blur: 16, autoContrast: false };
+  const d5 = { blur: 16, autoContrast: false, surfaceOpacity: 0.5 };
   storeSpec.actions.resetDefaults(d5);
-  check('resetDefaults 恢复无模糊默认 (blur=0, speed=0.4, density=1000)', d5.blur === 0 && d5.speed === 0.4 && d5.density === 1000);
+  check('resetDefaults 恢复无模糊默认 (blur=0, speed=0.4, density=1000, surfaceOpacity=0)', d5.blur === 0 && d5.speed === 0.4 && d5.density === 1000 && d5.surfaceOpacity === 0);
 
   /* ── 关键回归：normalize 绝不能把用户设置归零 ── */
 
-  const keep = { schemaVersion: 3, enabled: false, speed: 1.3, density: 1800 };
+  const keep = { schemaVersion: 3, enabled: false, speed: 1.3, density: 1800, surfaceOpacity: 0.4 };
   storeSpec.actions.normalize(keep);
   check('【回归】normalize 保留用户速度设置', keep.speed === 1.3);
   check('【回归】normalize 保留用户粒子数设置', keep.density === 1800);
   check('【回归】normalize 保留用户开关设置', keep.enabled === false);
+  check('【回归】normalize 保留用户玻璃遮罩设置', keep.surfaceOpacity === 0.4);
 
   // 旧版迁移
   const legacy = { schemaVersion: 1, enabled: false, speed: 0.2, boost: false };

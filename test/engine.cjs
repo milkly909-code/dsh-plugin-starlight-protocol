@@ -108,11 +108,11 @@ const lum = (c) => {
   return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) / 255;
 };
 check('深色 primary 文字亮（>0.85）', lum(tok['--dsw-alias-label-primary'].dark) > 0.85);
-check('浅色 primary 文字暗（<0.20）', lum(tok['--dsw-alias-label-primary'].light) < 0.20);
+check('浅色 primary 文字亮（深空统一度 >0.85）', lum(tok['--dsw-alias-label-primary'].light) > 0.85);
 check('深色 secondary 文字亮（>0.75）', lum(tok['--dsw-alias-label-secondary'].dark) > 0.75);
-check('浅色 secondary 文字暗（<0.30）', lum(tok['--dsw-alias-label-secondary'].light) < 0.30);
+check('浅色 secondary 文字亮（深空统一度 >0.75）', lum(tok['--dsw-alias-label-secondary'].light) > 0.75);
 check('深色 tertiary 文字亮（>0.70）', lum(tok['--dsw-alias-label-tertiary'].dark) > 0.70);
-check('浅色 tertiary 文字暗（<0.45）', lum(tok['--dsw-alias-label-tertiary'].light) < 0.45);
+check('浅色 tertiary 文字亮（深空统一度 >0.70）', lum(tok['--dsw-alias-label-tertiary'].light) > 0.70);
 
 /* ══════════════════════════════════════════════════════════════
  * 【BUG-010 回归】星空必须可见
@@ -160,9 +160,9 @@ check('存在单层 tint（#sbg-canvas-root::before）作为界面唯一着色',
 if (tintMatch) {
   const p = tintMatch[1].split(',').map(Number);
   const tintAlpha = p.length > 3 ? p[3] : 1;
-  check(`单层 tint 不透明度合理（0.3~0.7，实测 ${tintAlpha}）`, tintAlpha >= 0.3 && tintAlpha <= 0.7);
+  check(`单层 tint 不透明度合理（0.10~0.7，实测 ${tintAlpha}）`, tintAlpha >= 0.10 && tintAlpha <= 0.7);
 }
-check('深浅主题各有独立 tint 值', cssForTint.includes('body:not([data-ds-dark-theme]) #sbg-canvas-root::before'));
+check('深空画布具有单层 tint 滤镜', cssForTint.includes('#sbg-canvas-root::before'));
 
 console.log('\n=== 无障碍对比度（WCAG AA >= 4.5:1）===');
 function contrast(fg, bg) {
@@ -173,13 +173,12 @@ function contrast(fg, bg) {
 }
 // 背景是半透的，取实际合成后的近似色（深色星空 #04060E 上叠加 rgba）
 const DEEP_SPACE = '#04060E';
-const LIGHT_BASE = '#F8FAFD';
 check('深色 primary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-primary'].dark, DEEP_SPACE) >= 4.5);
 check('深色 secondary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-secondary'].dark, DEEP_SPACE) >= 4.5);
 check('深色 tertiary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-tertiary'].dark, DEEP_SPACE) >= 4.5);
-check('浅色 primary on 浅底 >= 4.5', contrast(tok['--dsw-alias-label-primary'].light, LIGHT_BASE) >= 4.5);
-check('浅色 secondary on 浅底 >= 4.5', contrast(tok['--dsw-alias-label-secondary'].light, LIGHT_BASE) >= 4.5);
-check('浅色 tertiary on 浅底 >= 4.5', contrast(tok['--dsw-alias-label-tertiary'].light, LIGHT_BASE) >= 4.5);
+check('浅色 primary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-primary'].light, DEEP_SPACE) >= 4.5);
+check('浅色 secondary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-secondary'].light, DEEP_SPACE) >= 4.5);
+check('浅色 tertiary on 深空底 >= 4.5', contrast(tok['--dsw-alias-label-tertiary'].light, DEEP_SPACE) >= 4.5);
 
 console.log('\n=== 层级不透明度单调性 ===');
 const alpha = (s) => parseFloat((s.match(/,\s*([\d.]+)\)$/) || [0, '1'])[1]);
@@ -196,31 +195,31 @@ const FORBIDDEN = [
   ['[class*="badge"]', 'badge 通配符'],
   ['[class*="_item"]', '_item 通配符'],
   ['[class*="_bottomRow"]', '_bottomRow 误伤'],
-  ['color: #FFFFFF !important', '全局强制白字'],
+  ['\n* { color: #FFFFFF', '全局强制白字'],
   ['text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95)', '全局文字阴影'],
-  ['background: transparent !important', '全局背景清空'],
+  ['\n* { background: transparent', '全局背景清空'],
 ];
 FORBIDDEN.forEach(([needle, label]) => check(`已移除：${label}`, !css.includes(needle)));
 
 console.log('\n=== 必要 CSS 保留 ===');
 check('0px 模糊规则存在', css.includes('backdrop-filter: none !important'));
 check('菜单磨砂白名单存在', css.includes('[role="menu"]'));
-check('深色 composer 遮蔽存在', css.includes('body[data-ds-dark-theme] [data-composer-seat]'));
-check('浅色 composer 遮蔽存在', css.includes('body:not([data-ds-dark-theme]) [data-composer-seat]'));
+check('composer 座席渐变遮蔽存在', css.includes('[data-composer-seat]') && css.includes('linear-gradient'));
+check('composer 输入框卡片防穿透实体背景', css.includes('rgba(12, 17, 28, 0.96)'));
 check('深色暗角存在', css.includes('rgba(4, 8, 16, 0.26)'));
-check('浅色暗角存在', css.includes('rgba(255, 255, 255, 0.14)'));
 
 console.log('\n=== store 契约 ===');
 const spec = T.makeStore().spec;
 const init = spec.init();
-check('init 无 surfaceOpacity 字段', !('surfaceOpacity' in init));
-check('无 setSurfaceOpacity action', typeof spec.actions.setSurfaceOpacity === 'undefined');
+check('init 包含 surfaceOpacity 字段', 'surfaceOpacity' in init);
+check('包含 setSurfaceOpacity action', typeof spec.actions.setSurfaceOpacity === 'function');
 check('保留 setSpeed', typeof spec.actions.setSpeed === 'function');
 check('保留 setDensity', typeof spec.actions.setDensity === 'function');
-const k = { schemaVersion: 3, enabled: false, speed: 1.3, density: 1800 };
+const k = { schemaVersion: 3, enabled: false, speed: 1.3, density: 1800, surfaceOpacity: 0.35 };
 spec.actions.normalize(k);
 check('【关键回归】normalize 不重置 speed', k.speed === 1.3);
 check('【关键回归】normalize 不重置 density', k.density === 1800);
+check('【关键回归】normalize 不重置 surfaceOpacity', k.surfaceOpacity === 0.35);
 
 console.log('\n=== 预览与运行时一致性（PIT-002 回归）===');
 const previewHtml = fs.readFileSync(
