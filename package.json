@@ -1,53 +1,30 @@
 {
-  "name": "@local/space-background",
-  "version": "2.2.0",
-  "description": "深空背景 (Deep Space Background) — 全景深空太空座舱与高对比度星际 HUD。27 个官方 --dsw-* 令牌驱动，输入框防历史消息穿透渐变遮罩，侧边栏半透深空磨砂，自带玻璃遮罩度与航速/星密实时调控面板。",
+  "name": "dsh-plugin-starlight-protocol",
+  "version": "1.0.0",
+  "description": "星轨协议 2077 (Starlight Protocol) — 集成开机冷启动认证序列、赛博朋克 2077 HUD 终端主题与全域通透深空天体引擎的旗舰综合外观系统",
   "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
   "keywords": [
+    "dsh",
     "dsh-plugin",
+    "deepseek",
     "deepseek-harness",
     "theme",
     "appearance",
+    "startup",
+    "splash",
     "background",
-    "starfield"
+    "cyberpunk"
   ],
-  "license": "MIT",
-  "author": "milkly909-code",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/milkly909-code/dsh-space-background.git"
-  },
-  "homepage": "https://github.com/milkly909-code/dsh-space-background#readme",
-  "bugs": {
-    "url": "https://github.com/milkly909-code/dsh-space-background/issues"
-  },
-  "scripts": {
-    "check": "node --check client.js && node --check index.js && node test/run.cjs && node test/engine.cjs",
-    "test": "node test/run.cjs && node test/engine.cjs",
-    "visual": "node test/visual.cjs",
-    "verify": "npm run check && npm run visual"
-  },
-  "exports": {
-    ".": "./index.js",
-    "./client": "./client.js",
-    "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
-  },
-  "files": [
-    "index.js",
-    "client.js",
-    "cordis.patch.yml",
-    "locale/*.json",
-    "icon.svg",
-    "README.md",
-    "LICENSE"
-  ],
-  "engines": {
-    "node": ">=22.19.0",
-    "dsh": ">=0.2.1-rc.1"
-  },
   "dsh": {
     "manifestVersion": 1,
+    "displayName": "星轨协议 2077 (Starlight Protocol)",
+    "description": "DeepSeek Harness 旗舰级综合外观系统：集成星海折跃开机认证序列、赛博朋克 2077 全套 HUD 终端主题与全域通透深空天体引擎，支持模块化自主启闭。",
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
@@ -55,11 +32,15 @@
       "platform": "web",
       "immediately": true,
       "inject": [
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-theme",
         "@deepseek-ai/dsh-client-ui-layout"
       ]
     }
   },
-  "devDependencies": {
-    "playwright": "^1.64.1"
+  "cordis": {
+    "bundles": [
+      "lib/client.js"
+    ]
   }
 }

@@ -1,157 +1,77 @@
-# 深空背景 · Deep Space Background
+# 星轨协议 2077 (Starlight Protocol)
 
-DSH 的**全域通透沉浸式宇宙视界**插件：直接将界面各层背景置为 100% 全透以完整展现深空星空，界面彻底**无模糊（0px blur）**，银河、随机星座、星云、行星与流星在窗口底层缓缓流动。
+[![GitHub License](https://img.shields.io/badge/license-MIT-cyan.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-DeepSeek%20Harness-yellow.svg)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
 
-聊天框与全界面保持高度统一的全透无模糊一致性，经**太空全息 HUD 文字防晕散立体微阴影**保护，星空从底层透出而所有文字清晰可读；关闭即撤销全部效果、立即恢复原样。不占用侧边栏面板、不侵入通用设置——直接嵌入插件详情页展现项目技术架构与总开关。
-
-- **接入点**：`plugins.detail.section`（插件详情页技术全景说明）+ `shell.overlay`（全窗覆盖层挂底层星空画布与右下角快捷悬浮调控球）。
-- **零模糊与全域穿透**：禁用常规背景模糊，界面各层容器（中栏/侧栏/设置/插件详情/底栏/聊天框）彻底全透。
-- **吸底座席深空平滑渐隐与防穿透**：吸底底座定制深空羽化渐变（顶部自然羽化、底部完全不透），彻底杜绝历史消息向下滚动时露在聊天框下方和状态栏处；输入卡片自身为防穿透深空悬浮舱（`rgba(13, 18, 30, 0.96)`），彻底杜绝历史消息上滑在打字区透出，四周留白完整显露星空。
-- **底部状态栏纯白高对比字体**：底栏运行状态、步数、Token 用量、TPS、缓存命中率与上下文仪表盘全部采用纯白（`#FFFFFF`）高对比立体文字与纯白图标，清晰醒目，一目了然。
-- **弹窗高对比防穿透**：点击底部步数、token 用量、上下文统计及下拉菜单绝不完全透明，采用高对比深空暗色卡片背景（`rgba(13, 17, 28, 0.96)`），保证弹出数据清晰可辨。
-- **右下角快捷悬浮调控球（支持外部点击自动收起）**：随时点击右下角浮动按钮，即可快速调节航行速度与星空粒子数量；支持点击浮层外部任意区域自动关闭面板。
-- **视窗径向微暗角**：中央阅读区柔和光学微暗角压暗（保持 0 模糊），四周边缘纯透灿烂，实现视觉高信噪比与防疲劳。
-- **聊天框无缝穿透与聚焦微光**：底部会话框消除厚重深灰实体色块与模糊灰斑；聚焦输入框时激发全息冰蓝微光边界。
-- **深空极简细轨滚动条**：5px 超窄全透轨道与冰蓝微光滑块，消除原生粗糙灰条割裂感。
-- **代码块与引用块微光盾**：Markdown `pre`、`code`、`blockquote` 全息护盾容器，保障密集语法高亮清晰分明。
-- **天体动力学引擎与微视差**：360° 正弦无缝流动银河、3D 相机正交投影星座、光环行星、高光流星，并支持鼠标阻尼微视差（Parallax Micro-Drift）随指针轻柔偏转。
-- **超低能耗节能架构**：30fps 上限、天幕 0.6 倍离屏双缓冲降采样绘制、1.2 万颗星点分帧填充、Page Visibility 页面隐藏自动休眠挂起；关闭即销毁引擎，零后台开销。
-- 状态本地持久化，默认开启；不联网、不上报。
+> **DeepSeek Harness 旗舰级综合外观系统 (Starlight Protocol 2077)**  
+> 集成冷启动认证序列、赛博朋克 2077 HUD 终端主题、全域通透深空天体引擎以及左上角战术侧边栏折叠总控，提供一站式模块矩阵自主配置与极致沉浸感。
 
 ---
 
-## ⚠️ 安装前必读：包名必须与安装目录一致
+## 🌟 核心模块
 
-DSH 的 Loader 按 `cordis.patch.yml` 里的 `name:` 作为**包名**去 `node_modules` 解析。
-如果 `package.json` 的 `name` 与它被安装到的目录名不一致，解析会直接失败：
+### 1. 🌌 深空全景动态宇宙天体引擎 (Deep Space Horizon)
+- **360° 环绕银河**：无缝正弦银河带算法，自动偏航巡航漂移与鼠标 3D 阻尼视差。
+- **正交 3D 星座系统**：动态生成的星座骨架网络与恒星等级光斑。
+- **动态天体**：光环行星公转、随机折跃流星轨迹。
+- **右下角 SPD 三档航速控制器**：
+  - **巡航档 (Cruise)**：`0.12` 航速（平稳护眼，星系缓慢移动）
+  - **加速档 (Boost)**：`0.25` 航速（2倍巡航推进）
+  - **折跃档 (Warp)**：`0.96` 航速（8倍超光速折跃，星轨流线光束）
 
-```
-Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@local/dsh-space-background'
-```
+### 2. ⚡ 赛博朋克 2077 战术 HUD 终端 (Cyberpunk 2077 Tactical Theme)
+- **夜之城色调矩阵**：霓虹青（`#00f0ff`）、战术金黄（`#fce300`）、深空玄黑底层。
+- **战术切角与 HUD 框架**：窗口组件战术切角裁切、CRT 细腻扫描线、细节角标包角。
+- **声效与交互反馈**：纯代码 Web Audio API 合成的机械按键打字音效，右下角 `SND` 开关与 `DECK` 控制抽屉。
+- **Relic 故障彩蛋**：瞬态画面轻微色散与故障扫描线闪烁。
 
-而**客户端卡片仍会显示「运行中」**（client 半走 `__ModuleLoader__` 的另一条通道），
-于是症状变成「插件看起来装好了，但完全没有效果」——非常容易误判。
+### 3. 🚀 开机冷启动认证序列 (Startup Sequence)
+- **黑幕鉴权流程**：冷启动时触发黑幕认证序列、过曝白光与 CRT 荧光屏展开。
+- **特工身份档案**：机密特工身份展示（代号、权限等级与数字流），支持用户自定身份。
+- **神经网络播报**：内置真人高质量语音片段（TTS 备选）。
 
-**三处名字必须完全一致**（本仓库已对齐为 `@local/space-background`）：
+### 4. 🎛️ 左上角战术侧边栏折叠按钮 (Tactical Sidebar Toggle)
+- **彻底解决 Windows 原生侧栏收起后按钮丢失的 Bug**。
+- **恒定高优先级切角微光按钮**：位于左上角（`top: 6px; left: 10px; z-index: 10050`），不受窗口拖拽区域干扰。
+- **双态动态矢量图符**：
+  - 展开态：显示向内折叠箭头 `◀` 与实线面板框（提示 `收起侧边栏 (Ctrl+B)`）。
+  - 折叠态：显示向外展开箭头 `▶` 与虚线导轨框（提示 `展开侧边栏 (Ctrl+B)`）。
+- **多级稳态调度**：直接驱动 DSH 官方 `layout.toggleSidebar()`，自动规避图标与 Logo 重叠。
 
-| 位置 | 值 |
-|---|---|
-| `package.json` → `name` | `@local/space-background` |
-| `cordis.patch.yml` → `name:` | `@local/space-background` |
-| `client.js` → `__ModuleLoader__.load({ id })` | `@local/space-background` |
-| 安装目录 | `<profile>/node_modules/@local/space-background` |
-
-官方文档原文（`app.asar` 内《UI plugins in the Web page》）：
-
-> The browser artifact registers a lazy factory whose **id equals the package name**.
+### 5. 🎚️ 模块矩阵总控面板 (Master Module Matrix)
+- 在 DSH「设置」界面左侧栏自动注册专属「星轨协议」配置分区。
+- 提供深空背景、主题、开机动画的独立启闭开关，设置保存即时热更新生效。
 
 ---
 
-## 安装
-
-```powershell
-dsh plugin --profile <你的profile> add "<本仓库路径>"
-```
-
-本机 desktop profile 已按同构方式手工接入（junction + link 依赖 + bundles 注册）。
-
-## 卸载（注意：本地插件是 Junction）
-
-`dsh plugin --profile X add` 建立的是指向本目录的 Junction。
-**不要对 profile 里的链接用 `Remove-Item -Recurse`**——会穿透 Junction 删掉本目录源码。
-
-```powershell
-dsh plugin --profile <你的profile> remove @local/space-background
-```
-
-若残留孤儿链接，只删链接本身：
-
-```powershell
-cmd /c rmdir "<profile>\node_modules\@local\space-background"
-```
-
-## 使用
-
-| 操作 | 效果 |
-|---|---|
-| 插件管理 →「深空背景」详情页 | 控制面板：查看项目全景技术说明，提供一键启停总开关 |
-| 全界面全透浏览 | 聊天工作区、设置、插件管理全部全透无模糊，底层星空锐利直透 |
-| 聊天对话 | 聊天底栏与输入框全透无模糊穿透，文字受太空 HUD 阴影保护 |
-| 等待十几秒 | 天幕交叉淡入一片新星域（不同银河弯曲 / 星座 / 星云 / 行星组合） |
-| 期间偶尔 | 流星划过、大行星（含光环）从近处掠过 |
-
-### 加载诊断
-
-`client.js` 会把装配进度写进 `window.__sbgApply`。刷新页面后在控制台执行：
-
-```js
-JSON.stringify(window.__sbgApply, null, 1)
-```
-
-正常输出应包含：
+## 📂 项目结构
 
 ```
-apply:enter → locale:register:ok → locale:bind:ok → store:created
-→ toggle:ready → shell.overlay:registered → plugins.detail.section:registered
-→ apply:done
+dsh-plugin-starlight-protocol/
+├── cordis.patch.yml      # DSH 核心服务注册编排文件
+├── package.json          # 插件元数据与 client/server 入口声明
+├── README.md             # 工程主文档
+├── SKILL.md              # AI Agent 智能体技能标准规范
+├── LICENSE               # MIT 开源授权协议
+└── lib/
+    ├── client.js         # 前端统一综合 Bundle (深空引擎 + 主题 + 折叠总控 + 设置面板)
+    ├── index.js          # 后端配置服务与 API 路由
+    ├── splash.js         # 冷启动开机认证动效逻辑
+    ├── splash.css        # 开机黑幕与认证样式
+    └── assets/           # 音频素材与 Relic 彩蛋图片
 ```
 
-以及组件渲染时的 `SpaceLayer:render hasUseStore=… enabled=…`、`SpaceLayer:effect:start`。
+---
 
-| 现象 | 含义 |
-|---|---|
-| 输出 `undefined` | client 半根本没加载（包名 / 路径问题，见上方「安装前必读」） |
-| 停在 `apply:enter` | `ctx.locale.register` 抛错（locale 服务未注入） |
-| 有 `apply:done` 但无 `SpaceLayer:render` | 槽位注册成功但组件未被渲染 |
-| `enabled=false` | 持久化状态被关掉了：点开关，或清 `localStorage['space-background/v1']` |
+## 🛠️ 安装与使用
 
-## 兼容性
+在 DSH 的配置文件 `cordis.patch.yml` 中注册，或使用命令行安装：
 
-- 针对 **DSH 0.2.1-rc.3** 开发并实测。
-- 依赖出厂槽位与服务的声明方：`shell.overlay`（ui-layout）、`settings.general.item`
-  （ui-settings-general）、`theme` 服务（ui-theme），并通过
-  `dsh.client.inject` 保证前两者先于本插件加载；`theme` 服务经 `ctx.inject`
-  等待就绪，无顺序依赖。
-- 升级 DSH 后：令牌覆盖走官方别名（`--dsw-alias-*`），不依赖类名哈希，通常无需改动；
-  若通用分区槽位名有变，仅需更新 `client.js` 中两处 `ctx.slots.inject` 的槽位名。
-
-## 实现要点
-
-- 免构建客户端插件：`window.__ModuleLoader__.load` 直接注册，仅 require 平台基表
-  （`react` / `@deepseek-ai/dsh-client-store`），无 JSX。
-- 引擎为闭包工厂 `createSpaceEngine(root, opts)`；开关关闭 / 插件卸载即 `dispose()`
-  （rAF / ResizeObserver / 监听器 / 画布 / 令牌覆盖层一并释放）。
-- 无缝天幕：银河带为整周期正弦曲线（左右边缘天然对齐），天体越界在对侧补画
-  （预渲染精灵保证逐像素一致），360° 环绕无接缝。
-- list 槽位带 id、order 断言、label thunk、按钮 `appearance:none`、主题 token + 兜底。
-
-## 开发
-
-```powershell
-npm run check     # 语法 + 契约测试（node test/run.cjs）
+```bash
+dsh plugin --profile desktop add dsh-plugin-starlight-protocol
 ```
 
-`preview.html` 是独立演示页（真实加载 `client.js`）：模拟 DSH 设置页中的真实
-「深空背景」开关行 + 底层星空联动。需本地服务器打开（React 走 CDN）：
+或将本仓库目录直接通过 Junction 链接到：
+`~/.dsh/profiles/desktop/node_modules/dsh-plugin-starlight-protocol`
 
-```powershell
-python -m http.server 8765 --bind 127.0.0.1 --directory .
-# 浏览器访问 http://127.0.0.1:8765/preview.html
-```
-
-目录结构：
-
-```
-package.json        DSH 清单（manifestVersion / bundle.patch / client.platform / engines.dsh）
-cordis.patch.yml    插件图插入点
-index.js            Host 半（纯客户端插件，空 apply）
-client.js           全部逻辑：天体动力学引擎 + 详情页专属项目技术架构 + 底层星空层 + 全域全透与无模糊
-locale/{zh,en}.json 插件管理页元信息
-icon.svg            图标底稿
-preview.html        浏览器演示页（真实组件）
-test/run.cjs        零依赖契约测试（61 项）
-```
-
-## License
-
-MIT
+启动 DeepSeek Harness 后即可享用星轨协议全套外观体验！

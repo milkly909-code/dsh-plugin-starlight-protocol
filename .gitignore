@@ -1,40 +1,19 @@
-# 构建产物 / 依赖
+# 依赖与运行时缓存
 node_modules/
-dist/
-lib/
-*.tgz
-
-# 编辑器与系统
-.vscode/
-.idea/
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# 本地备份（插件调试时产生）
-*.bak
-*.bak-*
-*.backup-*
-*~
-
-# 日志与临时文件
+.pnpm-debug.log*
 *.log
 *.tmp
 .cache/
 
-# 本地安装后由宿主生成的状态（绝不提交）
-.workbuddy-*/
-.dsh-qoder-connect/
-space-background/
+# 操作系统与 IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
 
-# ── 本地工作区目录（不随包发布）─────────────────────────────────────────
-# _backups      改文件前的原件快照
-# _community    提交到 awesome-dsh-plugin 的条目 YAML
-# _diagnostics  离线加载/解析模拟脚本
-# _findings     排查记录
-# 这些是开发过程的辅助材料：`npm pack` 的 files 白名单本就不含它们，
-# 这里再排除一次，避免被 git 误跟踪。
-_backups/
-_community/
-_diagnostics/
-_findings/
+# 备份与历史补丁快照
+*.bak
+*.bak-*
+*.backup-*
+*~

@@ -1,4 +1,4 @@
+# Starlight Protocol 2077 — DSH bundle patch
 - insert:
-    - id: space-background
-      name: '@local/space-background'
-      config: {}
+    - id: dsh-plugin-starlight-protocol
+      name: dsh-plugin-starlight-protocol
