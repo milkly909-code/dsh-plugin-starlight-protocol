@@ -146,6 +146,18 @@ dsh-plugin-starlight-protocol/
 
 ---
 
+## 🙏 致谢与上游开源项目 (Acknowledgements & Upstream)
+
+星轨协议 2077（Starlight Protocol）是一套深度定制与二次开发的综合外观增强系统。我们由衷感谢以下优秀开源项目为社区带来的灵感与技术基石：
+
+- **[dsh-theme-cyberpunk2077](https://github.com/Tommy00748/dsh-theme-cyberpunk2077)** (by [@Tommy00748](https://github.com/Tommy00748)) — 提供了出色的赛博朋克 2077 夜之城 HUD 终端视觉体系与配色基底。
+- **[dsh-startup-screen](https://github.com/6shenhonghong9/dsh-startup-screen)** (by [@6shenhonghong9](https://github.com/6shenhonghong9)) — 提供了特工冷启动序列与鉴权动效的核心框架。
+- **[dsh-space-background](https://github.com/milkly909-code/dsh-space-background)** (by [@milkly909-code](https://github.com/milkly909-code)) — 提供了底层全域深空动态天体引擎。
+
+本项目在遵循 MIT 开源许可证的前提下，对上述模块进行了底层重构、视觉统一与性能调度整合，并针对 Windows 无边框定制环境**自主研发补齐了「战术侧栏隐藏/展开总控（`#starlight-sidebar-toggle`）」**及专属独立控制分区，使三个独立的模块升华成为开箱即用、无缝协同的一体化旗舰套件。
+
+---
+
 ## 📜 开源协议 (License)
 
-本项目基于 [MIT License](LICENSE) 开源发布。
+本项目基于 [MIT License](LICENSE) 开源发布。详细上游第三方版权声明参见 [LICENSE](LICENSE) 文件。
