@@ -1,103 +1,97 @@
-# 星轨协议 2077 (Starlight Protocol)
+# Starlight Protocol (星轨协议 2077)
 
 <div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-00f0ff.svg?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-DeepSeek%20Harness-fce300.svg?style=flat-square)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
-[![Edition](https://img.shields.io/badge/Edition-Night%20City%202077-ff007f.svg?style=flat-square)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
-[![Status](https://img.shields.io/badge/Build-Passing-00f5a0.svg?style=flat-square)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
+[![Release](https://img.shields.io/badge/Release-v2.1.0-ff007f.svg?style=flat-square)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
+[![Build](https://img.shields.io/badge/Build-Passing-00f5a0.svg?style=flat-square)](https://github.com/milkly909-code/dsh-plugin-starlight-protocol)
 
 <p align="center">
-  <strong>「WAKE UP, SAMURAI. 欢迎接入星轨协议 2077。」</strong><br>
-  为 DeepSeek Harness 量身打造的旗舰级综合外观系统<br>
-  深空天体引擎 × 赛博朋克 HUD × 开机鉴权序列 × 战术侧栏总控 · 四合一自主矩阵
+  <strong>DeepSeek Harness 综合外观与交互增强套件</strong><br>
+  全域动态深空天体引擎 × 赛博朋克 2077 战术 HUD × 特工冷启动鉴权序列 × 战术侧栏折叠修复
 </p>
 
 </div>
 
 ---
 
-## 🖥️ 实际应用主界面效果 (Application Interface)
+## 📸 界面预览 (Interface Previews)
 
-> **实机渲染效果**：深空正交星座与流动天体星幕穿透窗口底层，赛博朋克 2077 夜之城 HUD 霓虹青战术切角轮廓包覆工作区，左上角无缝集成战术侧栏折叠按钮，右下角常驻航速读数与芯片控制器。
+### 1. 应用主界面 (Application UI)
+
+星轨协议深度重构了 DeepSeek Harness 视觉系统。在窗口底层注入无缝深空流动天体星幕，界面组件采用高对比度赛博朋克夜之城配色（霓虹青 × 战术金），并彻底修复了无边框环境下侧栏收起后的折叠按钮丢失问题。
+
+#### 侧边栏展开状态 (Full Workspace View)
+展示完整侧边栏导航、搜索卡片、中央对话台与右下角 HUD 状态读数：
 
 <div align="center">
-  <img src="assets/starlight-hero.png" alt="DeepSeek Harness 实际应用界面效果" width="95%" />
+  <img src="assets/app-expanded.png" alt="DeepSeek Harness 侧边栏展开状态" width="95%" />
+</div>
+
+<br>
+
+#### 侧边栏折叠状态 (Immersive Focused View)
+点击左上角战术切角折叠按钮一键隐藏侧栏，进入宽屏沉浸模式：
+
+<div align="center">
+  <img src="assets/app-folded.png" alt="DeepSeek Harness 侧边栏折叠状态" width="95%" />
 </div>
 
 ---
 
-## 🌟 核心特性全景
+### 2. 开机冷启动序列 (Startup Sequence)
 
-### 1. 🌌 全域深空动态天体引擎 (Deep Space Horizon)
-- **360° 无缝流动星幕**：整周期无缝正弦银河带算法，自动偏航巡航漂移与鼠标 3D 阻尼视差。
-- **正交 3D 星座网络**：动态随机生成的星座骨架网络与 6 阶光谱级恒星光斑。
-- **光环行星公转与流星**：光环行星轨道公转，随机穿梭折跃流星。
-- **右下角 SPD 三档航速控制器**：
-  - **巡航档 (Cruise)**：`0.12x`（星系缓慢巡航，护眼防眩）
-  - **动力档 (Boost)**：`0.25x`（2倍巡航推进）
-  - **折跃档 (Warp)**：`0.96x`（8倍超光速折跃，星轨流线光束）
+应用启动时自动触发独立的特工鉴权动效，由黑幕序幕平滑过渡至特工身份确认。
+
+| 序幕阶段 (Blackout & Reticle) | 鉴权阶段 (Identity & Authorization) |
+| :---: | :---: |
+| <img src="assets/startup-intro.png" alt="开机黑幕与瞄准准星" width="100%" /> | <img src="assets/startup-auth.png" alt="特工档案卡片与授权按键" width="100%" /> |
+| 官方矢量鲸鱼标识准星瞄准扫描 | 机密特工档案卡、动态进度条与授权按钮 |
 
 ---
 
-### 2. 🚀 开机冷启动认证序列 (Startup Sequence)
+## ⚡ 核心功能 (Features)
 
-> **实际开机效果**：冷启动时触发黑幕认证序列、过曝白光与 CRT 荧光屏平滑展开。特工档案卡片、官方鲸鱼瞄准准星扫描、动态进度条与实机交互授权按键。
+### 🌌 1. 全域深空动态天体引擎 (Deep Space Engine)
+* **无缝流动星幕**：整周期正弦银河带算法，自动偏航巡航漂移与鼠标 3D 阻尼视差。
+* **正交 3D 星座网络**：动态随机生成的星座骨架网络与多阶光谱级恒星光斑。
+* **三档天体航速 (SPD)**：
+  * `0.12x`（巡航档 · 缓慢巡航，舒适防眩）
+  * `0.25x`（动力档 · 2倍平稳推进）
+  * `0.96x`（折跃档 · 8倍高速流线光束）
 
-<div align="center">
-  <img src="assets/starlight-startup.png" alt="DeepSeek Harness 实际开机页面鉴权效果" width="90%" />
-</div>
+### ⚡ 2. 赛博朋克 2077 战术 HUD 终端 (HUD Theme)
+* **高对比度视觉重构**：霓虹青（`#00f0ff`）× 战术金黄（`#fce300`）× 深空玄黑底层。
+* **机能切角轮廓**：全组件工业战术切角（`clip-path`）、CRT 扫描线与细节边角。
+* **现场音频合成**：基于 Web Audio API 现场合成机械交互音效，无需加载外部音频文件。
+* **彩蛋模式**：内置专属彩蛋交互，提供沉浸式终端质感。
 
-- **黑幕鉴权过场**：深空冷启动时触发黑幕认证序列，平滑过渡至特工档案底板。
-- **机密特工档案卡**：黑客特工身份档案（代号、权限等级与数字流），支持自定义身份。
-- **动态雷达与授权交互**：环形准星扫描瞄准、全宽动态进度条、支持键盘/鼠标点击「授予访问权限」快速接入。
-- **神经网络真声念白**：内置高质量语音念白与 Web Speech 语音回退保障。
+### 🎛️ 3. 战术侧栏隐藏总控 (Sidebar Controller · 核心修复)
+* **解决原生折叠缺陷**：彻底解决 Windows 无边框定制环境下侧边栏收起后按钮丢失的痛点。
+* **高优先级切角微光按钮**：固定于左上角操作区（`z-index: 10050`），不受窗口拖拽区域拦截。
+* **双态联动**：展开态向内折叠 `◀`，折叠态向外展开 `▶`，直接调度 DSH 官方 `layout.toggleSidebar()` 原生接口，安全稳定零崩溃。
 
----
-
-### 3. ⚡ 赛博朋克 2077 战术 HUD 终端 (Cyberpunk 2077 HUD Theme)
-- **夜之城色调矩阵**：霓虹青（`#00f0ff`）× 战术金黄（`#fce300`）× 深空玄黑底层，高对比度视觉重构。
-- **战术切角与 HUD 框架**：全组件战术切角轮廓（`clip-path`）、CRT 细腻扫描线、细节角标包角。
-- **声效与交互反馈**：纯代码 Web Audio API 合成机械打字音效（零外部音频依赖），右下角 `SND` 音效开关与 `DECK` 控制抽屉。
-- **Relic 故障彩蛋**：输入框输入特定暗号（如 `relic` 或 `johnny`）触发强尼·银手夺屏故障扫描与色散撕裂。
-
----
-
-### 4. 🎛️ 战术侧栏隐藏总控与控件矩阵 (Tactical Controls)
-
-> **细节特写**：左上角无边框定制环境下新修复的战术侧栏折叠按钮、右下角 SPD 天体航速控制器与特工鉴权序列。
-
-<div align="center">
-  <img src="assets/starlight-controls.png" alt="战术侧边栏折叠按钮与核心控制面板" width="90%" />
-</div>
-
-- **彻底修复侧栏折叠按钮丢失问题**：在 Windows 无边框定制环境下解决原生折叠按钮丢失缺陷，高优先级切角微光按钮固定于左上角（`z-index: 10050`），不受拖拽区域拦截。
-- **双态智能矢量图标**：
-  - **展开态 (显示侧栏)**：显示向内折叠箭头 `◀` 与实线面板框，悬停提示 `收起侧边栏 (Ctrl+B)`。
-  - **折叠态 (隐藏侧栏)**：显示向外展开箭头 `▶` 与虚线导轨框，悬停提示 `展开侧边栏 (Ctrl+B)`。
-- **多级稳态调度**：直接驱动 DSH 官方 `layout.toggleSidebar()`，自动避让品牌 Logo，零崩溃风险。
+### 🚀 4. 特工冷启动鉴权序列 (Startup Screen)
+* **黑客特工档案**：开机加载特工机密身份卡片（代号、权限等级与数字流）。
+* **交互式快速接入**：支持回车、空格或鼠标点击「授予访问权限」快速切入工作台。
+* **自适应与可配置**：支持在设置中配置自定义身份名称与播报选项。
 
 ---
 
-### 5. 🎚️ 模块矩阵总控面板 (Master Module Matrix)
-- 在 DSH「设置 (Settings)」左侧栏自动注册专属「星轨协议 (Starlight)」配置分区。
-- 提供深空背景、主题、开机动画的独立启闭开关，配置保存即时热更新生效。
-
----
-
-## ⚡ 快速安装与配置
+## 📦 安装与启用 (Installation)
 
 ### 方式一：DSH 插件管理器一键接入 (推荐)
 
-在终端中执行以下命令快速安装：
+在命令行中执行：
 
 ```bash
 dsh plugin --profile desktop add dsh-plugin-starlight-protocol
 ```
 
-### 方式二：手动配置 (Cordis 编排)
+### 方式二：Cordis 配置挂载
 
-在 DSH 用户配置目录的 `cordis.patch.yml` 中追加挂载项：
+在 DeepSeek Harness 的 `cordis.patch.yml` 中追加：
 
 ```yaml
 - insert:
@@ -105,42 +99,53 @@ dsh plugin --profile desktop add dsh-plugin-starlight-protocol
     name: dsh-plugin-starlight-protocol
 ```
 
-重启 DeepSeek Harness 或在窗口中按下 `Ctrl + R`，欢迎接入夜之城星轨协议！
+保存后重启 DeepSeek Harness 或在窗口中按下 `Ctrl + R` 刷新生效。
 
 ---
 
-## 🛡️ 性能与隐私安全保障
+## ⚙️ 模块设置 (Settings)
 
-- **零隐私外泄**：所有组件均在本地沙箱运行，不搜集、不上传任何个人文件、工作区路径或聊天内容。
-- **小屏自适应**：在移动端或窄屏环境（≤768px）下自动关闭高耗能扫描线与背景流线。
-- **减弱动态效果支持**：遵循系统 `prefers-reduced-motion` 设置，开启时平稳收敛高帧率过渡。
-- **一键静音与特效开关**：界面右下角常驻 `SND` 静音按键与 `DECK` 控制器，所有特效可独立一键关闭。
+安装后，DeepSeek Harness「设置 (Settings)」面板将自动注册专属的 **「星轨协议」** 控制分区：
+
+* **深空天体引擎**：独立开关与航速预设
+* **赛博朋克 HUD**：主题色系与扫描线样式调节
+* **开机动画序列**：启闭控制、播报语言与身份信息定制
+
+所有设置支持热更新，修改后即时生效。
 
 ---
 
-## 📁 项目结构
+## 🛡️ 安全与隐私保障 (Privacy & Security)
+
+* **零数据外泄**：纯本地运行，不收集、不上传任何个人文件、工作区路径、代码或聊天内容。
+* **零外部 CDN 依赖**：所有样式、矢量图标及动效逻辑均打包在本地沙箱中运行，离线可用。
+* **性能友好**：针对低功耗环境做了平滑降帧优化，自动遵循系统 `prefers-reduced-motion` 设置。
+
+---
+
+## 📁 项目结构 (Structure)
 
 ```
 dsh-plugin-starlight-protocol/
-├── assets/               # README 实机高清演示截图
-│   ├── starlight-hero.png       # 实际应用主界面效果截图
-│   ├── starlight-startup.png    # 实际冷启动特工鉴权开机截图
-│   └── starlight-controls.png   # 战术折叠按钮与核心控制展示
-├── cordis.patch.yml      # DSH 核心服务注册编排文件
-├── package.json          # 插件元数据与入口声明
-├── README.md             # 工程主文档
-├── SKILL.md              # AI Agent 智能体技能标准规范
-├── LICENSE               # MIT 开源授权协议
+├── assets/                  # 官方实机演示截图
+│   ├── app-expanded.png     # 侧边栏展开状态实机图
+│   ├── app-folded.png       # 侧边栏折叠状态实机图
+│   ├── startup-intro.png    # 开机冷启动序幕图
+│   └── startup-auth.png     # 特工档案与鉴权交互图
+├── cordis.patch.yml         # DSH 核心服务注册编排文件
+├── package.json             # 插件元数据与入口配置
+├── README.md                # 插件文档
+├── SKILL.md                 # 智能体规范定义
+├── LICENSE                  # MIT 开源许可
 └── lib/
-    ├── client.js         # 前端综合 Bundle (深空引擎 + HUD 主题 + 折叠总控 + 设置面板)
-    ├── index.js          # 后端配置服务与 API 路由
-    ├── splash.js         # 开机冷启动动效逻辑
-    ├── splash.css        # 开机黑幕与认证卡片样式
-    └── assets/           # 音频素材与 Relic 彩蛋图片
+    ├── client.js            # 前端综合 Bundle (深空引擎 + HUD 主题 + 折叠按钮 + 设置面板)
+    ├── index.js             # 后端配置服务与 API 路由
+    ├── splash.js            # 开机冷启动动效逻辑
+    └── splash.css           # 开机界面样式
 ```
 
 ---
 
-## 📜 开源协议
+## 📜 开源协议 (License)
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目基于 [MIT License](LICENSE) 开源发布。
