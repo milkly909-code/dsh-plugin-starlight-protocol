@@ -42,5 +42,10 @@
     "bundles": [
       "lib/client.js"
     ]
+  },
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/splash.js",
+    "test": "node test/manifest.mjs",
+    "test:boot": "node test/boot-safety.mjs"
   }
 }
