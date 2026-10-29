@@ -20,7 +20,7 @@
 
 ### 1. 应用主界面 (Application UI)
 
-星轨协议深度重构了 DeepSeek Harness 视觉系统。在窗口底层注入无缝深空流动天体星幕，界面组件采用高对比度赛博朋克夜之城配色（霓虹青 × 战术金），并彻底修复了无边框环境下侧栏收起后的折叠按钮丢失问题。
+星轨协议重构了 DeepSeek Harness 视觉系统。在窗口底层注入无缝深空流动天体星幕，界面组件采用高对比度赛博朋克夜之城配色（霓虹青 × 战术金），并修复了无边框环境下侧栏收起后的折叠按钮丢失问题。
 
 #### 侧边栏展开状态 (Full Workspace View)
 展示完整侧边栏导航、搜索卡片、中央对话台与右下角 HUD 状态读数：
@@ -68,7 +68,7 @@
 * **彩蛋模式**：内置专属彩蛋交互，提供沉浸式终端质感。
 
 ### 🎛️ 3. 战术侧栏隐藏总控 (Sidebar Controller · 核心修复)
-* **解决原生折叠缺陷**：彻底解决 Windows 无边框定制环境下侧边栏收起后按钮丢失的痛点。
+* **解决原生折叠缺陷**：解决 Windows 无边框定制环境下侧边栏收起后按钮丢失的问题。
 * **高优先级切角微光按钮**：固定于左上角操作区（`z-index: 10050`），不受窗口拖拽区域拦截。
 * **双态联动**：展开态向内折叠 `◀`，折叠态向外展开 `▶`，直接调度 DSH 官方 `layout.toggleSidebar()` 原生接口，安全稳定零崩溃。
 
@@ -154,7 +154,7 @@ dsh-plugin-starlight-protocol/
 - **[dsh-startup-screen](https://github.com/6shenhonghong9/dsh-startup-screen)** (by [@6shenhonghong9](https://github.com/6shenhonghong9)) — 提供了特工冷启动序列与鉴权动效的核心框架。
 - **[dsh-space-background](https://github.com/milkly909-code/dsh-space-background)** (by [@milkly909-code](https://github.com/milkly909-code)) — 提供了底层全域深空动态天体引擎。
 
-本项目在遵循 MIT 开源许可证的前提下，对上述模块进行了底层重构、视觉统一与性能调度整合，并针对 Windows 无边框定制环境**自主研发补齐了「战术侧栏隐藏/展开总控（`#starlight-sidebar-toggle`）」**及专属独立控制分区，使三个独立的模块升华成为开箱即用、无缝协同的一体化旗舰套件。
+本项目在遵循 MIT 开源许可证的前提下，对上述模块进行了底层重构、视觉统一与性能调度整合，并针对 Windows 无边框定制环境**自主研发补齐了「战术侧栏隐藏/展开总控（`#starlight-sidebar-toggle`）」**及专属独立控制分区，使三个独立模块组合为统一配置与协同运行的一体化外观套件。
 
 ---
 
