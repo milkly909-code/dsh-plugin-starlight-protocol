@@ -1,9 +1,17 @@
 {
   "name": "dsh-plugin-starlight-protocol",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复",
   "type": "module",
   "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "SKILL.md",
+    "LICENSE",
+    "NOTICE"
+  ],
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
