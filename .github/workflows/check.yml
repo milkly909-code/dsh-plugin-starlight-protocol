@@ -38,3 +38,5 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Apply must never throw
         run: node test/boot-safety.mjs
+      - name: Kernel compatibility (rc.5 behaviours)
+        run: node test/rc5-compat.mjs

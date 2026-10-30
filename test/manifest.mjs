@@ -37,6 +37,12 @@ if (pkg) {
   ok('声明了 dsh.bundle（可被 dsh plugin add 安装）', !!bundle && typeof bundle.patch === 'string',
      bundle ? JSON.stringify(bundle) : '缺失')
 
+  // 声明支持的 DSH 版本范围。没有它，用户装到不兼容内核时
+  // 得不到任何提示，只会在运行时出问题。
+  const engines = pkg.dsh && pkg.dsh.engines && pkg.dsh.engines.dsh
+  ok('声明了 dsh.engines.dsh 版本范围', typeof engines === 'string' && engines.length > 0,
+     engines || '缺失')
+
   if (bundle && typeof bundle.patch === 'string') {
     const patchPath = join(ROOT, bundle.patch.replace(/^\.\//, ''))
     ok('dsh.bundle.patch 指向的文件存在', existsSync(patchPath), bundle.patch)

@@ -81,9 +81,14 @@
 
 ### 环境要求
 
-- **DSH 版本**：在 `0.2.1-rc.3` 上开发与验证。
+- **DSH 版本**：`>=0.2.1-rc.3 <0.3.0`（`package.json` 的 `dsh.engines` 声明）。
+  已在 `0.2.1-rc.3` 与 `0.2.1-rc.5` 上验证。
 - **平台**：Web 客户端（`dsh.client.platform = "web"`），桌面端与浏览器端均适用。
 - **重启**：新增 bundle 必须重启 DSH 才能加载（运行中的进程无法采纳新的模块解析）。
+
+> 关于 `0.2.1-rc.5`：该版本起内核的 `theme.register()` 在主题 id 已存在时会抛错。
+> 插件已对此做兼容——重复注册被识别为「已存在」而非失败，随后仍会调用
+> `setTheme()`，因此热重载或重复启用时主题照常生效。
 
 ### 方式一：DSH 插件管理器一键接入 (推荐)
 
@@ -173,9 +178,10 @@ dsh-plugin-starlight-protocol/
 ## 🔧 开发与测试 (Development)
 
 ```bash
-npm run check      # 语法检查
-npm test           # 清单校验（23 项断言，无需浏览器）
-npm run test:boot  # apply() 异常兜底（14 项断言，需 playwright）
+npm run check        # 语法检查
+npm test             # 清单校验（24 项断言，无需浏览器）
+npm run test:boot    # apply() 异常兜底（14 项断言，需 playwright）
+npm run test:compat  # 内核兼容性（11 项断言，需 playwright）
 ```
 
 `boot-safety` 覆盖了 7 种 ctx 形态：正常、缺 `slots`、`slots` 无 `inject`、
@@ -185,6 +191,10 @@ npm run test:boot  # apply() 异常兜底（14 项断言，需 playwright）
 这条约束不是形式主义。DSH 在 boot 期收集所有插件的装载失败，只要有一个抛错就
 抛 `ClientPackageCompositionError` → `process.exit(1)` → 用户看到「DSH 打不开」。
 所以插件读到的服务都不应假设存在，每个外部调用点都单独兜住。
+
+`compat` 针对 `0.2.1-rc.5` 的行为变化：`theme.register()` 在 id 已注册时抛错
+（热重载必现）、`layout.toggleSidebar()` 仍是公开无参接口、`settings.section`
+与 `shell.overlay` 槽位仍在。这三条都是版本升级后最容易静默失效的地方。
 
 ---
 

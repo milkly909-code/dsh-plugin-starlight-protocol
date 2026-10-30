@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-starlight-protocol",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复",
   "type": "module",
   "main": "lib/index.js",
@@ -31,6 +31,9 @@
   ],
   "dsh": {
     "manifestVersion": 1,
+    "engines": {
+      "dsh": ">=0.2.1-rc.3 <0.3.0-0"
+    },
     "displayName": "星轨协议 2077 (Starlight Protocol)",
     "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复，支持模块化自主启闭。",
     "bundle": {
@@ -54,6 +57,7 @@
   "scripts": {
     "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/splash.js",
     "test": "node test/manifest.mjs",
-    "test:boot": "node test/boot-safety.mjs"
+    "test:boot": "node test/boot-safety.mjs",
+    "test:compat": "node test/rc5-compat.mjs"
   }
 }
