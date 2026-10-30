@@ -2,6 +2,7 @@
   "name": "dsh-plugin-starlight-protocol",
   "version": "1.0.2",
   "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复",
+  "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
   "files": [
@@ -29,6 +30,14 @@
     "background",
     "cyberpunk"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/milkly909-code/dsh-plugin-starlight-protocol.git"
+  },
+  "homepage": "https://github.com/milkly909-code/dsh-plugin-starlight-protocol#readme",
+  "bugs": {
+    "url": "https://github.com/milkly909-code/dsh-plugin-starlight-protocol/issues"
+  },
   "dsh": {
     "manifestVersion": 1,
     "engines": {
