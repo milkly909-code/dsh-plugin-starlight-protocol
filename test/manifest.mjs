@@ -39,9 +39,20 @@ if (pkg) {
 
   // 声明支持的 DSH 版本范围。没有它，用户装到不兼容内核时
   // 得不到任何提示，只会在运行时出问题。
-  const engines = pkg.dsh && pkg.dsh.engines && pkg.dsh.engines.dsh
-  ok('声明了 dsh.engines.dsh 版本范围', typeof engines === 'string' && engines.length > 0,
-     engines || '缺失')
+  //
+  // 必须写在**标准** engines 字段：awesome-dsh-plugin 的索引脚本
+  // (scripts/probe-npm.mjs) 读的是 `versions[latest].engines.dsh`，
+  // 写在 dsh.engines 里它读不到，市场就不会显示兼容范围。
+  const stdEngines = pkg.engines && pkg.engines.dsh
+  ok('声明了标准 engines.dsh（索引读取此处）',
+     typeof stdEngines === 'string' && stdEngines.length > 0,
+     stdEngines || '缺失')
+
+  // dsh.engines 是 DSH 自有清单字段，两者保持一致，避免歧义
+  const nestedEngines = pkg.dsh && pkg.dsh.engines && pkg.dsh.engines.dsh
+  ok('dsh.engines.dsh 与标准 engines.dsh 一致',
+     !nestedEngines || nestedEngines === stdEngines,
+     nestedEngines ? `${nestedEngines} vs ${stdEngines}` : '未声明（可接受）')
 
   if (bundle && typeof bundle.patch === 'string') {
     const patchPath = join(ROOT, bundle.patch.replace(/^\.\//, ''))
