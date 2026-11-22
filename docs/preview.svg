@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="300" viewBox="0 0 640 300">
+  <defs>
+    <linearGradient id="sgBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f6fa"/>
+      <stop offset="1" stop-color="#e8ecf4"/>
+    </linearGradient>
+    <linearGradient id="sgCol" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#fbfcfe"/>
+    </linearGradient>
+    <linearGradient id="sgAccent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4c8dff"/>
+      <stop offset="1" stop-color="#2f6ae0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="300" fill="url(#sgBg)"/>
+
+  <!-- 左：展开态 -->
+  <g>
+    <rect x="40" y="24" width="248" height="252" rx="14" fill="url(#sgCol)" stroke="#d8dfeb"/>
+    <!-- 品牌行 -->
+    <circle cx="66" cy="52" r="8" fill="#2f6ae0" opacity="0.9"/>
+    <rect x="82" y="47" width="72" height="10" rx="5" fill="#c9d4e6"/>
+    <!-- 新会话行 -->
+    <rect x="56" y="72" width="216" height="26" rx="8" fill="#eef3fb" stroke="#dbe4f2"/>
+
+    <!-- 面板分组头（展开） -->
+    <path d="M66 118l5 4-5 4" fill="none" stroke="#7f8fae" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(90 68.5 122)"/>
+    <rect x="80" y="115" width="34" height="9" rx="4.5" fill="#9aa8c2"/>
+    <!-- 面板行 -->
+    <g fill="#cfd9e9">
+      <rect x="66" y="132" width="16" height="16" rx="4"/>
+      <rect x="90" y="136" width="96" height="9" rx="4.5"/>
+      <rect x="66" y="158" width="16" height="16" rx="4"/>
+      <rect x="90" y="162" width="120" height="9" rx="4.5"/>
+      <rect x="66" y="184" width="16" height="16" rx="4"/>
+      <rect x="90" y="188" width="76" height="9" rx="4.5"/>
+      <rect x="66" y="210" width="16" height="16" rx="4"/>
+      <rect x="90" y="214" width="104" height="9" rx="4.5"/>
+    </g>
+
+    <!-- 工作区分组头（展开，带折叠箭头） -->
+    <path d="M66 244l5 4-5 4" fill="none" stroke="#7f8fae" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" transform="rotate(90 68.5 248)"/>
+    <rect x="80" y="241" width="44" height="9" rx="4.5" fill="#9aa8c2"/>
+    <circle cx="252" cy="245.5" r="8" fill="#eef3fb" stroke="#dbe4f2"/>
+    <!-- 工作区行（被下边缘裁切，表示列表继续） -->
+    <g fill="#dbe4f0">
+      <rect x="66" y="262" width="16" height="16" rx="4"/>
+      <rect x="90" y="266" width="86" height="9" rx="4.5"/>
+    </g>
+  </g>
+
+  <!-- 右：折叠态 -->
+  <g>
+    <rect x="352" y="24" width="248" height="252" rx="14" fill="url(#sgCol)" stroke="#d8dfeb"/>
+    <circle cx="378" cy="52" r="8" fill="#2f6ae0" opacity="0.9"/>
+    <rect x="394" y="47" width="72" height="10" rx="5" fill="#c9d4e6"/>
+    <rect x="368" y="72" width="216" height="26" rx="8" fill="#eef3fb" stroke="#dbe4f2"/>
+
+    <!-- 面板分组头（已折叠：箭头朝右，行被收起） -->
+    <path d="M378 118l5 4-5 4" fill="none" stroke="url(#sgAccent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="392" y="115" width="34" height="9" rx="4.5" fill="#5a6b8a"/>
+
+    <!-- 一段留白 + 淡虚线，表示「该组内容已收起」 -->
+    <line x1="378" y1="146" x2="570" y2="146" stroke="#e2e8f2" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round"/>
+
+    <!-- 工作区分组头（已折叠：箭头朝右） -->
+    <path d="M378 176l5 4-5 4" fill="none" stroke="url(#sgAccent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="392" y="173" width="44" height="9" rx="4.5" fill="#5a6b8a"/>
+    <circle cx="564" cy="177.5" r="8" fill="#eef3fb" stroke="#dbe4f2"/>
+    <line x1="378" y1="204" x2="570" y2="204" stroke="#e2e8f2" stroke-width="2" stroke-dasharray="4 6" stroke-linecap="round"/>
+
+    <!-- 强调：折叠后剩下的两个分组头 -->
+    <rect x="366" y="108" width="216" height="23" rx="7" fill="#4c8dff" opacity="0.07"/>
+    <rect x="366" y="166" width="216" height="23" rx="7" fill="#4c8dff" opacity="0.07"/>
+  </g>
+
+  <!-- 中间：折叠动作指示 -->
+  <circle cx="320" cy="150" r="15" fill="#ffffff" stroke="#dbe4f2"/>
+  <path d="M314 150h12M322 145l5 5-5 5" fill="none" stroke="#4c8dff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

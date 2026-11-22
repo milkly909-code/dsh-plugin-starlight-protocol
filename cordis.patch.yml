@@ -1,4 +1,6 @@
-# Starlight Protocol 2077 — DSH bundle patch
+# Starlight Protocol 2077 & Sidebar Groups — DSH bundle patch
+# 两套子系统共用同一个 client bundle（lib/client.js）；
+# 侧栏分组的界面逻辑已内联其中，Host 端负责星轨的路由与开机注入。
 - insert:
     - id: dsh-plugin-starlight-protocol
       name: dsh-plugin-starlight-protocol

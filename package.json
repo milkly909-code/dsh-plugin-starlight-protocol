@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-starlight-protocol",
-  "version": "1.0.3",
-  "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复",
+  "version": "2.0.0",
+  "description": "DeepSeek Harness 外观套件：侧栏分组精简（面板收纳、工作区折叠、「更多」拖拽重排、丝滑滚动）× 星轨协议 2077（深空动态天体背景、赛博朋克 HUD 主题、开机冷启动序列）",
   "license": "MIT",
   "type": "module",
   "main": "lib/index.js",
@@ -11,18 +11,28 @@
     "README.md",
     "SKILL.md",
     "LICENSE",
-    "NOTICE"
+    "NOTICE",
+    "locale",
+    "docs",
+    "icon.svg"
   ],
   "exports": {
     ".": "./lib/index.js",
     "./client": "./lib/client.js",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/zh.json": "./locale/zh.json",
+    "./locale/en.json": "./locale/en.json",
+    "./icon": "./icon.svg"
   },
   "keywords": [
     "dsh",
     "dsh-plugin",
     "deepseek",
     "deepseek-harness",
+    "sidebar",
+    "collapse",
+    "group",
+    "ui",
     "theme",
     "appearance",
     "startup",
@@ -47,8 +57,8 @@
     "engines": {
       "dsh": ">=0.2.1-rc.3 <0.3.0-0"
     },
-    "displayName": "星轨协议 2077 (Starlight Protocol)",
-    "description": "DeepSeek Harness 外观套件：深空动态天体背景、赛博朋克 2077 HUD 主题、开机认证序列，以及无边框窗口下的侧栏折叠按钮修复，支持模块化自主启闭。",
+    "displayName": "星轨协议 2077 与 侧栏分组 (Starlight & Sidebar Groups)",
+    "description": "外观套件：侧栏面板收纳、工作区折叠、「更多」拖拽重排、深空天体背景、赛博朋克 HUD 主题与开机冷启动序列，各模块可独立启闭。",
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
@@ -56,9 +66,12 @@
       "platform": "web",
       "immediately": true,
       "inject": [
+        "@deepseek-ai/dsh-client-ui-sidebar",
+        "@deepseek-ai/dsh-client-ui-workspace",
         "@deepseek-ai/dsh-client-ui-settings",
         "@deepseek-ai/dsh-client-ui-theme",
-        "@deepseek-ai/dsh-client-ui-layout"
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-slots"
       ]
     }
   },
@@ -69,7 +82,7 @@
   },
   "scripts": {
     "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/splash.js",
-    "test": "node test/manifest.mjs",
+    "test": "node test/check.mjs && node test/starlight-merge.mjs && node test/manifest.mjs",
     "test:boot": "node test/boot-safety.mjs",
     "test:compat": "node test/rc5-compat.mjs"
   }

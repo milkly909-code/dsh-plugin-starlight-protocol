@@ -1,0 +1,12 @@
+{
+  "meta": {
+    "title": "Sidebar groups",
+    "description": "Splits the sidebar into two independently collapsible groups: the global panel list and the workspace/session list, remembering each group's state.\n\nUsage: with the sidebar expanded, a \"Panels\" header appears above the panel rows; click the row to collapse or expand that group (\"More\" collapses with it). An arrow appears to the left of the workspace section header; click it to collapse or expand the session list. The search field and the add-workspace button stay usable while collapsed, and typing in the search field expands the list temporarily. Both states are stored in the browser (dsh-sidebar-groups/v1) and survive reloads and restarts. While the sidebar is collapsed to the 56px rail the group headers hide and the states are kept.\n\nLimitations: this plugin enhances the sidebar through the stable markers the host reserves for integrators (data-sidebar-scrollport, data-sidebar-workspace-header, data-sidebar-list-area). It does not take over or replace the official sidebar. If a future DSH release changes those markers, the plugin degrades to doing nothing instead of breaking the sidebar; disabling or uninstalling it restores the sidebar completely.",
+    "detail": "docs/DETAIL.en.md"
+  },
+  "panels": {
+    "label": "Panels",
+    "collapse": "Collapse",
+    "expand": "Expand"
+  }
+}

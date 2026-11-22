@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+  <defs>
+    <linearGradient id="sgAccentGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4c8dff"/>
+      <stop offset="1" stop-color="#2f6ae0"/>
+    </linearGradient>
+  </defs>
+  <!-- 两个可折叠分组的意象：每组 = 收起箭头 + 组标题，下面一条浅色内容线 -->
+  <g stroke="url(#sgAccentGrad)" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M7.2 7.4 10.4 10.6 13.6 7.4"/>
+    <path d="M7.2 21.4 10.4 24.6 13.6 21.4"/>
+  </g>
+  <g fill="url(#sgAccentGrad)">
+    <rect x="17" y="7.9" width="12.4" height="2.7" rx="1.35"/>
+    <rect x="17" y="21.9" width="9.2" height="2.7" rx="1.35"/>
+  </g>
+  <!-- 内容行：低对比，暗示分组里还有条目 -->
+  <g fill="#2f6ae0" opacity="0.32">
+    <rect x="17" y="13.6" width="14.4" height="2.2" rx="1.1"/>
+    <rect x="17" y="27.6" width="11.6" height="2.2" rx="1.1"/>
+  </g>
+</svg>
