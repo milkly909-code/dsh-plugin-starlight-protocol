@@ -10,7 +10,7 @@
 
 <p align="center">
   <strong>DeepSeek Harness 外观与交互增强套件</strong><br>
-  深空动态天体背景 × 赛博朋克 2077 HUD 主题 × 特工冷启动鉴权序列 × 侧栏折叠按钮
+  深空动态天体背景 × 赛博朋克 2077 HUD 主题 × 特工冷启动鉴权序列 × 侧栏分组与精简
 </p>
 
 </div>
